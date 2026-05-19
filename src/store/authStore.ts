@@ -1,33 +1,59 @@
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { AuthState, AuthUser, UserRole } from "@/types/auth";
+import { api } from "@/lib/api";
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { AuthState, AuthUser, UserRole } from '@/types/auth';
+function decodeJwt(token: string) {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join(""),
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    console.error("Failed to decode JWT token", e);
+    return null;
+  }
+}
 
 const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
-  SUPER_ADMIN: ['*'],
-  HOTEL_OWNER: ['*'],
+  SUPER_ADMIN: ["*"],
+  HOTEL_OWNER: ["*"],
   HOTEL_MANAGER: [
-    'dashboard:read', 'booking:*', 'front_desk:*', 'room:*', 'guest:*', 
-    'availability:read', 'reports:read', 'staff:*', 'maintenance:*', 'housekeeping:*'
+    "dashboard:read",
+    "booking:*",
+    "front_desk:*",
+    "room:*",
+    "guest:*",
+    "availability:read",
+    "reports:read",
+    "staff:*",
+    "maintenance:*",
+    "housekeeping:*",
   ],
   REVENUE_MANAGER: [
-    'dashboard:read', 'booking:read', 'pricing:*', 'reports:read', 'availability:read'
+    "dashboard:read",
+    "booking:read",
+    "pricing:*",
+    "reports:read",
+    "availability:read",
   ],
   FRONT_DESK: [
-    'dashboard:read', 'booking:*', 'front_desk:*', 'room:read', 'guest:read', 'availability:read'
+    "dashboard:read",
+    "booking:*",
+    "front_desk:*",
+    "room:read",
+    "guest:read",
+    "availability:read",
   ],
-  ACCOUNTANT: [
-    'dashboard:read', 'finance:*', 'booking:read', 'reports:read'
-  ],
-  HOUSEKEEPING_SUPERVISOR: [
-    'housekeeping:*', 'room:read', 'reports:read'
-  ],
-  HOUSEKEEPING_STAFF: [
-    'housekeeping:own_tasks'
-  ],
-  MAINTENANCE_STAFF: [
-    'maintenance:own_tickets'
-  ],
+  ACCOUNTANT: ["dashboard:read", "finance:*", "booking:read", "reports:read"],
+  HOUSEKEEPING_SUPERVISOR: ["housekeeping:*", "room:read", "reports:read"],
+  HOUSEKEEPING_STAFF: ["housekeeping:own_tasks"],
+  MAINTENANCE_STAFF: ["maintenance:own_tickets"],
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -35,35 +61,74 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       token: null,
-      login: (role) => {
-        const scope = role === 'SUPER_ADMIN' ? 'platform' : 'hotel';
-        const mockUser: AuthUser = {
-          sub: 'user_123',
-          email: `${role.toLowerCase()}@example.com`,
-          name: role.replace('_', ' '),
-          role,
-          scope,
-          hotel_id: scope === 'hotel' ? 'hotel_789' : undefined,
-          permissions: ROLE_PERMISSIONS[role],
-        };
-        set({ user: mockUser, token: 'mock_jwt_token' });
+      login: async (email, password, hotelId) => {
+        try {
+          console.log(`Connecting to backend login API for ${email}...`);
+          const response = await api.post("auth/login", {
+            email,
+            password,
+            ...(hotelId ? { hotelId } : {}),
+          });
+
+          if (response && response.access_token) {
+            const payload = decodeJwt(response.access_token);
+            if (payload) {
+              // Convert email username to human readable name
+              const rawName = payload.email
+                ? payload.email.split("@")[0]
+                : "User";
+              const formattedName = rawName
+                .split(/[._-]/)
+                .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+                .join(" ");
+
+              const apiUser: AuthUser = {
+                sub: payload.sub || "user_123",
+                email: payload.email || email,
+                name: formattedName,
+                role: (payload.role || "HOTEL_OWNER") as UserRole,
+                scope: (payload.scope || "hotel") as "platform" | "hotel",
+                hotel_id: payload.hotel_id || undefined,
+                permissions:
+                  payload.permissions ||
+                  ROLE_PERMISSIONS[
+                    (payload.role || "HOTEL_OWNER") as UserRole
+                  ] ||
+                  [],
+              };
+              set({ user: apiUser, token: response.access_token });
+              console.log(
+                "Successfully logged in against Live API and synced state!",
+              );
+              return;
+            }
+          }
+          throw new Error("Authentication response empty.");
+        } catch (error: any) {
+          console.error("Authentication Error:", error);
+          throw new Error(
+            error.message ||
+              "Login failed, please check your network and credentials.",
+          );
+        }
       },
       logout: () => set({ user: null, token: null }),
       hasPermission: (permission) => {
         const { user } = get();
         if (!user) return false;
-        if (user.permissions.includes('*')) return true;
-        
-        const [resource, action] = permission.split(':');
-        return user.permissions.some(p => {
-          const [pResource, pAction] = p.split(':');
-          if (pResource === resource && (pAction === '*' || pAction === action)) return true;
+        if (user.permissions.includes("*")) return true;
+
+        const [resource, action] = permission.split(":");
+        return user.permissions.some((p) => {
+          const [pResource, pAction] = p.split(":");
+          if (pResource === resource && (pAction === "*" || pAction === action))
+            return true;
           return false;
         });
       },
     }),
     {
-      name: 'auth-storage',
-    }
-  )
+      name: "auth-storage",
+    },
+  ),
 );

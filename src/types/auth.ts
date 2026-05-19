@@ -1,16 +1,15 @@
+export type UserRole =
+  | "SUPER_ADMIN"
+  | "HOTEL_OWNER"
+  | "HOTEL_MANAGER"
+  | "REVENUE_MANAGER"
+  | "FRONT_DESK"
+  | "ACCOUNTANT"
+  | "HOUSEKEEPING_SUPERVISOR"
+  | "HOUSEKEEPING_STAFF"
+  | "MAINTENANCE_STAFF";
 
-export type UserRole = 
-  | 'SUPER_ADMIN' 
-  | 'HOTEL_OWNER' 
-  | 'HOTEL_MANAGER' 
-  | 'REVENUE_MANAGER' 
-  | 'FRONT_DESK' 
-  | 'ACCOUNTANT' 
-  | 'HOUSEKEEPING_SUPERVISOR' 
-  | 'HOUSEKEEPING_STAFF' 
-  | 'MAINTENANCE_STAFF';
-
-export type UserScope = 'platform' | 'hotel';
+export type UserScope = "platform" | "hotel";
 
 export interface AuthUser {
   sub: string;
@@ -25,7 +24,7 @@ export interface AuthUser {
 export interface AuthState {
   user: AuthUser | null;
   token: string | null;
-  login: (role: UserRole) => void;
+  login: (email: string, password: string, hotelId?: string) => Promise<void>;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
 }
