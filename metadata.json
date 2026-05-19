@@ -1,0 +1,6 @@
+{
+  "name": "LuxeHotel SaaS Admin",
+  "description": "Multi-tenant Hotel Management System with platform and property dashboards, booking management, and housekeeping tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
