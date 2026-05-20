@@ -1,6 +1,7 @@
 import {
   usePlatformHotels,
   useUpdatePlatformHotel,
+  useDeletePlatformHotel,
 } from "@/hooks/usePlatformData";
 import {
   Card,
@@ -32,7 +33,6 @@ import {
   UserPlus,
   Key,
   ShieldAlert,
-  ChevronRight,
   Globe,
   CheckCircle2,
 } from "lucide-react";
@@ -77,10 +77,12 @@ export function PlatformHotels() {
     refetch,
   } = usePlatformHotels();
   const updateMutation = useUpdatePlatformHotel();
+  const deleteMutation = useDeletePlatformHotel();
   const navigate = useNavigate();
 
   const [editingHotel, setEditingHotel] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleEdit = (hotel: any) => {
@@ -89,17 +91,30 @@ export function PlatformHotels() {
   };
 
   const handleStatusChange = async (hotel: any, newStatus: string) => {
+    // DB HotelStatus enum uses lowercase: 'active' | 'suspended'
+    const statusValue = newStatus.toLowerCase();
     try {
       await updateMutation.mutateAsync({
         id: hotel.id,
-        data: { ...hotel, status: newStatus },
+        data: { status: statusValue },
       });
       toast.success(
-        `Hotel ${newStatus === "active" ? "reactivated" : "suspended"} successfully`,
+        `Hotel ${statusValue === "active" ? "reactivated" : "suspended"} successfully`,
       );
       refetch();
     } catch (error) {
       toast.error("Failed to update status");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteMutation.mutateAsync(deleteTarget.id);
+      toast.success(`"${deleteTarget.name}" deleted successfully`);
+      setDeleteTarget(null);
+    } catch (error) {
+      toast.error("Failed to delete hotel");
     }
   };
 
@@ -349,16 +364,6 @@ export function PlatformHotels() {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className='flex items-center justify-end'>
-                        <Button
-                          variant='ghost'
-                          size='icon'
-                          className='h-8 w-8 text-muted-foreground hover:text-[#C9973A]'
-                          onClick={() =>
-                            navigate({ to: `/platform/hotels/${hotel.id}` })
-                          }
-                        >
-                          <ChevronRight className='w-4 h-4' />
-                        </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             className={cn(
@@ -431,13 +436,9 @@ export function PlatformHotels() {
                             )}
                             <DropdownMenuItem
                               className='gap-2 text-red-600'
-                              onClick={() =>
-                                toast.error(
-                                  "Delete action requires multi-stage verification",
-                                )
-                              }
+                              onClick={() => setDeleteTarget(hotel)}
                             >
-                              <Trash2 className='w-4 h-4' /> Mark for Archive
+                              <Trash2 className='w-4 h-4' /> Delete Tenant
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -563,6 +564,55 @@ export function PlatformHotels() {
                 <Loader2 className='w-4 h-4 mr-2 animate-spin' />
               ) : (
                 "Apply Updates"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
+        <DialogContent className='max-w-md'>
+          <DialogHeader>
+            <DialogTitle className='font-serif text-2xl text-red-600'>
+              Delete Tenant
+            </DialogTitle>
+            <DialogDescription className='pt-2'>
+              Are you sure you want to permanently delete{" "}
+              <span className='font-bold text-[#0F1B2D]'>
+                "{deleteTarget?.name}"
+              </span>
+              ? This will remove all associated subscriptions, feature flags,
+              user access, and the tenant schema.
+              <span className='block mt-2 font-semibold text-red-600'>
+                This action cannot be undone.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className='mt-4'>
+            <Button
+              variant='outline'
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleteMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              className='bg-red-600 hover:bg-red-700 text-white gap-2'
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className='w-4 h-4 animate-spin' /> Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className='w-4 h-4' /> Confirm Delete
+                </>
               )}
             </Button>
           </DialogFooter>
