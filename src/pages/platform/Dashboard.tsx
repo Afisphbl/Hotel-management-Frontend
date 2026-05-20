@@ -60,9 +60,9 @@ export function PlatformDashboard() {
     error,
     refetch: refetchKpis,
   } = usePlatformKPIs();
-  const { data: revData } = usePlatformRevenueChart();
-  const { data: tierData } = usePlatformHotelsByTier();
-  const { data: logs } = usePlatformAuditLogs();
+  const { data: revData, isLoading: revLoading } = usePlatformRevenueChart();
+  const { data: tierData, isLoading: tierLoading } = usePlatformHotelsByTier();
+  const { data: logs, isLoading: logsLoading } = usePlatformAuditLogs();
 
   if (isError) {
     return (
@@ -156,7 +156,7 @@ export function PlatformDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className='h-[300px]'>
-            {kpisLoading ? (
+            {revLoading ? (
               <div className='h-full w-full flex items-center justify-center bg-muted/5 rounded-[4px]'>
                 <Skeleton className='h-[200px] w-full mx-6' />
               </div>
@@ -219,7 +219,7 @@ export function PlatformDashboard() {
             <CardDescription>Subscription distribution</CardDescription>
           </CardHeader>
           <CardContent className='h-[300px]'>
-            {kpisLoading ? (
+            {tierLoading ? (
               <div className='h-full w-full flex items-center justify-center'>
                 <Skeleton className='h-40 w-40 rounded-full' />
               </div>
@@ -281,7 +281,30 @@ export function PlatformDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {logs && logs.length > 0 ? (
+              {logsLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <TableRow key={i} className='animate-pulse'>
+                    <TableCell>
+                      <Skeleton className='h-4 w-20' />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className='h-4 w-24' />
+                    </TableCell>
+                    <TableCell className='hidden md:table-cell'>
+                      <Skeleton className='h-4 w-28' />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className='h-4 w-16' />
+                    </TableCell>
+                    <TableCell className='hidden lg:table-cell'>
+                      <Skeleton className='h-4 w-20' />
+                    </TableCell>
+                    <TableCell className='hidden xl:table-cell'>
+                      <Skeleton className='h-4 w-24' />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : logs && logs.length > 0 ? (
                 logs.map((log: any) => (
                   <TableRow
                     key={log.id}

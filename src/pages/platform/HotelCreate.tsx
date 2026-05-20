@@ -325,25 +325,27 @@ export function HotelCreate() {
           <div className='space-y-6 animate-fade-in'>
             <div className='grid grid-cols-3 gap-4'>
               {["Starter", "Pro", "Enterprise"].map((plan) => (
-                <div
+                <button
+                  type='button'
                   key={plan}
                   className={cn(
-                    "p-4 rounded-xl border-2 cursor-pointer transition-all",
+                    "p-4 rounded-xl border-2 cursor-pointer transition-all text-slate-800 bg-white hover:bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-[#C9973A] focus:ring-offset-2",
                     formData.plan === plan
-                      ? "border-[#C9973A] bg-[#C9973A]/5"
+                      ? "border-[#C9973A] bg-[#C9973A]/5 font-bold"
                       : "border-muted hover:border-muted-foreground/50",
                   )}
                   onClick={() => handleChange("plan", plan)}
+                  aria-pressed={formData.plan === plan}
                 >
                   <h3 className='font-bold text-center mb-2'>{plan}</h3>
-                  <p className='text-xs text-muted-foreground text-center'>
+                  <p className='text-xs text-muted-foreground text-center font-normal'>
                     {plan === "Starter"
                       ? "Basic PMS features"
                       : plan === "Pro"
                         ? "Full operational suite"
                         : "Unlimited & Custom"}
                   </p>
-                </div>
+                </button>
               ))}
             </div>
             <div className='space-y-2'>
