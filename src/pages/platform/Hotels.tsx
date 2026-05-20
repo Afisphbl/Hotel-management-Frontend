@@ -316,7 +316,7 @@ export function PlatformHotels() {
                           {hotel.owner}
                         </p>
                         <p className='text-[10px] text-muted-foreground'>
-                          owner@hotel.com
+                          {hotel.email}
                         </p>
                       </div>
                     </TableCell>
@@ -336,7 +336,7 @@ export function PlatformHotels() {
                       </Badge>
                     </TableCell>
                     <TableCell className='hidden sm:table-cell text-sm font-serif'>
-                      120
+                      {hotel.rooms || 120}
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={hotel.status} />
