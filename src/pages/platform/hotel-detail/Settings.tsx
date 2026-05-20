@@ -24,7 +24,8 @@ import {
   UserCog,
   AlertTriangle,
   Archive,
-  Trash2
+  Trash2,
+  Database
 } from 'lucide-react';
 
 export function HotelSettings() {
@@ -87,33 +88,47 @@ export function HotelSettings() {
             <CardDescription>Configuration for this tenant's runtime environment.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label>Release Channel (Environment)</Label>
-              <Select value={formData.environment} onValueChange={(val) => setFormData({...formData, environment: val})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="production">Production (Stable)</SelectItem>
-                  <SelectItem value="staging">Staging (Beta)</SelectItem>
-                  <SelectItem value="sandbox">Sandbox (Testing Only)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Cloud Region</Label>
-              <Select value={formData.region} onValueChange={(val) => setFormData({...formData, region: val})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="europe-west">Europe West (Ireland)</SelectItem>
-                  <SelectItem value="us-east">US East (N. Virginia)</SelectItem>
-                  <SelectItem value="asia-south">Asia South (Mumbai)</SelectItem>
-                  <SelectItem value="africa-east">Africa East (Kenya)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {formData.environment != null ? (
+              <div className="space-y-2">
+                <Label>Release Channel (Environment)</Label>
+                <Select value={formData.environment} onValueChange={(val) => setFormData({...formData, environment: val})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="production">Production (Stable)</SelectItem>
+                    <SelectItem value="staging">Staging (Beta)</SelectItem>
+                    <SelectItem value="sandbox">Sandbox (Testing Only)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 p-3 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+                <Database className="w-4 h-4 text-slate-300" />
+                <p className="text-xs text-slate-400 italic">No environment data in database</p>
+              </div>
+            )}
+            {formData.region != null ? (
+              <div className="space-y-2">
+                <Label>Cloud Region</Label>
+                <Select value={formData.region} onValueChange={(val) => setFormData({...formData, region: val})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="europe-west">Europe West (Ireland)</SelectItem>
+                    <SelectItem value="us-east">US East (N. Virginia)</SelectItem>
+                    <SelectItem value="asia-south">Asia South (Mumbai)</SelectItem>
+                    <SelectItem value="africa-east">Africa East (Kenya)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 p-3 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+                <Database className="w-4 h-4 text-slate-300" />
+                <p className="text-xs text-slate-400 italic">No region data in database</p>
+              </div>
+            )}
             <div className="pt-4 flex justify-end">
               <Button className="bg-[#0F1B2D] hover:bg-[#1a2a3a] gap-2" onClick={handleSave} disabled={updateMutation.isPending}>
                 {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -133,28 +148,48 @@ export function HotelSettings() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>System Timezone</Label>
-                <Select value={formData.timezone} onValueChange={(val) => setFormData({...formData, timezone: val})}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="UTC">UTC (Default)</SelectItem>
-                    <SelectItem value="GMT">GMT</SelectItem>
-                    <SelectItem value="EST">EST</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Base Currency</Label>
-                <Select value={formData.currency} onValueChange={(val) => setFormData({...formData, currency: val})}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="GBP">GBP (£)</SelectItem>
-                    <SelectItem value="USD">USD ($)</SelectItem>
-                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {formData.timezone != null ? (
+                <div className="space-y-2">
+                  <Label>System Timezone</Label>
+                  <Select value={formData.timezone} onValueChange={(val) => setFormData({...formData, timezone: val})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="UTC">UTC (Default)</SelectItem>
+                      <SelectItem value="GMT">GMT</SelectItem>
+                      <SelectItem value="EST">EST</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>System Timezone</Label>
+                  <div className="flex items-center gap-2 p-3 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+                    <Database className="w-4 h-4 text-slate-300" />
+                    <p className="text-xs text-slate-400 italic">No timezone in database</p>
+                  </div>
+                </div>
+              )}
+              {formData.currency != null ? (
+                <div className="space-y-2">
+                  <Label>Base Currency</Label>
+                  <Select value={formData.currency} onValueChange={(val) => setFormData({...formData, currency: val})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="GBP">GBP (£)</SelectItem>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                      <SelectItem value="EUR">EUR (€)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>Base Currency</Label>
+                  <div className="flex items-center gap-2 p-3 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+                    <Database className="w-4 h-4 text-slate-300" />
+                    <p className="text-xs text-slate-400 italic">No currency in database</p>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Default Language</Label>

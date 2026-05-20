@@ -9,7 +9,8 @@ import {
   CheckCircle2, 
   ArrowRight,
   FileText,
-  Download
+  Download,
+  Database
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MoneyDisplay } from '@/components/shared/MoneyDisplay';
@@ -18,7 +19,17 @@ export function HotelSubscription() {
   const { id } = useParams({ from: '/auth/platform/hotels/$id' });
   const { data: hotel } = usePlatformHotel(id);
 
-  if (!hotel) return null;
+  if (!hotel) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <Database className="w-10 h-10 text-slate-300 mb-3" />
+        <h3 className="text-lg font-serif text-slate-400">No subscription data found</h3>
+        <p className="text-xs text-slate-300 mt-1">
+          This section has no database or data available
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -28,16 +39,23 @@ export function HotelSubscription() {
             <CardTitle className="font-serif text-xl">Current Subscription</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="p-4 sm:p-6 bg-[#F8F7F4] rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-center sm:text-left">
-                <h3 className="text-2xl sm:text-3xl font-serif text-[#0F1B2D]">{hotel.plan}</h3>
-                <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-bold">Monthly Plan</p>
+            {hotel.plan || hotel.monthlyRevenue ? (
+              <div className="p-4 sm:p-6 bg-[#F8F7F4] rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-center sm:text-left">
+                  <h3 className="text-2xl sm:text-3xl font-serif text-[#0F1B2D]">{hotel.plan || 'N/A'}</h3>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-bold">Monthly Plan</p>
+                </div>
+                <div className="text-center sm:text-right">
+                  <MoneyDisplay amount={hotel.monthlyRevenue} className="text-xl sm:text-2xl font-bold" />
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-1">Per Month</p>
+                </div>
               </div>
-              <div className="text-center sm:text-right">
-                <MoneyDisplay amount={hotel.monthlyRevenue} className="text-xl sm:text-2xl font-bold" />
-                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-1">Per Month</p>
+            ) : (
+              <div className="p-6 border border-dashed border-slate-200 rounded-2xl text-center">
+                <Database className="w-6 h-6 mx-auto text-slate-300 mb-2" />
+                <p className="text-xs text-slate-400 italic">No subscription plan data in database</p>
               </div>
-            </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 border rounded-xl space-y-2">
@@ -70,15 +88,22 @@ export function HotelSubscription() {
             <CardTitle className="font-serif text-lg">Platform Usage</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Storage</span>
-                <span>{hotel.storageUsed} / 50 GB</span>
+            {hotel.storageUsed != null ? (
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Storage</span>
+                  <span>{hotel.storageUsed} / 50 GB</span>
+                </div>
+                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#C9973A] w-[24%]" />
+                </div>
               </div>
-              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-[#C9973A] w-[24%]" />
+            ) : (
+              <div className="flex items-center gap-2 p-3 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+                <Database className="w-4 h-4 text-slate-300" />
+                <p className="text-xs text-slate-400 italic">No storage data in database</p>
               </div>
-            </div>
+            )}
             <div className="space-y-2">
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Monthly Email Credits</span>
