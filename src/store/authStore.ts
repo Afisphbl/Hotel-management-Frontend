@@ -113,6 +113,30 @@ export const useAuthStore = create<AuthState>()(
         }
       },
       logout: () => set({ user: null, token: null }),
+      impersonate: async (hotelId: string) => {
+        try {
+          const response = await api.post("auth/impersonate", { hotelId });
+          if (response && response.access_token) {
+            const payload = decodeJwt(response.access_token);
+            if (payload) {
+              const apiUser: AuthUser = {
+                sub: payload.sub,
+                email: payload.email,
+                name: `SUPPORT: ${payload.email.split("@")[0]}`,
+                role: payload.role as UserRole,
+                scope: payload.scope as "platform" | "hotel",
+                hotel_id: payload.hotel_id,
+                permissions: payload.permissions || ["*"],
+              };
+              set({ user: apiUser, token: response.access_token });
+              return;
+            }
+          }
+        } catch (error: any) {
+          console.error("Impersonation Error:", error);
+          throw new Error(error.message || "Failed to start impersonation session.");
+        }
+      },
       hasPermission: (permission) => {
         const { user } = get();
         if (!user) return false;

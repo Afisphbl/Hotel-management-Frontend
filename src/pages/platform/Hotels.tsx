@@ -67,6 +67,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/authStore";
 
 export function PlatformHotels() {
   const {
@@ -79,6 +80,7 @@ export function PlatformHotels() {
   const updateMutation = useUpdatePlatformHotel();
   const deleteMutation = useDeletePlatformHotel();
   const navigate = useNavigate();
+  const impersonate = useAuthStore((state) => state.impersonate);
 
   const [editingHotel, setEditingHotel] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -131,6 +133,16 @@ export function PlatformHotels() {
       refetch();
     } catch (error) {
       toast.error("Failed to update hotel");
+    }
+  };
+
+  const handleImpersonate = async (hotel: any) => {
+    try {
+      await impersonate(hotel.id);
+      toast.success(`Now impersonating ${hotel.name}`);
+      navigate({ to: "/hotel/dashboard" });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to impersonate");
     }
   };
 
@@ -395,11 +407,7 @@ export function PlatformHotels() {
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className='gap-2'
-                              onClick={() =>
-                                toast.info(
-                                  "Impersonating hotel... session starting",
-                                )
-                              }
+                              onClick={() => handleImpersonate(hotel)}
                             >
                               <ShieldAlert className='w-4 h-4' /> Impersonate
                               Owner
