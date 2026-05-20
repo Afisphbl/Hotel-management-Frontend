@@ -8,7 +8,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, Calendar } from "lucide-react";
+import { Search, Calendar, Database } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -46,43 +46,51 @@ export function HotelAuditLogs() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Time</TableHead>
-              <TableHead>Actor</TableHead>
-              <TableHead className='hidden sm:table-cell'>Action</TableHead>
-              <TableHead className='hidden md:table-cell'>Resource</TableHead>
-              <TableHead className='hidden lg:table-cell'>IP</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {logs?.map((log: any) => (
-              <TableRow key={log.id}>
-                <TableCell className='text-[10px] sm:text-xs'>
-                  {format(new Date(log.timestamp), "MMM d, HH:mm")}
-                </TableCell>
-                <TableCell className='text-xs sm:text-sm font-medium'>
-                  {log.actor}
-                </TableCell>
-                <TableCell className='hidden sm:table-cell'>
-                  <Badge
-                    variant='outline'
-                    className='text-[10px] font-bold uppercase'
-                  >
-                    {log.action}
-                  </Badge>
-                </TableCell>
-                <TableCell className='hidden md:table-cell text-xs sm:text-sm text-muted-foreground'>
-                  {log.resource}
-                </TableCell>
-                <TableCell className='hidden lg:table-cell text-[10px] sm:text-xs font-mono'>
-                  {log.ip}
-                </TableCell>
+        {logs && logs.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Time</TableHead>
+                <TableHead>Actor</TableHead>
+                <TableHead className='hidden sm:table-cell'>Action</TableHead>
+                <TableHead className='hidden md:table-cell'>Resource</TableHead>
+                <TableHead className='hidden lg:table-cell'>IP</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {logs?.map((log: any) => (
+                <TableRow key={log.id}>
+                  <TableCell className='text-[10px] sm:text-xs'>
+                    {format(new Date(log.timestamp), "MMM d, HH:mm")}
+                  </TableCell>
+                  <TableCell className='text-xs sm:text-sm font-medium'>
+                    {log.actor}
+                  </TableCell>
+                  <TableCell className='hidden sm:table-cell'>
+                    <Badge
+                      variant='outline'
+                      className='text-[10px] font-bold uppercase'
+                    >
+                      {log.action}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className='hidden md:table-cell text-xs sm:text-sm text-muted-foreground'>
+                    {log.resource}
+                  </TableCell>
+                  <TableCell className='hidden lg:table-cell text-[10px] sm:text-xs font-mono'>
+                    {log.ip}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Database className="w-8 h-8 text-slate-300 mb-2" />
+            <p className="text-sm text-slate-400">No audit logs found</p>
+            <p className="text-[10px] text-slate-300 mt-1">This section has no database or data available</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

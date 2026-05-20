@@ -15,14 +15,15 @@ import {
 } from 'recharts';
 import { 
   Activity, 
-  Database, 
+  Database as DatabaseIcon, 
   Users, 
   Cpu, 
   Zap,
   Globe,
   HardDrive,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  LayoutDashboard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -37,7 +38,13 @@ export function HotelUsageMetrics() {
     revenue: metrics.revenue[i]
   })) || [];
 
-  if (!infra) return null;
+  if (!infra) return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <DatabaseIcon className="w-10 h-10 text-slate-300 mb-3" />
+      <h3 className="text-lg font-serif text-slate-400">No usage metrics found</h3>
+      <p className="text-xs text-slate-300 mt-1">This section has no database or data available</p>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -114,14 +121,24 @@ export function HotelUsageMetrics() {
                   <div className="p-1.5 bg-slate-100 rounded text-slate-500"><HardDrive className="w-3.5 h-3.5" /></div>
                   <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Storage</span>
                 </div>
-                <span className="text-xs font-medium">{infra.storageUsed} / {infra.storageLimit} GB</span>
+                {infra.storageUsed != null ? (
+                  <span className="text-xs font-medium">{infra.storageUsed} / {infra.storageLimit} GB</span>
+                ) : (
+                  <span className="text-xs text-slate-300 italic">No data</span>
+                )}
               </div>
-              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div 
-                  className={cn("h-full transition-all", (infra.storageUsed / infra.storageLimit) > 0.8 ? "bg-red-500" : "bg-[#C9973A]")}
-                  style={{ width: `${(infra.storageUsed / infra.storageLimit) * 100}%` }}
-                />
-              </div>
+              {infra.storageUsed != null ? (
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div 
+                    className={cn("h-full transition-all", (infra.storageUsed / infra.storageLimit) > 0.8 ? "bg-red-500" : "bg-[#C9973A]")}
+                    style={{ width: `${(infra.storageUsed / infra.storageLimit) * 100}%` }}
+                  />
+                </div>
+              ) : (
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-slate-200 w-0" />
+                </div>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -130,14 +147,24 @@ export function HotelUsageMetrics() {
                   <div className="p-1.5 bg-slate-100 rounded text-slate-500"><Users className="w-3.5 h-3.5" /></div>
                   <span className="text-xs font-bold uppercase tracking-widest text-slate-500">User Slots</span>
                 </div>
-                <span className="text-xs font-medium">{infra.usersUsed} / {infra.userLimit}</span>
+                {infra.usersUsed != null ? (
+                  <span className="text-xs font-medium">{infra.usersUsed} / {infra.userLimit}</span>
+                ) : (
+                  <span className="text-xs text-slate-300 italic">No data</span>
+                )}
               </div>
-              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-[#0F1B2D] transition-all"
-                  style={{ width: `${(infra.usersUsed / infra.userLimit) * 100}%` }}
-                />
-              </div>
+              {infra.usersUsed != null ? (
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-[#0F1B2D] transition-all"
+                    style={{ width: `${(infra.usersUsed / infra.userLimit) * 100}%` }}
+                  />
+                </div>
+              ) : (
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-slate-200 w-0" />
+                </div>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -146,17 +173,27 @@ export function HotelUsageMetrics() {
                   <div className="p-1.5 bg-slate-100 rounded text-slate-500"><LayoutDashboard className="w-3.5 h-3.5" /></div>
                   <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Rooms</span>
                 </div>
-                <span className="text-xs font-medium">{infra.roomsUsed} / {infra.roomLimit}</span>
+                {infra.roomsUsed != null ? (
+                  <span className="text-xs font-medium">{infra.roomsUsed} / {infra.roomLimit}</span>
+                ) : (
+                  <span className="text-xs text-slate-300 italic">No data</span>
+                )}
               </div>
-              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-slate-400 transition-all"
-                  style={{ width: `${(infra.roomsUsed / infra.roomLimit) * 100}%` }}
-                />
-              </div>
+              {infra.roomsUsed != null ? (
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-slate-400 transition-all"
+                    style={{ width: `${(infra.roomsUsed / infra.roomLimit) * 100}%` }}
+                  />
+                </div>
+              ) : (
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-slate-200 w-0" />
+                </div>
+              )}
             </div>
           </div>
-          {(infra.storageUsed / infra.storageLimit) > 0.8 && (
+          {infra.storageUsed != null && (infra.storageUsed / infra.storageLimit) > 0.8 && (
             <div className="mt-6 p-3 bg-red-50 border border-red-100 rounded-lg flex items-center gap-3 text-red-800 text-xs">
               <AlertTriangle className="w-4 h-4" />
               Tenant is nearing storage limit. Automatic uploads may be restricted soon.
@@ -210,4 +247,3 @@ export function HotelUsageMetrics() {
   );
 }
 
-import { LayoutDashboard } from 'lucide-react';

@@ -3,7 +3,7 @@ import { useParams } from '@tanstack/react-router';
 import { useHotelFeatureFlags } from '@/hooks/usePlatformData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function HotelFeatureFlags() {
@@ -17,27 +17,35 @@ export function HotelFeatureFlags() {
         <CardDescription>Control which modules are accessible to this tenant.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {features?.map(feature => (
-            <div key={feature.id} className="flex items-center justify-between p-4 rounded-xl bg-[#F8F7F4]">
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center",
-                  feature.enabled ? "bg-green-100 text-green-600" : "bg-slate-200 text-slate-500"
-                )}>
-                  {feature.enabled ? <CheckCircle2 className="w-5 h-5" /> : <ShieldCheck className="w-5 h-5" />}
+        {features && features.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {features.map(feature => (
+              <div key={feature.id} className="flex items-center justify-between p-4 rounded-xl bg-[#F8F7F4]">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center",
+                    feature.enabled ? "bg-green-100 text-green-600" : "bg-slate-200 text-slate-500"
+                  )}>
+                    {feature.enabled ? <CheckCircle2 className="w-5 h-5" /> : <ShieldCheck className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm">{feature.name}</p>
+                    <p className="text-[10px] uppercase text-muted-foreground font-bold tracking-widest">{feature.category}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-sm">{feature.name}</p>
-                  <p className="text-[10px] uppercase text-muted-foreground font-bold tracking-widest">{feature.category}</p>
-                </div>
+                <Button variant={feature.enabled ? "default" : "outline"} size="sm" className={feature.enabled ? "bg-green-600 hover:bg-green-700" : ""}>
+                  {feature.enabled ? "Enabled" : "Disabled"}
+                </Button>
               </div>
-              <Button variant={feature.enabled ? "default" : "outline"} size="sm" className={feature.enabled ? "bg-green-600 hover:bg-green-700" : ""}>
-                {feature.enabled ? "Enabled" : "Disabled"}
-              </Button>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Database className="w-8 h-8 text-slate-300 mb-2" />
+            <p className="text-sm text-slate-400">No feature flags data</p>
+            <p className="text-[10px] text-slate-300 mt-1">This section has no database or data available</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

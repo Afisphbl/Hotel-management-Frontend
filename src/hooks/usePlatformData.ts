@@ -61,7 +61,7 @@ export function useTenantDomains(hotelId: string) {
     queryKey: ["tenant-domains", hotelId],
     queryFn: async () => {
       const hotel = await api.get(`platform/hotels/${hotelId}`);
-      const subdomain = hotel.subdomain || "grandpeninsula";
+      const subdomain = hotel.subdomain || hotel.name?.toLowerCase().replace(/ /g, '-') || "tenant";
       return {
         subdomain: subdomain,
         customDomain: hotel.location?.toLowerCase().includes("london")
@@ -79,7 +79,7 @@ export function useTenantDomains(hotelId: string) {
           {
             type: "TXT",
             host: "@",
-            value: `pms-verification=${hotel.id.slice(0, 8)}`,
+            value: `pms-verification=${(hotel.id || "").slice(0, 8)}`,
             status: "verified",
           },
         ],
@@ -100,17 +100,17 @@ export function useTenantInfrastructure(hotelId: string) {
     queryFn: async () => {
       const hotel = await api.get(`platform/hotels/${hotelId}`);
       return {
-        healthScore: 98,
-        uptime: "99.99%",
+        healthScore: hotel.healthScore ?? 98,
+        uptime: hotel.uptime ?? "99.99%",
         sslExpires: new Date(Date.now() + 180 * 86400000).toISOString(),
-        bandwidth: "45.2 GB",
-        apiRequests: "840k",
+        bandwidth: hotel.bandwidth ?? "45.2 GB",
+        apiRequests: hotel.apiRequests ?? "840k",
         storageLimit: 50,
-        storageUsed: hotel.storageUsedMb ? hotel.storageUsedMb / 1024 : 1.2,
+        storageUsed: hotel.storageUsedMb ? hotel.storageUsedMb / 1024 : null,
         userLimit: 50,
-        usersUsed: hotel.activeUsers || 12,
+        usersUsed: hotel.activeUsers ?? null,
         roomLimit: 200,
-        roomsUsed: hotel.totalRooms || 120,
+        roomsUsed: hotel.totalRooms ?? null,
       };
     },
   });
@@ -316,24 +316,26 @@ export function useHotelUsers(hotelId: string) {
     queryKey: ["hotel-users", hotelId],
     queryFn: async () => {
       const hotel = await api.get(`platform/hotels/${hotelId}`);
-      return [
-        {
+      const users = [];
+      if (hotel.owner) {
+        users.push({
           id: `user-${hotel.id}-owner`,
-          name: hotel.owner || "Hotel Owner",
-          email: hotel.email || "owner@example.com",
+          name: hotel.owner,
+          email: hotel.email || "No email in database",
           role: "Owner",
           status: "active",
           lastLogin: new Date().toISOString(),
-        },
-        {
-          id: `user-${hotel.id}-mgr`,
-          name: "Alex Mercer",
-          email: "alex.mercer@hotel.com",
-          role: "Manager",
-          status: "active",
-          lastLogin: new Date(Date.now() - 3600000 * 4).toISOString(),
-        },
-      ];
+        });
+      }
+      users.push({
+        id: `user-${hotel.id}-mgr`,
+        name: "Alex Mercer",
+        email: "alex.mercer@hotel.com",
+        role: "Manager",
+        status: "active",
+        lastLogin: new Date(Date.now() - 3600000 * 4).toISOString(),
+      });
+      return users;
     },
   });
 }
@@ -383,6 +385,10 @@ export function useHotelFeatureFlags(hotelId: string) {
         },
       ];
     },
+    select: (features) => {
+      if (!hotelId) return [];
+      return features;
+    },
   });
 }
 
@@ -392,14 +398,14 @@ export function useHotelUsageMetrics(hotelId: string) {
     queryFn: async () => {
       const hotel = await api.get(`platform/hotels/${hotelId}`);
       return {
-        bookings: [120, 145, 132, 168, 154, 182],
+        bookings: hotel.bookings || [120, 145, 132, 168, 154, 182],
         revenue: Array.from({ length: 6 }).map(
           (_, i) => hotel.monthlyRevenue || 299,
         ),
-        occupancy: 78,
-        storage: hotel.storageUsedMb ? hotel.storageUsedMb / 1024 : 1.2,
-        apiCalls: 4500,
-        activeUsers: hotel.activeUsers || 12,
+        occupancy: hotel.currentOccupancy ?? 78,
+        storage: hotel.storageUsedMb ? hotel.storageUsedMb / 1024 : null,
+        apiCalls: hotel.apiCalls || 4500,
+        activeUsers: hotel.activeUsers ?? null,
       };
     },
   });

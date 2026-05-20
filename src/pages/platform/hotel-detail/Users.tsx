@@ -3,7 +3,7 @@ import { useParams } from '@tanstack/react-router';
 import { useHotelUsers } from '@/hooks/usePlatformData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, MoreVertical } from 'lucide-react';
+import { Plus, MoreVertical, Database } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/shared/StatusBadge';
@@ -25,43 +25,51 @@ export function HotelUsers() {
         </Button>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead className="hidden sm:table-cell">Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="hidden md:table-cell">Last Login</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users?.map(user => (
-              <TableRow key={user.id}>
-                <TableCell>
-                  <div className="flex flex-col">
-                    <p className="font-bold text-xs sm:text-sm text-[#0F1B2D] truncate max-w-[120px] sm:max-w-none">{user.name}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate max-w-[120px] sm:max-w-none">{user.email}</p>
-                  </div>
-                </TableCell>
-                <TableCell className="hidden sm:table-cell">
-                  <Badge variant="outline" className="font-bold text-[10px] uppercase">{user.role}</Badge>
-                </TableCell>
-                <TableCell>
-                  <StatusBadge status={user.status} />
-                </TableCell>
-                <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
-                  {format(new Date(user.lastLogin), 'MMM d, HH:mm')}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </TableCell>
+        {users && users.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead className="hidden sm:table-cell">Role</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="hidden md:table-cell">Last Login</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {users.map(user => (
+                <TableRow key={user.id}>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <p className="font-bold text-xs sm:text-sm text-[#0F1B2D] truncate max-w-[120px] sm:max-w-none">{user.name}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground truncate max-w-[120px] sm:max-w-none">{user.email}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <Badge variant="outline" className="font-bold text-[10px] uppercase">{user.role}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={user.status} />
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                    {format(new Date(user.lastLogin), 'MMM d, HH:mm')}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Database className="w-8 h-8 text-slate-300 mb-2" />
+            <p className="text-sm text-slate-400">No users found</p>
+            <p className="text-[10px] text-slate-300 mt-1">This section has no database or data available</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
