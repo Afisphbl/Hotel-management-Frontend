@@ -27,7 +27,6 @@ import { useState } from 'react';
 export function HotelDomains() {
   const { id } = useParams({ from: '/auth/platform/hotels/$id' });
   const { data: domains, isLoading, isError, error, refetch } = useTenantDomains(id);
-  const [newSubdomain, setNewSubdomain] = useState('');
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -62,26 +61,30 @@ export function HotelDomains() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 sm:items-end">
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-end opacity-60">
             <div className="flex-1 space-y-2">
               <Label>Subdomain Prefix</Label>
               <div className="flex">
                 <Input 
-                  value={newSubdomain} 
-                  onChange={(e) => setNewSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                  value={domains.subdomain || ''} 
+                  disabled
                   placeholder="e.g. grandpeninsula"
-                  className="rounded-r-none"
+                  className="rounded-r-none bg-slate-50 cursor-not-allowed"
                 />
                 <div className="bg-slate-100 border border-l-0 px-3 flex items-center text-xs sm:text-sm font-medium text-slate-500 rounded-r-md whitespace-nowrap">
                   .pms.cloud
                 </div>
               </div>
             </div>
-            <Button className="w-full sm:w-auto bg-[#0F1B2D] hover:bg-[#1a2a3a]">Update</Button>
+            <Button disabled className="w-full sm:w-auto bg-[#0F1B2D] hover:bg-[#1a2a3a]">Update</Button>
           </div>
-          <div className="p-4 bg-amber-50 border border-amber-100 rounded-lg text-xs text-amber-800 flex gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            Changing the subdomain will immediately break all existing staff bookmarks and API integrations using the old URL.
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-500 flex gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-amber-500" />
+            <div>
+              <p className="font-bold text-slate-700 mb-1">Editing Disabled</p>
+              Changing the subdomain will immediately break all existing staff bookmarks and API integrations using the old URL. 
+              Subdomain modification requires manual database migration and routing updates by the platform engineering team.
+            </div>
           </div>
         </CardContent>
       </Card>

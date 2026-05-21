@@ -140,10 +140,14 @@ export function AppShell() {
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const user = useAuthStore((state) => state.user);
+  const originalToken = useAuthStore((state) => state.originalToken);
+  const stopImpersonating = useAuthStore((state) => state.stopImpersonating);
   const logout = useAuthStore((state) => state.logout);
   const hasPermission = useAuthStore((state) => state.hasPermission);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isImpersonating = !!originalToken;
 
   const navItems =
     user?.scope === "platform"
@@ -162,14 +166,33 @@ export function AppShell() {
   };
 
   return (
-    <div className='flex h-screen bg-[#F8F7F4] text-[#0F1B2D]'>
-      {/* Desktop Sidebar */}
-      <aside
-        className={cn(
-          "hidden md:flex bg-[#0F1B2D] text-white transition-all duration-300 flex-col z-20 shadow-xl shrink-0",
-          collapsed ? "w-20" : "w-64",
-        )}
-      >
+    <div className='flex h-screen bg-[#F8F7F4] text-[#0F1B2D] flex-col'>
+      {/* Impersonation Banner */}
+      {isImpersonating && (
+        <div className="bg-amber-600 text-white px-4 py-2 flex items-center justify-between text-sm font-bold z-50">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4" />
+            <span>Currently impersonating: {user?.email}</span>
+          </div>
+          <Button 
+            size="sm" 
+            variant="secondary" 
+            className="h-7 bg-white text-amber-700 hover:bg-white/90"
+            onClick={stopImpersonating}
+          >
+            Return to Super Admin
+          </Button>
+        </div>
+      )}
+      
+      <div className="flex flex-1 overflow-hidden">
+        {/* Desktop Sidebar */}
+        <aside
+          className={cn(
+            "hidden md:flex bg-[#0F1B2D] text-white transition-all duration-300 flex-col z-20 shadow-xl shrink-0",
+            collapsed ? "w-20" : "w-64",
+          )}
+        >
         <div className='p-6 flex items-center justify-between h-16 border-b border-white/10 shrink-0'>
           {!collapsed && (
             <div className='flex items-center gap-3 overflow-hidden whitespace-nowrap'>
@@ -414,5 +437,6 @@ export function AppShell() {
         </main>
       </div>
     </div>
-  );
+  </div>
+);
 }
