@@ -148,8 +148,8 @@ export function PlatformHotels() {
 
   const filteredHotels = hotels?.filter(
     (h) =>
-      h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      h.owner.toLowerCase().includes(searchQuery.toLowerCase()),
+      h.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (h.owner ?? "").toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -369,7 +369,9 @@ export function PlatformHotels() {
                       <StatusBadge status={hotel.status} />
                     </TableCell>
                     <TableCell className='hidden xl:table-cell text-[11px] text-muted-foreground font-medium'>
-                      {format(new Date(hotel.created), "MMM d, yyyy")}
+                      {hotel.created
+                        ? format(new Date(hotel.created), "MMM d, yyyy")
+                        : "—"}
                     </TableCell>
                     <TableCell
                       className='text-right'

@@ -64,6 +64,13 @@ export function HotelCreate() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const passwordPolicy =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
+  const planToSubscriptionPlan: Record<string, string> = {
+    Starter: "BASIC",
+    Pro: "PROFESSIONAL",
+    Enterprise: "ENTERPRISE",
+  };
 
   const validateCurrentStep = (step: number): boolean => {
     const newErrors: Record<string, string> = {};
@@ -90,8 +97,9 @@ export function HotelCreate() {
       }
       if (!formData.password.trim()) {
         newErrors.password = "Temporary Password is required";
-      } else if (formData.password.length < 6) {
-        newErrors.password = "Password must be at least 6 characters";
+      } else if (!passwordPolicy.test(formData.password)) {
+        newErrors.password =
+          "Password must be at least 8 characters and include uppercase, lowercase, and a number";
       }
     }
 
@@ -126,12 +134,31 @@ export function HotelCreate() {
       toast.error("Please fix the required fields across steps.");
       return;
     }
+
+    const payload = {
+      name: formData.name.trim(),
+      ownerName: formData.ownerName.trim() || undefined,
+      ownerEmail: formData.ownerEmail.trim(),
+      password: formData.password,
+      code: formData.code.trim() || undefined,
+      city: formData.city.trim() || undefined,
+      country: formData.country.trim() || undefined,
+      timezone: formData.timezone.trim() || undefined,
+      rooms: formData.rooms,
+      plan: planToSubscriptionPlan[formData.plan] ?? formData.plan,
+      features: formData.features,
+      primaryColor: formData.primaryColor,
+      accentColor: formData.accentColor,
+    };
+
     try {
-      await createMutation.mutateAsync(formData);
+      await createMutation.mutateAsync(payload);
       toast.success("Hotel tenant created successfully");
       navigate({ to: "/platform/hotels" });
     } catch (err) {
-      toast.error("Failed to create hotel");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to create hotel",
+      );
     }
   };
 
