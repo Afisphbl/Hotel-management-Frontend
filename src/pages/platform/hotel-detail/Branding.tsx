@@ -15,7 +15,8 @@ import {
   Image as ImageIcon,
   CheckCircle2,
   Menu,
-  MoreVertical
+  MoreVertical,
+  Database
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
@@ -24,7 +25,7 @@ import { cn } from '@/lib/utils';
 
 export function HotelBranding() {
   const { id } = useParams({ from: '/auth/platform/hotels/$id' });
-  const { data: branding, isLoading } = useTenantBranding(id);
+  const { data: branding, isLoading, isError, error, refetch } = useTenantBranding(id);
   const updateMutation = useUpdateTenantBranding();
   
   const [formData, setFormData] = useState<any>(null);
@@ -43,7 +44,16 @@ export function HotelBranding() {
     }
   };
 
-  if (isLoading || !formData) return null;
+  if (isLoading) return null;
+  if (isError) return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <Database className="w-10 h-10 text-red-400 mb-3" />
+      <h3 className="text-lg font-serif text-slate-500">Failed to load branding</h3>
+      <p className="text-xs text-slate-400 mt-1 mb-4">{error?.message}</p>
+      <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+    </div>
+  );
+  if (!formData) return null;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

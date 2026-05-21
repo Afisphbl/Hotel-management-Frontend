@@ -9,7 +9,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, History, Filter, Download, Calendar } from "lucide-react";
+import { Search, History, Filter, Download, Calendar, ShieldAlert } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 
 export function PlatformAuditLogs() {
-  const { data: logs } = usePlatformAuditLogs();
+  const { data: logs, isLoading, isError, error, refetch } = usePlatformAuditLogs();
 
   return (
     <div className='space-y-6'>
@@ -91,7 +91,17 @@ export function PlatformAuditLogs() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {!logs ? (
+                {isError ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className='py-12 text-center'>
+                      <div className='flex flex-col items-center gap-2'>
+                        <ShieldAlert className='w-6 h-6 text-red-400' />
+                        <p className='text-sm text-muted-foreground'>{error?.message || 'Failed to load audit logs'}</p>
+                        <Button variant='outline' size='sm' onClick={() => refetch()}>Retry</Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : isLoading ? (
                   Array.from({ length: 4 }).map((_, i) => (
                     <TableRow key={i} className='animate-pulse'>
                       <TableCell className='pl-6 py-4'>
@@ -117,7 +127,7 @@ export function PlatformAuditLogs() {
                       </TableCell>
                     </TableRow>
                   ))
-                ) : logs.length === 0 ? (
+                ) : !logs || logs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className='py-12 text-center'>
                       <div className='w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3'>
@@ -143,7 +153,7 @@ export function PlatformAuditLogs() {
                       <TableCell>
                         <div className='flex items-center gap-2 max-w-[200px]'>
                           <div className='hidden xs:flex w-6 h-6 shrink-0 rounded bg-[#F8F7F4] items-center justify-center text-[10px] font-bold text-[#0F1B2D] border border-slate-100'>
-                            {log.actor.charAt(0)}
+                            {log.actor?.charAt(0)}
                           </div>
                           <span className='text-xs sm:text-sm font-bold text-[#0F1B2D] truncate'>
                             {log.actor}
@@ -154,12 +164,12 @@ export function PlatformAuditLogs() {
                         <span
                           className={cn(
                             "text-[10px] px-2 py-1 rounded border whitespace-nowrap",
-                            log.hotel === "-"
+                            log.hotel === "-" || !log.hotel
                               ? "bg-slate-50 text-slate-400 border-slate-100"
                               : "bg-[#C9973A]/5 text-[#C9973A] border-[#C9973A]/10 font-bold",
                           )}
                         >
-                          {log.hotel}
+                          {log.hotel || '-'}
                         </span>
                       </TableCell>
                       <TableCell className='hidden md:table-cell'>

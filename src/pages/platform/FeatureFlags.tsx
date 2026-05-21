@@ -31,18 +31,21 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export function PlatformFeatureFlags() {
-  const { data: flags } = usePlatformGlobalFeatureFlags();
+  const { data: flags, isLoading, isError, error, refetch } = usePlatformGlobalFeatureFlags();
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case "enabled":
+      case "active":
         return <CheckCircle2 className='w-4 h-4 text-green-600' />;
       case "disabled":
+      case "inactive":
         return <XCircle className='w-4 h-4 text-slate-400' />;
       case "beta":
+      case "preview":
         return <AlertCircle className='w-4 h-4 text-amber-500' />;
       default:
-        return null;
+        return <AlertCircle className='w-4 h-4 text-slate-400' />;
     }
   };
 
@@ -93,7 +96,17 @@ export function PlatformFeatureFlags() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {!flags ? (
+              {isError ? (
+                <TableRow>
+                  <TableCell colSpan={5} className='py-12 text-center'>
+                    <div className='flex flex-col items-center gap-2'>
+                      <AlertCircle className='w-6 h-6 text-red-400' />
+                      <p className='text-sm text-red-500'>{error?.message || 'Failed to load feature flags'}</p>
+                      <Button variant='outline' size='sm' onClick={() => refetch()}>Retry</Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : isLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={i} className='animate-pulse'>
                     <TableCell className='pl-6 py-4'>
@@ -116,7 +129,7 @@ export function PlatformFeatureFlags() {
                     </TableCell>
                   </TableRow>
                 ))
-              ) : flags.length === 0 ? (
+              ) : !flags || flags.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={5}
@@ -134,9 +147,9 @@ export function PlatformFeatureFlags() {
                   </TableCell>
                 </TableRow>
               ) : (
-                flags.map((flag) => (
+                flags.map((flag: any) => (
                   <TableRow
-                    key={flag.id}
+                    key={flag.id || flag.key}
                     className='group hover:bg-slate-50/50 transition-colors'
                   >
                     <TableCell className='pl-6 py-4'>
@@ -162,7 +175,7 @@ export function PlatformFeatureFlags() {
                         variant='outline'
                         className='bg-white border-slate-200 text-slate-600 font-bold text-[10px] uppercase'
                       >
-                        {flag.scope}
+                        {flag.scope || flag.audience || 'All'}
                       </Badge>
                     </TableCell>
                     <TableCell className='hidden md:table-cell'>

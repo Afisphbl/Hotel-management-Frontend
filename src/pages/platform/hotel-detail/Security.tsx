@@ -14,7 +14,8 @@ import {
   Save,
   Loader2,
   Trash2,
-  Plus
+  Plus,
+  AlertTriangle
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -24,7 +25,7 @@ import { toast } from 'sonner';
 
 export function HotelSecurity() {
   const { id } = useParams({ from: '/auth/platform/hotels/$id' });
-  const { data: security, isLoading } = useTenantSecurity(id);
+  const { data: security, isLoading, isError, error, refetch } = useTenantSecurity(id);
   const [formData, setFormData] = useState<any>(null);
 
   useEffect(() => {
@@ -35,7 +36,16 @@ export function HotelSecurity() {
     toast.success('Security policy updated');
   };
 
-  if (isLoading || !formData) return null;
+  if (isLoading) return null;
+  if (isError) return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <AlertTriangle className="w-10 h-10 text-red-400 mb-3" />
+      <h3 className="text-lg font-serif text-slate-500">Failed to load security settings</h3>
+      <p className="text-xs text-slate-400 mt-1 mb-4">{error?.message}</p>
+      <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+    </div>
+  );
+  if (!formData) return null;
 
   return (
     <div className="space-y-6">

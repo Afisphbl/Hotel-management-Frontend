@@ -2,6 +2,7 @@
 import { useParams } from '@tanstack/react-router';
 import { useHotelUsageMetrics, useTenantInfrastructure } from '@/hooks/usePlatformData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { 
   AreaChart, 
   Area, 
@@ -26,17 +27,39 @@ import {
   LayoutDashboard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function HotelUsageMetrics() {
   const { id } = useParams({ from: '/auth/platform/hotels/$id' });
-  const { data: metrics } = useHotelUsageMetrics(id);
-  const { data: infra } = useTenantInfrastructure(id);
+  const { data: metrics, isLoading: metricsLoading, isError: metricsError } = useHotelUsageMetrics(id);
+  const { data: infra, isLoading: infraLoading, isError: infraError, refetch } = useTenantInfrastructure(id);
 
-  const chartData = metrics?.bookings.map((val, i) => ({
-    name: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'][i],
+  const chartData = metrics?.bookings?.map((val: number, i: number) => ({
+    name: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'][i] || `M${i + 1}`,
     bookings: val,
-    revenue: metrics.revenue[i]
+    revenue: metrics.revenue?.[i] ?? 0
   })) || [];
+
+  if (infraError || metricsError) return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <AlertTriangle className="w-10 h-10 text-red-400 mb-3" />
+      <h3 className="text-lg font-serif text-slate-500">Failed to load metrics</h3>
+      <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>Retry</Button>
+    </div>
+  );
+
+  if (infraLoading || metricsLoading) return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i} className="shadow-sm border-none bg-white p-4">
+            <Skeleton className="h-3 w-16 mb-2" />
+            <Skeleton className="h-7 w-20" />
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
 
   if (!infra) return (
     <div className="flex flex-col items-center justify-center py-16 text-center">

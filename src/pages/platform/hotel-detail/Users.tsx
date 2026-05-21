@@ -3,6 +3,7 @@ import { useParams } from '@tanstack/react-router';
 import { useHotelUsers } from '@/hooks/usePlatformData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, MoreVertical, Database } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +12,7 @@ import { format } from 'date-fns';
 
 export function HotelUsers() {
   const { id } = useParams({ from: '/auth/platform/hotels/$id' });
-  const { data: users } = useHotelUsers(id);
+  const { data: users, isLoading, isError, error, refetch } = useHotelUsers(id);
 
   return (
     <Card className="shadow-sm border-none bg-white">
@@ -25,7 +26,23 @@ export function HotelUsers() {
         </Button>
       </CardHeader>
       <CardContent>
-        {users && users.length > 0 ? (
+        {isError ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Database className="w-8 h-8 text-red-400 mb-2" />
+            <p className="text-sm text-slate-500">{error?.message || 'Failed to load users'}</p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>Retry</Button>
+          </div>
+        ) : isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-4 p-4 border-b last:border-0">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          ))
+        ) : users && users.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -52,7 +69,7 @@ export function HotelUsers() {
                     <StatusBadge status={user.status} />
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
-                    {format(new Date(user.lastLogin), 'MMM d, HH:mm')}
+                    {user.lastLogin ? format(new Date(user.lastLogin), 'MMM d, HH:mm') : 'N/A'}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" className="h-8 w-8">

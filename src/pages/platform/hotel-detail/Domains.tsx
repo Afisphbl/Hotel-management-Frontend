@@ -26,15 +26,24 @@ import { useState } from 'react';
 
 export function HotelDomains() {
   const { id } = useParams({ from: '/auth/platform/hotels/$id' });
-  const { data: domains, isLoading } = useTenantDomains(id);
-  const [newSubdomain, setNewSubdomain] = useState(domains?.subdomain || '');
+  const { data: domains, isLoading, isError, error, refetch } = useTenantDomains(id);
+  const [newSubdomain, setNewSubdomain] = useState('');
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success('Copied to clipboard');
   };
 
-  if (isLoading || !domains) return null;
+  if (isLoading) return null;
+  if (isError) return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
+      <h3 className="text-lg font-serif text-slate-500">Failed to load domain data</h3>
+      <p className="text-xs text-slate-400 mt-1 mb-4">{error?.message}</p>
+      <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+    </div>
+  );
+  if (!domains) return null;
 
   return (
     <div className="space-y-6">
@@ -122,7 +131,7 @@ export function HotelDomains() {
               <div className="space-y-3 bg-slate-50 p-4 rounded-lg">
                 <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Required DNS Records</p>
                 <div className="space-y-2">
-                  {domains.dnsRecords.map((record, i) => (
+                  {domains.dnsRecords.map((record: any, i: number) => (
                     <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between text-[10px] sm:text-xs font-mono bg-white p-2 border rounded gap-2">
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                         <Badge variant="outline" className="bg-slate-100 font-bold border-none px-1 h-5">{record.type}</Badge>

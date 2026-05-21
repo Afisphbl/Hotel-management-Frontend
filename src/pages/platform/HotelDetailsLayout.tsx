@@ -17,7 +17,8 @@ import {
   LayoutDashboard,
   Globe,
   Palette,
-  Database
+  Database,
+  ShieldAlert
 } from 'lucide-react';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,10 +26,18 @@ import { cn } from '@/lib/utils';
 
 export function HotelDetailsLayout() {
   const { id } = useParams({ from: '/auth/platform/hotels/$id' });
-  const { data: hotel, isLoading } = usePlatformHotel(id);
+  const { data: hotel, isLoading, isError, error, refetch } = usePlatformHotel(id);
   const location = useLocation();
 
   if (isLoading) return <div className="p-8"><Skeleton className="h-12 w-full mb-4" /><Skeleton className="h-64 w-full" /></div>;
+  if (isError) return (
+    <div className="p-8 flex flex-col items-center justify-center py-16 text-center">
+      <ShieldAlert className="w-10 h-10 text-red-400 mb-3" />
+      <h3 className="text-lg font-serif text-slate-600">Failed to load hotel</h3>
+      <p className="text-xs text-slate-400 mt-1 mb-4">{error?.message || 'Connection error'}</p>
+      <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+    </div>
+  );
   if (!hotel) return (
     <div className="p-8 flex flex-col items-center justify-center py-16 text-center">
       <Database className="w-10 h-10 text-slate-300 mb-3" />

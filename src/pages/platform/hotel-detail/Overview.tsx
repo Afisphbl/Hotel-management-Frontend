@@ -4,6 +4,7 @@ import {
   usePlatformAuditLogs,
 } from "@/hooks/usePlatformData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Building2, Database, Activity } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -57,13 +58,24 @@ function StatCard({ label, value }: { label: string; value: string | number | nu
 
 export function HotelOverview() {
   const { id } = useParams({ from: "/auth/platform/hotels/$id" });
-  const { data: hotel, isLoading } = usePlatformHotel(id);
+  const { data: hotel, isLoading, isError, error, refetch } = usePlatformHotel(id);
   const { data: logs } = usePlatformAuditLogs();
 
   if (isLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-48 w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <Database className="w-10 h-10 text-red-400 mb-3" />
+        <h3 className="text-lg font-serif text-slate-500">Failed to load hotel data</h3>
+        <p className="text-xs text-slate-400 mt-1 mb-4">{error?.message}</p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
       </div>
     );
   }
