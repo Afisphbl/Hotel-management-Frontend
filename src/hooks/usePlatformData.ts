@@ -9,7 +9,20 @@ export function usePlatformKPIs() {
   return useQuery({
     queryKey: ["platform-kpis"],
     queryFn: async () => {
-      return api.get("platform/analytics/kpis");
+      const [global, revenueSummary, mrr] = await Promise.all([
+        api.get("platform/analytics/global"),
+        api.get("platform/analytics/revenue-summary").catch(() => null),
+        api.get("platform/analytics/mrr").catch(() => null),
+      ]);
+      return {
+        totalHotels: revenueSummary?.totalHotels ?? global?.totalHotels ?? 0,
+        activeSubscriptions: revenueSummary?.activeSubscriptions ?? mrr?.totalSubscriptions ?? 0,
+        mrr: revenueSummary?.mrr ?? mrr?.totalMRR ?? 0,
+        totalBookings: 0,
+        activeUsers: global?.totalUsers ?? 0,
+        mrrGrowth: mrr?.mrrGrowth ?? 0,
+        hotelsGrowth: 0,
+      };
     },
   });
 }
