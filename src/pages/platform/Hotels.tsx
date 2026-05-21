@@ -87,8 +87,47 @@ export function PlatformHotels() {
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const getTextValue = (...values: Array<string | null | undefined>) => {
+    for (const value of values) {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed) return trimmed;
+      }
+    }
+    return "—";
+  };
+
+  const getNumericValue = (
+    ...values: Array<string | number | null | undefined>
+  ) => {
+    for (const value of values) {
+      if (typeof value === "number" && !Number.isNaN(value)) {
+        return value;
+      }
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (!trimmed) continue;
+        const parsed = Number(trimmed);
+        if (!Number.isNaN(parsed)) {
+          return parsed;
+        }
+      }
+    }
+    return "—";
+  };
+
   const handleEdit = (hotel: any) => {
-    setEditingHotel({ ...hotel });
+    setEditingHotel({
+      ...hotel,
+      ownerName:
+        getTextValue(hotel.ownerName, hotel.owner) === "—"
+          ? ""
+          : getTextValue(hotel.ownerName, hotel.owner),
+      ownerEmail:
+        getTextValue(hotel.ownerEmail, hotel.email) === "—"
+          ? ""
+          : getTextValue(hotel.ownerEmail, hotel.email),
+    });
     setIsEditDialogOpen(true);
   };
 
@@ -149,7 +188,12 @@ export function PlatformHotels() {
   const filteredHotels = hotels?.filter(
     (h) =>
       h.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (h.owner ?? "").toLowerCase().includes(searchQuery.toLowerCase()),
+      (h.ownerName ?? h.owner ?? "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (h.email ?? h.ownerEmail ?? "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -200,7 +244,7 @@ export function PlatformHotels() {
                 <Filter className='w-4 h-4' /> Filters
               </Button>
               <Select defaultValue='all'>
-                <SelectTrigger className='flex-1 md:w-[140px] h-9 bg-[#F8F7F4] border-none'>
+                <SelectTrigger className='flex-1 md:w-35 h-9 bg-[#F8F7F4] border-none'>
                   <SelectValue placeholder='All Plans' />
                 </SelectTrigger>
                 <SelectContent>
@@ -217,7 +261,7 @@ export function PlatformHotels() {
           <Table>
             <TableHeader className='bg-[#F8F7F4]'>
               <TableRow>
-                <TableHead className='w-[300px]'>Property</TableHead>
+                <TableHead className='w-75'>Property</TableHead>
                 <TableHead className='hidden lg:table-cell'>Owner</TableHead>
                 <TableHead>Tier</TableHead>
                 <TableHead className='hidden sm:table-cell'>Rooms</TableHead>
@@ -340,10 +384,10 @@ export function PlatformHotels() {
                     <TableCell className='hidden lg:table-cell'>
                       <div className='text-sm'>
                         <p className='font-medium text-[#0F1B2D]'>
-                          {hotel.owner}
+                          {getTextValue(hotel.ownerName, hotel.owner)}
                         </p>
                         <p className='text-[10px] text-muted-foreground'>
-                          {hotel.email}
+                          {getTextValue(hotel.ownerEmail, hotel.email)}
                         </p>
                       </div>
                     </TableCell>
@@ -363,7 +407,7 @@ export function PlatformHotels() {
                       </Badge>
                     </TableCell>
                     <TableCell className='hidden sm:table-cell text-sm font-serif'>
-                      {hotel.rooms || 120}
+                      {getNumericValue(hotel.totalRooms, hotel.rooms)}
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={hotel.status} />
@@ -513,10 +557,28 @@ export function PlatformHotels() {
               <div className='space-y-2'>
                 <Label htmlFor='owner'>Owner Name</Label>
                 <Input
-                  id='owner'
-                  value={editingHotel.owner}
+                  id='ownerName'
+                  value={editingHotel.ownerName}
                   onChange={(e) =>
-                    setEditingHotel({ ...editingHotel, owner: e.target.value })
+                    setEditingHotel({
+                      ...editingHotel,
+                      ownerName: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='rooms'>Rooms</Label>
+                <Input
+                  id='rooms'
+                  type='number'
+                  min='0'
+                  value={editingHotel.rooms ?? ""}
+                  onChange={(e) =>
+                    setEditingHotel({
+                      ...editingHotel,
+                      rooms: Number(e.target.value) || 0,
+                    })
                   }
                 />
               </div>

@@ -16,7 +16,8 @@ export function usePlatformKPIs() {
       ]);
       return {
         totalHotels: revenueSummary?.totalHotels ?? global?.totalHotels ?? 0,
-        activeSubscriptions: revenueSummary?.activeSubscriptions ?? mrr?.totalSubscriptions ?? 0,
+        activeSubscriptions:
+          revenueSummary?.activeSubscriptions ?? mrr?.totalSubscriptions ?? 0,
         mrr: revenueSummary?.mrr ?? mrr?.totalMRR ?? 0,
         totalBookings: 0,
         activeUsers: global?.totalUsers ?? 0,
@@ -81,7 +82,10 @@ export function usePlatformChurn() {
   });
 }
 
-export function usePlatformFinancialReport(startDate?: string, endDate?: string) {
+export function usePlatformFinancialReport(
+  startDate?: string,
+  endDate?: string,
+) {
   return useQuery({
     queryKey: ["platform-financial-report", startDate, endDate],
     queryFn: async () => {
@@ -89,7 +93,9 @@ export function usePlatformFinancialReport(startDate?: string, endDate?: string)
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
       const qs = params.toString();
-      return api.get(`platform/analytics/financial-report${qs ? `?${qs}` : ""}`);
+      return api.get(
+        `platform/analytics/financial-report${qs ? `?${qs}` : ""}`,
+      );
     },
   });
 }
@@ -336,23 +342,41 @@ export function useHotelFeatureFlags(hotelId: string) {
       ]);
       const enabledFeatures = hotel.enabledFeatures || [];
       const predefined = [
-        { id: "housekeeping", name: "Housekeeping Module", category: "Operations" },
-        { id: "maintenance", name: "Maintenance Module", category: "Operations" },
+        {
+          id: "housekeeping",
+          name: "Housekeeping Module",
+          category: "Operations",
+        },
+        {
+          id: "maintenance",
+          name: "Maintenance Module",
+          category: "Operations",
+        },
         { id: "pos", name: "POS Integration", category: "Integrations" },
-        { id: "whatsapp", name: "WhatsApp Notifications", category: "Guest Services" },
+        {
+          id: "whatsapp",
+          name: "WhatsApp Notifications",
+          category: "Guest Services",
+        },
         { id: "analytics", name: "Advanced Analytics", category: "Business" },
-        { id: "guest-portal", name: "Guest Self-Service Portal", category: "Guest Services" },
+        {
+          id: "guest-portal",
+          name: "Guest Self-Service Portal",
+          category: "Guest Services",
+        },
       ];
       const items = predefined.map((f) => ({
         ...f,
         enabled: enabledFeatures.includes(f.id),
       }));
-      const extras = (Array.isArray(globalFlags) ? globalFlags : []).map((gf: any) => ({
-        id: gf.id || gf.key,
-        name: gf.name || gf.key,
-        enabled: gf.status === "enabled" || enabledFeatures.includes(gf.id),
-        category: gf.category || "Global",
-      }));
+      const extras = (Array.isArray(globalFlags) ? globalFlags : []).map(
+        (gf: any) => ({
+          id: gf.id || gf.key,
+          name: gf.name || gf.key,
+          enabled: gf.status === "enabled" || enabledFeatures.includes(gf.id),
+          category: gf.category || "Global",
+        }),
+      );
       return [...items, ...extras];
     },
   });
@@ -367,10 +391,17 @@ export function useHotelUsageMetrics(hotelId: string) {
         api.get(`platform/quota/snapshot/${hotelId}`).catch(() => null),
       ]);
       return {
-        bookings: quota?.bookings || hotel.bookings || [120, 145, 132, 168, 154, 182],
-        revenue: quota?.revenue || Array.from({ length: 6 }).map(() => hotel.monthlyRevenue || 299),
+        bookings: quota?.bookings ||
+          hotel.bookings || [120, 145, 132, 168, 154, 182],
+        revenue:
+          quota?.revenue ||
+          Array.from({ length: 6 }).map(() => hotel.monthlyRevenue || 299),
         occupancy: quota?.occupancy ?? hotel.currentOccupancy ?? 78,
-        storage: quota?.storageUsedMb ? quota.storageUsedMb / 1024 : hotel.storageUsedMb ? hotel.storageUsedMb / 1024 : null,
+        storage: quota?.storageUsedMb
+          ? quota.storageUsedMb / 1024
+          : hotel.storageUsedMb
+            ? hotel.storageUsedMb / 1024
+            : null,
         apiCalls: quota?.apiCalls || hotel.apiCalls || 4500,
         activeUsers: quota?.activeUsers ?? hotel.activeUsers ?? null,
       };
@@ -442,7 +473,11 @@ export function usePlatformSettings() {
 export function useUpdatePlatformSettings() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { key: string; value: any; category?: string }) => {
+    mutationFn: async (data: {
+      key: string;
+      value: any;
+      category?: string;
+    }) => {
       return api.post("platform/settings", data);
     },
     onSuccess: () => {
@@ -636,8 +671,19 @@ export function useActivatePlatformUser() {
 export function useResetUserPassword() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, currentPassword, newPassword }: { id: string; currentPassword: string; newPassword: string }) => {
-      return api.post(`platform/users/${id}/change-password`, { currentPassword, newPassword });
+    mutationFn: async ({
+      id,
+      currentPassword,
+      newPassword,
+    }: {
+      id: string;
+      currentPassword: string;
+      newPassword: string;
+    }) => {
+      return api.post(`platform/users/${id}/change-password`, {
+        currentPassword,
+        newPassword,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["platform-users"] });
