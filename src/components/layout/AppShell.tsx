@@ -1,13 +1,12 @@
-
-import React from 'react';
-import { useAuthStore } from '@/store/authStore';
-import { Button } from '@/components/ui/button';
-import { 
-  LayoutDashboard, 
-  Hotel, 
-  CreditCard, 
-  Flag, 
-  ShieldAlert, 
+import React from "react";
+import { useAuthStore } from "@/store/authStore";
+import { Button } from "@/components/ui/button";
+import {
+  LayoutDashboard,
+  Hotel,
+  CreditCard,
+  Flag,
+  ShieldAlert,
   History,
   Menu,
   ChevronLeft,
@@ -25,21 +24,21 @@ import {
   BarChart3,
   DollarSign,
   Tag,
-  X
-} from 'lucide-react';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Outlet, Link, useNavigate, useLocation } from '@tanstack/react-router';
-import { cn } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
+  X,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Outlet, Link, useNavigate, useLocation } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
 interface NavItem {
   title: string;
@@ -49,83 +48,169 @@ interface NavItem {
 }
 
 const PLATFORM_NAV: NavItem[] = [
-  { title: 'Dashboard', href: '/platform/dashboard', icon: LayoutDashboard },
-  { title: 'Hotels', href: '/platform/hotels', icon: Hotel },
-  { title: 'Subscriptions', href: '/platform/subscriptions', icon: CreditCard },
-  { title: 'Feature Flags', href: '/platform/feature-flags', icon: Flag },
-  { title: 'Roles & Permissions', href: '/platform/roles-permissions', icon: ShieldAlert },
-  { title: 'Audit Logs', href: '/platform/audit-logs', icon: History },
+  { title: "Dashboard", href: "/platform/dashboard", icon: LayoutDashboard },
+  { title: "Hotels", href: "/platform/hotels", icon: Hotel },
+  { title: "Subscriptions", href: "/platform/subscriptions", icon: CreditCard },
+  { title: "Feature Flags", href: "/platform/feature-flags", icon: Flag },
+  {
+    title: "Roles & Permissions",
+    href: "/platform/roles-permissions",
+    icon: ShieldAlert,
+  },
+  { title: "Audit Logs", href: "/platform/audit-logs", icon: History },
 ];
 
 const HOTEL_NAV: NavItem[] = [
-  { title: 'Dashboard', href: '/hotel/dashboard', icon: LayoutDashboard, permission: 'dashboard:read' },
-  { title: 'Bookings', href: '/hotel/bookings', icon: Calendar, permission: 'booking:read' },
-  { title: 'Front Desk', href: '/hotel/front-desk', icon: ClipboardList, permission: 'front_desk:read' },
-  { title: 'Rooms', href: '/hotel/rooms', icon: Bed, permission: 'room:read' },
-  { title: 'Availability', href: '/hotel/availability', icon: MapPin, permission: 'availability:read' },
-  { title: 'Guests', href: '/hotel/guests', icon: Users, permission: 'guest:read' },
-  { title: 'Pricing', href: '/hotel/pricing', icon: Tag, permission: 'pricing:read' },
-  { title: 'Finance', href: '/hotel/finance', icon: DollarSign, permission: 'finance:read' },
-  { title: 'Housekeeping', href: '/hotel/housekeeping', icon: ClipboardList, permission: 'housekeeping:read' },
-  { title: 'Maintenance', href: '/hotel/maintenance', icon: Wrench, permission: 'maintenance:read' },
-  { title: 'Staff', href: '/hotel/staff', icon: Users, permission: 'staff:read' },
-  { title: 'Reports', href: '/hotel/reports', icon: BarChart3, permission: 'reports:read' },
-  { title: 'Settings', href: '/hotel/settings', icon: Settings, permission: 'settings:read' },
+  {
+    title: "Dashboard",
+    href: "/hotel/dashboard",
+    icon: LayoutDashboard,
+    permission: "dashboard:read",
+  },
+  {
+    title: "Bookings",
+    href: "/hotel/bookings",
+    icon: Calendar,
+    permission: "booking:read",
+  },
+  {
+    title: "Front Desk",
+    href: "/hotel/front-desk",
+    icon: ClipboardList,
+    permission: "front_desk:read",
+  },
+  { title: "Rooms", href: "/hotel/rooms", icon: Bed, permission: "room:read" },
+  {
+    title: "Availability",
+    href: "/hotel/availability",
+    icon: MapPin,
+    permission: "availability:read",
+  },
+  {
+    title: "Guests",
+    href: "/hotel/guests",
+    icon: Users,
+    permission: "guest:read",
+  },
+  {
+    title: "Pricing",
+    href: "/hotel/pricing",
+    icon: Tag,
+    permission: "pricing:read",
+  },
+  {
+    title: "Finance",
+    href: "/hotel/finance",
+    icon: DollarSign,
+    permission: "finance:read",
+  },
+  {
+    title: "Housekeeping",
+    href: "/hotel/housekeeping",
+    icon: ClipboardList,
+    permission: "housekeeping:read",
+  },
+  {
+    title: "Maintenance",
+    href: "/hotel/maintenance",
+    icon: Wrench,
+    permission: "maintenance:read",
+  },
+  {
+    title: "Staff",
+    href: "/hotel/staff",
+    icon: Users,
+    permission: "staff:read",
+  },
+  {
+    title: "Reports",
+    href: "/hotel/reports",
+    icon: BarChart3,
+    permission: "reports:read",
+  },
+  {
+    title: "Settings",
+    href: "/hotel/settings",
+    icon: Settings,
+    permission: "settings:read",
+  },
 ];
 
 export function AppShell() {
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const user = useAuthStore(state => state.user);
-  const logout = useAuthStore(state => state.logout);
-  const hasPermission = useAuthStore(state => state.hasPermission);
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const hasPermission = useAuthStore((state) => state.hasPermission);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const navItems = user?.scope === 'platform' ? PLATFORM_NAV : HOTEL_NAV.filter(item => !item.permission || hasPermission(item.permission));
+  const navItems =
+    user?.scope === "platform"
+      ? PLATFORM_NAV
+      : HOTEL_NAV.filter(
+          (item) => !item.permission || hasPermission(item.permission),
+        );
+  const notificationHref =
+    user?.scope === "platform" ? "/platform/audit-logs" : "/hotel/dashboard";
+  const settingsHref =
+    user?.scope === "platform" ? "/platform/settings" : "/hotel/settings";
 
   const handleLogout = () => {
     logout();
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
   return (
-    <div className="flex h-screen bg-[#F8F7F4] text-[#0F1B2D]">
+    <div className='flex h-screen bg-[#F8F7F4] text-[#0F1B2D]'>
       {/* Desktop Sidebar */}
-      <aside 
+      <aside
         className={cn(
           "hidden md:flex bg-[#0F1B2D] text-white transition-all duration-300 flex-col z-20 shadow-xl shrink-0",
-          collapsed ? "w-20" : "w-64"
+          collapsed ? "w-20" : "w-64",
         )}
       >
-        <div className="p-6 flex items-center justify-between h-16 border-b border-white/10 shrink-0">
+        <div className='p-6 flex items-center justify-between h-16 border-b border-white/10 shrink-0'>
           {!collapsed && (
-            <div className="flex items-center gap-3 overflow-hidden whitespace-nowrap">
-              <div className="w-8 h-8 bg-[#C9973A] rounded-[4px] flex items-center justify-center font-bold text-white shrink-0">L</div>
-              <h1 className="font-serif font-bold text-lg tracking-tight">LuxeHotel</h1>
+            <div className='flex items-center gap-3 overflow-hidden whitespace-nowrap'>
+              <div className='w-8 h-8 bg-[#C9973A] rounded-md flex items-center justify-center font-bold text-white shrink-0'>
+                L
+              </div>
+              <h1 className='font-serif font-bold text-lg tracking-tight'>
+                LuxeHotel
+              </h1>
             </div>
           )}
           {collapsed && (
-            <div className="w-8 h-8 bg-[#C9973A] rounded-[4px] flex items-center justify-center font-bold text-white mx-auto">L</div>
+            <div className='w-8 h-8 bg-[#C9973A] rounded-md flex items-center justify-center font-bold text-white mx-auto'>
+              L
+            </div>
           )}
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 text-sm overflow-y-auto">
+        <nav className='flex-1 p-4 space-y-2 text-sm overflow-y-auto'>
           {navItems.map((item) => (
             <Link
               key={item.href}
               to={item.href}
               className={cn(
-                "flex items-center gap-3 p-2 rounded-[4px] transition-colors group",
-                location.pathname.startsWith(item.href) 
-                  ? "bg-white/10 text-white" 
-                  : "text-white/60 hover:bg-white/5 hover:text-white"
+                "flex items-center gap-3 p-2 rounded-md transition-colors group",
+                location.pathname.startsWith(item.href)
+                  ? "bg-white/10 text-white"
+                  : "text-white/60 hover:bg-white/5 hover:text-white",
               )}
             >
-              <item.icon className={cn("w-4 h-4 shrink-0", location.pathname.startsWith(item.href) ? "text-[#C9973A]" : "group-hover:text-[#C9973A]")} />
-              {!collapsed && <span className="font-medium">{item.title}</span>}
+              <item.icon
+                className={cn(
+                  "w-4 h-4 shrink-0",
+                  location.pathname.startsWith(item.href)
+                    ? "text-[#C9973A]"
+                    : "group-hover:text-[#C9973A]",
+                )}
+              />
+              {!collapsed && <span className='font-medium'>{item.title}</span>}
               {collapsed && (
-                <div className="absolute left-16 bg-[#0F1B2D] text-white px-2 py-1 rounded-[4px] text-xs opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 border border-white/10 shadow-lg">
+                <div className='absolute left-16 bg-[#0F1B2D] text-white px-2 py-1 rounded-md text-xs opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 border border-white/10 shadow-lg'>
                   {item.title}
                 </div>
               )}
@@ -133,124 +218,198 @@ export function AppShell() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-white/10 shrink-0">
-          <div className={cn(
-            "flex items-center gap-3 p-2 bg-white/5 rounded-[4px] relative group/user",
-            collapsed ? "justify-center" : "justify-between"
-          )}>
-            <div className="flex items-center gap-3 min-w-0">
-              <Avatar className="h-8 w-8 rounded-full border border-white/10 shrink-0">
-                <AvatarImage src={`https://avatar.iran.liara.run/username?username=${user?.name}`} />
-                <AvatarFallback className="bg-[#C9973A] text-[#0F1B2D] text-[10px] font-bold">{user?.name?.charAt(0)}</AvatarFallback>
+        <div className='p-4 border-t border-white/10 shrink-0'>
+          <div
+            className={cn(
+              "flex items-center gap-3 p-2 bg-white/5 rounded-md relative group/user",
+              collapsed ? "justify-center" : "justify-between",
+            )}
+          >
+            <div className='flex items-center gap-3 min-w-0'>
+              <Avatar className='h-8 w-8 rounded-full border border-white/10 shrink-0'>
+                <AvatarImage
+                  src={`https://avatar.iran.liara.run/username?username=${user?.name}`}
+                />
+                <AvatarFallback className='bg-[#C9973A] text-[#0F1B2D] text-[10px] font-bold'>
+                  {user?.name?.charAt(0)}
+                </AvatarFallback>
               </Avatar>
               {!collapsed && (
-                <div className="min-w-0">
-                  <p className="text-xs text-white font-medium truncate">{user?.name}</p>
-                  <p className="text-[10px] text-white/50 truncate capitalize">{user?.role?.toLowerCase().replace('_', ' ')}</p>
+                <div className='min-w-0'>
+                  <p className='text-xs text-white font-medium truncate'>
+                    {user?.name}
+                  </p>
+                  <p className='text-[10px] text-white/50 truncate capitalize'>
+                    {user?.role?.toLowerCase().replace("_", " ")}
+                  </p>
                 </div>
               )}
             </div>
-            
-            <Button 
-              variant="ghost" 
-              size="icon" 
+
+            <Button
+              variant='ghost'
+              size='icon'
               className={cn(
                 "h-6 w-6 text-white/30 hover:text-white hover:bg-white/10 transition-all",
-                collapsed ? "absolute -right-3 top-1/2 -translate-y-1/2 bg-[#0F1B2D] border border-white/10 rounded-full z-30" : ""
+                collapsed
+                  ? "absolute -right-3 top-1/2 -translate-y-1/2 bg-[#0F1B2D] border border-white/10 rounded-full z-30"
+                  : "",
               )}
               onClick={() => setCollapsed(!collapsed)}
             >
-              {collapsed ? <ChevronLeft className="w-3 h-3 rotate-180" /> : <ChevronLeft className="w-3 h-3" />}
+              {collapsed ? (
+                <ChevronLeft className='w-3 h-3 rotate-180' />
+              ) : (
+                <ChevronLeft className='w-3 h-3' />
+              )}
             </Button>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className='flex-1 flex flex-col min-w-0 overflow-hidden'>
         {/* Header */}
-        <header className="h-16 bg-white border-b border-[#E5E7EB] flex items-center justify-between px-4 md:px-8 shrink-0 shadow-sm">
-          <div className="flex items-center gap-4 text-xs text-gray-500 uppercase tracking-widest font-bold">
+        <header className='h-16 bg-white border-b border-[#E5E7EB] flex items-center justify-between px-4 md:px-8 shrink-0 shadow-sm'>
+          <div className='flex items-center gap-4 text-xs text-gray-500 uppercase tracking-widest font-bold'>
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger render={<Button variant="ghost" size="icon" className="md:hidden h-8 w-8 text-[#0F1B2D]" />}>
-                <Menu className="w-5 h-5" />
+              <SheetTrigger
+                render={
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    className='md:hidden h-8 w-8 text-[#0F1B2D]'
+                  />
+                }
+              >
+                <Menu className='w-5 h-5' />
               </SheetTrigger>
-              <SheetContent side="left" className="p-0 bg-[#0F1B2D] border-none text-white w-[280px] flex flex-col">
-                <div className="p-6 flex items-center gap-3 border-b border-white/10 shrink-0">
-                  <div className="w-8 h-8 bg-[#C9973A] rounded-[4px] flex items-center justify-center font-bold text-white shrink-0">L</div>
-                  <h1 className="font-serif font-bold text-lg tracking-tight">LuxeHotel</h1>
+              <SheetContent
+                side='left'
+                className='p-0 bg-[#0F1B2D] border-none text-white w-70 flex flex-col'
+              >
+                <div className='p-6 flex items-center gap-3 border-b border-white/10 shrink-0'>
+                  <div className='w-8 h-8 bg-[#C9973A] rounded-md flex items-center justify-center font-bold text-white shrink-0'>
+                    L
+                  </div>
+                  <h1 className='font-serif font-bold text-lg tracking-tight'>
+                    LuxeHotel
+                  </h1>
                 </div>
-                <nav className="flex-1 p-4 space-y-1 text-sm overflow-y-auto">
+                <nav className='flex-1 p-4 space-y-1 text-sm overflow-y-auto'>
                   {navItems.map((item) => (
                     <Link
                       key={item.href}
                       to={item.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 p-2.5 rounded-[4px] transition-colors group",
-                        location.pathname.startsWith(item.href) 
-                          ? "bg-white/10 text-white" 
-                          : "text-white/60 hover:bg-white/5 hover:text-white"
+                        "flex items-center gap-3 p-2.5 rounded-md transition-colors group",
+                        location.pathname.startsWith(item.href)
+                          ? "bg-white/10 text-white"
+                          : "text-white/60 hover:bg-white/5 hover:text-white",
                       )}
                     >
-                      <item.icon className={cn("w-4 h-4 shrink-0", location.pathname.startsWith(item.href) ? "text-[#C9973A]" : "group-hover:text-[#C9973A]")} />
-                      <span className="font-medium">{item.title}</span>
+                      <item.icon
+                        className={cn(
+                          "w-4 h-4 shrink-0",
+                          location.pathname.startsWith(item.href)
+                            ? "text-[#C9973A]"
+                            : "group-hover:text-[#C9973A]",
+                        )}
+                      />
+                      <span className='font-medium'>{item.title}</span>
                     </Link>
                   ))}
                 </nav>
-                <div className="p-4 border-t border-white/10 shrink-0">
-                  <div className="flex items-center gap-3 p-2 bg-white/5 rounded-[4px]">
-                    <Avatar className="h-8 w-8 rounded-full border border-white/10 shrink-0">
-                      <AvatarImage src={`https://avatar.iran.liara.run/username?username=${user?.name}`} />
-                      <AvatarFallback className="bg-[#C9973A] text-[#0F1B2D] text-[10px] font-bold">{user?.name?.charAt(0)}</AvatarFallback>
+                <div className='p-4 border-t border-white/10 shrink-0'>
+                  <div className='flex items-center gap-3 p-2 bg-white/5 rounded-md'>
+                    <Avatar className='h-8 w-8 rounded-full border border-white/10 shrink-0'>
+                      <AvatarImage
+                        src={`https://avatar.iran.liara.run/username?username=${user?.name}`}
+                      />
+                      <AvatarFallback className='bg-[#C9973A] text-[#0F1B2D] text-[10px] font-bold'>
+                        {user?.name?.charAt(0)}
+                      </AvatarFallback>
                     </Avatar>
-                    <div className="min-w-0">
-                      <p className="text-xs text-white font-medium truncate">{user?.name}</p>
-                      <p className="text-[10px] text-white/50 truncate capitalize">{user?.role?.toLowerCase().replace('_', ' ')}</p>
+                    <div className='min-w-0'>
+                      <p className='text-xs text-white font-medium truncate'>
+                        {user?.name}
+                      </p>
+                      <p className='text-[10px] text-white/50 truncate capitalize'>
+                        {user?.role?.toLowerCase().replace("_", " ")}
+                      </p>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={handleLogout} className="ml-auto h-8 w-8 text-white/30 hover:text-red-500">
-                      <LogOut className="w-4 h-4" />
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      onClick={handleLogout}
+                      className='ml-auto h-8 w-8 text-white/30 hover:text-red-500'
+                    >
+                      <LogOut className='w-4 h-4' />
                     </Button>
                   </div>
                 </div>
               </SheetContent>
             </Sheet>
 
-            <span className="hidden sm:inline">LuxeHotel</span>
-            <span className="text-gray-300 hidden sm:inline">/</span>
-            <span className="text-[#0F1B2D] truncate max-w-[150px] sm:max-w-none">
-              {location.pathname.split('/').filter(Boolean).slice(1).join(' / ') || 'Dashboard'}
+            <span className='hidden sm:inline'>LuxeHotel</span>
+            <span className='text-gray-300 hidden sm:inline'>/</span>
+            <span className='text-[#0F1B2D] truncate max-w-37.5 sm:max-w-none'>
+              {location.pathname
+                .split("/")
+                .filter(Boolean)
+                .slice(1)
+                .join(" / ") || "Dashboard"}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-6">
-            <div className="relative hidden lg:block">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Search..." 
-                className="bg-[#F3F4F6] border-none rounded-[4px] py-1.5 pl-9 pr-4 text-xs w-48 focus:ring-1 focus:ring-[#C9973A] outline-none transition-all"
+          <div className='flex items-center gap-2 md:gap-6'>
+            <div className='relative hidden lg:block'>
+              <Search className='w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400' />
+              <input
+                type='text'
+                placeholder='Search...'
+                className='bg-[#F3F4F6] border-none rounded-md py-1.5 pl-9 pr-4 text-xs w-48 focus:ring-1 focus:ring-[#C9973A] outline-none transition-all'
               />
             </div>
-            
-            <div className="flex items-center gap-1 md:gap-4">
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-[#0F1B2D]">
-                <Bell className="w-4 h-4" />
+
+            <div className='flex items-center gap-1 md:gap-4'>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-8 w-8 text-gray-400 hover:text-[#0F1B2D]'
+                onClick={() => navigate({ to: notificationHref })}
+                aria-label='Open notifications'
+              >
+                <Bell className='w-4 h-4' />
               </Button>
-              <Button variant="ghost" size="icon" className="hidden sm:flex h-8 w-8 text-gray-400 hover:text-[#0F1B2D]">
-                <Settings className="w-4 h-4" />
+              <Button
+                variant='ghost'
+                size='icon'
+                className='hidden sm:flex h-8 w-8 text-gray-400 hover:text-[#0F1B2D]'
+                onClick={() => navigate({ to: settingsHref })}
+                aria-label='Open settings'
+              >
+                <Settings className='w-4 h-4' />
               </Button>
-              <Separator orientation="vertical" className="hidden sm:block h-4 mx-2" />
-              <Button variant="ghost" size="icon" onClick={handleLogout} className="hidden sm:flex h-8 w-8 text-gray-400 hover:text-red-500">
-                <LogOut className="w-4 h-4" />
+              <Separator
+                orientation='vertical'
+                className='hidden sm:block h-4 mx-2'
+              />
+              <Button
+                variant='ghost'
+                size='icon'
+                onClick={handleLogout}
+                className='hidden sm:flex h-8 w-8 text-gray-400 hover:text-red-500'
+              >
+                <LogOut className='w-4 h-4' />
               </Button>
             </div>
           </div>
         </header>
 
-
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+        <main className='flex-1 overflow-y-auto p-4 md:p-8'>
           <Outlet />
         </main>
       </div>

@@ -1,40 +1,46 @@
-
-import { createRootRoute, createRoute, createRouter, Outlet, redirect } from '@tanstack/react-router';
-import { useAuthStore } from '@/store/authStore';
-import { LoginPage } from '@/pages/Login';
-import { AppShell } from '@/components/layout/AppShell';
-import { PlatformDashboard } from '@/pages/platform/Dashboard';
-import { PlatformHotels } from '@/pages/platform/Hotels';
-import { HotelCreate } from '@/pages/platform/HotelCreate';
-import { HotelDetailsLayout } from '@/pages/platform/HotelDetailsLayout';
-import { HotelOverview } from '@/pages/platform/hotel-detail/Overview';
-import { HotelDomains } from '@/pages/platform/hotel-detail/Domains';
-import { HotelBranding } from '@/pages/platform/hotel-detail/Branding';
-import { HotelUsers } from '@/pages/platform/hotel-detail/Users';
-import { HotelFeatureFlags } from '@/pages/platform/hotel-detail/FeatureFlags';
-import { HotelAuditLogs } from '@/pages/platform/hotel-detail/AuditLogs';
-import { HotelUsageMetrics } from '@/pages/platform/hotel-detail/UsageMetrics';
-import { HotelSubscription } from '@/pages/platform/hotel-detail/Subscription';
-import { HotelSecurity } from '@/pages/platform/hotel-detail/Security';
-import { HotelSettings } from '@/pages/platform/hotel-detail/Settings';
-import { PlatformSubscriptions } from '@/pages/platform/Subscriptions';
-import { PlatformFeatureFlags } from '@/pages/platform/FeatureFlags';
-import { PlatformRoles } from '@/pages/platform/Roles';
-import { PlatformAuditLogs } from '@/pages/platform/AuditLogs';
-import { HotelDashboard } from '@/pages/hotel/Dashboard';
-import { HotelBookings } from '@/pages/hotel/Bookings';
-import { HotelRooms } from '@/pages/hotel/Rooms';
-import { HotelAvailability } from '@/pages/hotel/Availability';
-import { HotelFrontDesk } from '@/pages/hotel/FrontDesk';
-import { HotelGuests } from '@/pages/hotel/Guests';
-import { HotelPricing } from '@/pages/hotel/Pricing';
-import { HotelFinance } from '@/pages/hotel/Finance';
-import { HotelHousekeeping } from '@/pages/hotel/Housekeeping';
-import { HotelMaintenance } from '@/pages/hotel/Maintenance';
-import { HotelStaff } from '@/pages/hotel/Staff';
-import { HotelReports } from '@/pages/hotel/Reports';
-import { HotelSettings as PropertySettings } from '@/pages/hotel/Settings';
-import { ComingSoon } from '@/components/shared/ComingSoon';
+import {
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Outlet,
+  redirect,
+} from "@tanstack/react-router";
+import { useAuthStore } from "@/store/authStore";
+import { LoginPage } from "@/pages/Login";
+import { AppShell } from "@/components/layout/AppShell";
+import { PlatformDashboard } from "@/pages/platform/Dashboard";
+import { PlatformHotels } from "@/pages/platform/Hotels";
+import { HotelCreate } from "@/pages/platform/HotelCreate";
+import { HotelDetailsLayout } from "@/pages/platform/HotelDetailsLayout";
+import { HotelOverview } from "@/pages/platform/hotel-detail/Overview";
+import { HotelDomains } from "@/pages/platform/hotel-detail/Domains";
+import { HotelBranding } from "@/pages/platform/hotel-detail/Branding";
+import { HotelUsers } from "@/pages/platform/hotel-detail/Users";
+import { HotelFeatureFlags } from "@/pages/platform/hotel-detail/FeatureFlags";
+import { HotelAuditLogs } from "@/pages/platform/hotel-detail/AuditLogs";
+import { HotelUsageMetrics } from "@/pages/platform/hotel-detail/UsageMetrics";
+import { HotelSubscription } from "@/pages/platform/hotel-detail/Subscription";
+import { HotelSecurity } from "@/pages/platform/hotel-detail/Security";
+import { HotelSettings } from "@/pages/platform/hotel-detail/Settings";
+import { PlatformSubscriptions } from "@/pages/platform/Subscriptions";
+import { PlatformFeatureFlags } from "@/pages/platform/FeatureFlags";
+import { PlatformRoles } from "@/pages/platform/Roles";
+import { PlatformAuditLogs } from "@/pages/platform/AuditLogs";
+import { PlatformSettings } from "@/pages/platform/Settings";
+import { HotelDashboard } from "@/pages/hotel/Dashboard";
+import { HotelBookings } from "@/pages/hotel/Bookings";
+import { HotelRooms } from "@/pages/hotel/Rooms";
+import { HotelAvailability } from "@/pages/hotel/Availability";
+import { HotelFrontDesk } from "@/pages/hotel/FrontDesk";
+import { HotelGuests } from "@/pages/hotel/Guests";
+import { HotelPricing } from "@/pages/hotel/Pricing";
+import { HotelFinance } from "@/pages/hotel/Finance";
+import { HotelHousekeeping } from "@/pages/hotel/Housekeeping";
+import { HotelMaintenance } from "@/pages/hotel/Maintenance";
+import { HotelStaff } from "@/pages/hotel/Staff";
+import { HotelReports } from "@/pages/hotel/Reports";
+import { HotelSettings as PropertySettings } from "@/pages/hotel/Settings";
+import { ComingSoon } from "@/components/shared/ComingSoon";
 
 // Root Layout
 const rootRoute = createRootRoute({
@@ -44,13 +50,16 @@ const rootRoute = createRootRoute({
 // Login Route
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/',
+  path: "/",
   component: LoginPage,
   loader: () => {
     const { user } = useAuthStore.getState();
     if (user) {
       throw redirect({
-        to: user.scope === 'platform' ? '/platform/dashboard' : '/hotel/dashboard',
+        to:
+          user.scope === "platform"
+            ? "/platform/dashboard"
+            : "/hotel/dashboard",
       });
     }
   },
@@ -59,12 +68,12 @@ const loginRoute = createRoute({
 // Auth Guard Layout
 const authLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
-  id: 'auth',
+  id: "auth",
   component: AppShell,
   loader: () => {
     const { user } = useAuthStore.getState();
     if (!user) {
-      throw redirect({ to: '/' });
+      throw redirect({ to: "/" });
     }
   },
 });
@@ -72,11 +81,11 @@ const authLayoutRoute = createRoute({
 // Platform Layout
 const platformLayoutRoute = createRoute({
   getParentRoute: () => authLayoutRoute,
-  path: 'platform',
+  path: "platform",
   loader: () => {
     const { user } = useAuthStore.getState();
-    if (user?.scope !== 'platform') {
-      throw redirect({ to: '/unauthorized' });
+    if (user?.scope !== "platform") {
+      throw redirect({ to: "/unauthorized" });
     }
   },
 });
@@ -84,11 +93,11 @@ const platformLayoutRoute = createRoute({
 // Hotel Layout
 const hotelLayoutRoute = createRoute({
   getParentRoute: () => authLayoutRoute,
-  path: 'hotel',
+  path: "hotel",
   loader: () => {
     const { user } = useAuthStore.getState();
-    if (user?.scope !== 'hotel') {
-      throw redirect({ to: '/unauthorized' });
+    if (user?.scope !== "hotel") {
+      throw redirect({ to: "/unauthorized" });
     }
   },
 });
@@ -96,193 +105,199 @@ const hotelLayoutRoute = createRoute({
 // Pages
 const platformDashboardRoute = createRoute({
   getParentRoute: () => platformLayoutRoute,
-  path: 'dashboard',
+  path: "dashboard",
   component: PlatformDashboard,
 });
 
 const platformHotelsRoute = createRoute({
   getParentRoute: () => platformLayoutRoute,
-  path: 'hotels',
+  path: "hotels",
   component: PlatformHotels,
 });
 
 const platformHotelCreateRoute = createRoute({
   getParentRoute: () => platformLayoutRoute,
-  path: 'hotels/create',
+  path: "hotels/create",
   component: HotelCreate,
 });
 
 const platformHotelDetailsRoute = createRoute({
   getParentRoute: () => platformLayoutRoute,
-  path: 'hotels/$id',
+  path: "hotels/$id",
   component: HotelDetailsLayout,
 });
 
 const platformHotelOverviewRoute = createRoute({
   getParentRoute: () => platformHotelDetailsRoute,
-  path: '/',
+  path: "/",
   component: HotelOverview,
 });
 
 const platformHotelDomainsRoute = createRoute({
   getParentRoute: () => platformHotelDetailsRoute,
-  path: 'domains',
+  path: "domains",
   component: HotelDomains,
 });
 
 const platformHotelBrandingRoute = createRoute({
   getParentRoute: () => platformHotelDetailsRoute,
-  path: 'branding',
+  path: "branding",
   component: HotelBranding,
 });
 
 const platformHotelUsersRoute = createRoute({
   getParentRoute: () => platformHotelDetailsRoute,
-  path: 'users',
+  path: "users",
   component: HotelUsers,
 });
 
 const platformHotelFeaturesRoute = createRoute({
   getParentRoute: () => platformHotelDetailsRoute,
-  path: 'features',
+  path: "features",
   component: HotelFeatureFlags,
 });
 
 const platformHotelAuditLogsRoute = createRoute({
   getParentRoute: () => platformHotelDetailsRoute,
-  path: 'audit-logs',
+  path: "audit-logs",
   component: HotelAuditLogs,
 });
 
 const platformHotelMetricsRoute = createRoute({
   getParentRoute: () => platformHotelDetailsRoute,
-  path: 'metrics',
+  path: "metrics",
   component: HotelUsageMetrics,
 });
 
 const platformHotelSubscriptionRoute = createRoute({
   getParentRoute: () => platformHotelDetailsRoute,
-  path: 'subscription',
+  path: "subscription",
   component: HotelSubscription,
 });
 
 const platformHotelSecurityRoute = createRoute({
   getParentRoute: () => platformHotelDetailsRoute,
-  path: 'security',
+  path: "security",
   component: HotelSecurity,
 });
 
 const platformHotelSettingsRoute = createRoute({
   getParentRoute: () => platformHotelDetailsRoute,
-  path: 'settings',
+  path: "settings",
   component: HotelSettings,
 });
 
 const platformSubscriptionsRoute = createRoute({
   getParentRoute: () => platformLayoutRoute,
-  path: 'subscriptions',
+  path: "subscriptions",
   component: PlatformSubscriptions,
 });
 
 const platformFeatureFlagsRoute = createRoute({
   getParentRoute: () => platformLayoutRoute,
-  path: 'feature-flags',
+  path: "feature-flags",
   component: PlatformFeatureFlags,
 });
 
 const platformRolesRoute = createRoute({
   getParentRoute: () => platformLayoutRoute,
-  path: 'roles-permissions',
+  path: "roles-permissions",
   component: PlatformRoles,
 });
 
 const platformAuditRoute = createRoute({
   getParentRoute: () => platformLayoutRoute,
-  path: 'audit-logs',
+  path: "audit-logs",
   component: PlatformAuditLogs,
+});
+
+const platformSettingsRoute = createRoute({
+  getParentRoute: () => platformLayoutRoute,
+  path: "settings",
+  component: PlatformSettings,
 });
 
 const hotelDashboardRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
-  path: 'dashboard',
+  path: "dashboard",
   component: HotelDashboard,
 });
 
 const hotelBookingsRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
-  path: 'bookings',
+  path: "bookings",
   component: HotelBookings,
 });
 
 const hotelRoomsRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
-  path: 'rooms',
+  path: "rooms",
   component: HotelRooms,
 });
 
 const hotelAvailabilityRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
-  path: 'availability',
+  path: "availability",
   component: HotelAvailability,
 });
 
 const hotelFrontDeskRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
-  path: 'front-desk',
+  path: "front-desk",
   component: HotelFrontDesk,
 });
 
 const hotelGuestsRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
-  path: 'guests',
+  path: "guests",
   component: HotelGuests,
 });
 
 const hotelPricingRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
-  path: 'pricing',
+  path: "pricing",
   component: HotelPricing,
 });
 
 const hotelFinanceRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
-  path: 'finance',
+  path: "finance",
   component: HotelFinance,
 });
 
 const hotelHousekeepingRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
-  path: 'housekeeping',
+  path: "housekeeping",
   component: HotelHousekeeping,
 });
 
 const hotelMaintenanceRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
-  path: 'maintenance',
+  path: "maintenance",
   component: HotelMaintenance,
 });
 
 const hotelStaffRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
-  path: 'staff',
+  path: "staff",
   component: HotelStaff,
 });
 
 const hotelReportsRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
-  path: 'reports',
+  path: "reports",
   component: HotelReports,
 });
 
 const hotelSettingsRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
-  path: 'settings',
+  path: "settings",
   component: PropertySettings,
 });
 
 const unauthorizedRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: 'unauthorized',
+  path: "unauthorized",
   component: () => <div>Unauthorized</div>,
 });
 
@@ -309,7 +324,8 @@ export const routeTree = rootRoute.addChildren([
       platformSubscriptionsRoute,
       platformFeatureFlagsRoute,
       platformRolesRoute,
-      platformAuditRoute
+      platformAuditRoute,
+      platformSettingsRoute,
     ]),
     hotelLayoutRoute.addChildren([
       hotelDashboardRoute,
@@ -324,14 +340,14 @@ export const routeTree = rootRoute.addChildren([
       hotelMaintenanceRoute,
       hotelStaffRoute,
       hotelReportsRoute,
-      hotelSettingsRoute
+      hotelSettingsRoute,
     ]),
   ]),
 ]);
 
 export const router = createRouter({ routeTree });
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
   }

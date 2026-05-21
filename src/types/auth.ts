@@ -26,5 +26,6 @@ export interface AuthState {
   token: string | null;
   login: (email: string, password: string, hotelId?: string) => Promise<void>;
   logout: () => void;
+  impersonate: (hotelId: string) => Promise<void>;
   hasPermission: (permission: string) => boolean;
 }

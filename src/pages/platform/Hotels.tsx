@@ -22,7 +22,6 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Plus,
   Search,
-  Filter,
   MoreHorizontal,
   Eye,
   Edit,
@@ -37,7 +36,6 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { StatusBadge } from "@/components/shared/StatusBadge";
 import { format } from "date-fns";
 import { useNavigate, Link } from "@tanstack/react-router";
 import {
@@ -69,6 +67,31 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore";
 
+const PLAN_FILTER_LABELS: Record<string, string> = {
+  all: "All Plans",
+  enterprise: "Enterprise",
+  pro: "Pro",
+  basic: "Basic",
+};
+
+const SORT_OPTIONS = [
+  { value: "name-asc", label: "Hotel name: A to Z" },
+  { value: "name-desc", label: "Hotel name: Z to A" },
+  { value: "rooms-asc", label: "Rooms: Low to High" },
+  { value: "rooms-desc", label: "Rooms: High to Low" },
+  { value: "created-desc", label: "Newest first" },
+  { value: "created-asc", label: "Oldest first" },
+] as const;
+
+const STATUS_LABELS: Record<string, string> = {
+  active: "Active",
+  suspended: "Suspended",
+  archived: "Archived",
+};
+
+type PlanFilterValue = keyof typeof PLAN_FILTER_LABELS;
+type SortValue = (typeof SORT_OPTIONS)[number]["value"];
+
 export function PlatformHotels() {
   const {
     data: hotels,
@@ -80,12 +103,14 @@ export function PlatformHotels() {
   const updateMutation = useUpdatePlatformHotel();
   const deleteMutation = useDeletePlatformHotel();
   const navigate = useNavigate();
-  const impersonate = useAuthStore((state) => state.impersonate);
+  const impersonate = useAuthStore.getState().impersonate;
 
   const [editingHotel, setEditingHotel] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [planFilter, setPlanFilter] = useState<PlanFilterValue>("all");
+  const [sortBy, setSortBy] = useState<SortValue>("name-asc");
 
   const getTextValue = (...values: Array<string | null | undefined>) => {
     for (const value of values) {
@@ -185,16 +210,58 @@ export function PlatformHotels() {
     }
   };
 
-  const filteredHotels = hotels?.filter(
-    (h) =>
-      h.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (h.ownerName ?? h.owner ?? "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      (h.email ?? h.ownerEmail ?? "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()),
-  );
+  const handleSortChange = (value: string | null) => {
+    setSortBy((value as SortValue) || "name-asc");
+  };
+
+  const handlePlanFilterChange = (value: string | null) => {
+    setPlanFilter((value as PlanFilterValue) || "all");
+  };
+
+  const getRoomsCount = (hotel: any) => {
+    const rooms = getNumericValue(hotel.totalRooms, hotel.rooms);
+    return typeof rooms === "number" ? rooms : 0;
+  };
+
+  const visibleHotels = [...(hotels ?? [])]
+    .filter((hotel) => {
+      const query = searchQuery.trim().toLowerCase();
+      const matchesSearch =
+        !query ||
+        hotel.name?.toLowerCase().includes(query) ||
+        (hotel.ownerName ?? hotel.owner ?? "").toLowerCase().includes(query) ||
+        (hotel.email ?? hotel.ownerEmail ?? "").toLowerCase().includes(query) ||
+        String(getRoomsCount(hotel)).includes(query);
+
+      const matchesPlan =
+        planFilter === "all" ||
+        (hotel.plan ?? "").toLowerCase() === planFilter.toLowerCase();
+
+      return matchesSearch && matchesPlan;
+    })
+    .sort((left, right) => {
+      switch (sortBy) {
+        case "name-desc":
+          return right.name.localeCompare(left.name);
+        case "rooms-asc":
+          return getRoomsCount(left) - getRoomsCount(right);
+        case "rooms-desc":
+          return getRoomsCount(right) - getRoomsCount(left);
+        case "created-asc":
+          return (
+            new Date(left.created ?? 0).getTime() -
+            new Date(right.created ?? 0).getTime()
+          );
+        case "created-desc":
+          return (
+            new Date(right.created ?? 0).getTime() -
+            new Date(left.created ?? 0).getTime()
+          );
+        case "name-asc":
+        default:
+          return left.name.localeCompare(right.name);
+      }
+    });
 
   return (
     <div className='space-y-8'>
@@ -236,22 +303,30 @@ export function PlatformHotels() {
               />
             </div>
             <div className='flex gap-2 w-full md:w-auto'>
-              <Button
-                variant='outline'
-                size='sm'
-                className='hidden sm:flex gap-2 border-slate-200'
-              >
-                <Filter className='w-4 h-4' /> Filters
-              </Button>
-              <Select defaultValue='all'>
+              <Select value={sortBy} onValueChange={handleSortChange}>
+                <SelectTrigger className='flex-1 md:w-44 h-9 bg-[#F8F7F4] border-none'>
+                  <span>
+                    {SORT_OPTIONS.find((option) => option.value === sortBy)
+                      ?.label ?? "Sort by"}
+                  </span>
+                </SelectTrigger>
+                <SelectContent>
+                  {SORT_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={planFilter} onValueChange={handlePlanFilterChange}>
                 <SelectTrigger className='flex-1 md:w-35 h-9 bg-[#F8F7F4] border-none'>
-                  <SelectValue placeholder='All Plans' />
+                  <span>{PLAN_FILTER_LABELS[planFilter] ?? "All Plans"}</span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value='all'>All Plans</SelectItem>
-                  <SelectItem value='Enterprise'>Enterprise</SelectItem>
-                  <SelectItem value='Pro'>Pro</SelectItem>
-                  <SelectItem value='Basic'>Basic</SelectItem>
+                  <SelectItem value='enterprise'>Enterprise</SelectItem>
+                  <SelectItem value='pro'>Pro</SelectItem>
+                  <SelectItem value='basic'>Basic</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -338,7 +413,7 @@ export function PlatformHotels() {
                     </TableCell>
                   </TableRow>
                 ))
-              ) : !filteredHotels || filteredHotels.length === 0 ? (
+              ) : !visibleHotels || visibleHotels.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={7}
@@ -356,7 +431,7 @@ export function PlatformHotels() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredHotels.map((hotel) => (
+                visibleHotels.map((hotel) => (
                   <TableRow
                     key={hotel.id}
                     className='hover:bg-[#F8F7F4]/50 transition-colors cursor-pointer group border-b border-slate-50'
@@ -407,10 +482,28 @@ export function PlatformHotels() {
                       </Badge>
                     </TableCell>
                     <TableCell className='hidden sm:table-cell text-sm font-serif'>
-                      {getNumericValue(hotel.totalRooms, hotel.rooms)}
+                      {getRoomsCount(hotel)}
                     </TableCell>
-                    <TableCell>
-                      <StatusBadge status={hotel.status} />
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <div className='flex justify-start'>
+                        <Select
+                          value={hotel.status}
+                          onValueChange={(value) =>
+                            handleStatusChange(hotel, value)
+                          }
+                        >
+                          <SelectTrigger className='h-8 w-32 bg-[#F8F7F4] border-slate-200 text-xs font-medium'>
+                            <span>
+                              {STATUS_LABELS[hotel.status] ?? hotel.status}
+                            </span>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value='active'>Active</SelectItem>
+                            <SelectItem value='suspended'>Suspended</SelectItem>
+                            <SelectItem value='archived'>Archived</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </TableCell>
                     <TableCell className='hidden xl:table-cell text-[11px] text-muted-foreground font-medium'>
                       {hotel.created
@@ -509,7 +602,7 @@ export function PlatformHotels() {
 
       <div className='flex items-center justify-between text-xs text-muted-foreground mt-4 px-2'>
         <p>
-          Showing {filteredHotels?.length} of {hotels?.length} properties
+          Showing {visibleHotels?.length} of {hotels?.length} properties
         </p>
         <div className='flex gap-2'>
           <Button
