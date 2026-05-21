@@ -2,6 +2,7 @@ import {
   usePlatformHotels,
   useUpdatePlatformHotel,
   useDeletePlatformHotel,
+  useCreatePlatformHotel,
 } from "@/hooks/usePlatformData";
 import {
   Card,
@@ -34,10 +35,12 @@ import {
   ShieldAlert,
   Globe,
   CheckCircle2,
+  Copy,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { useNavigate, Link } from "@tanstack/react-router";
+import { api } from "@/lib/api";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,7 +66,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore";
 
@@ -93,24 +96,42 @@ type PlanFilterValue = keyof typeof PLAN_FILTER_LABELS;
 type SortValue = (typeof SORT_OPTIONS)[number]["value"];
 
 export function PlatformHotels() {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [planFilter, setPlanFilter] = useState<PlanFilterValue>("all");
+  const [sortBy, setSortBy] = useState<SortValue>("name-asc");
+
   const {
     data: hotels,
     isLoading,
     isError,
     error,
     refetch,
-  } = usePlatformHotels();
+  } = usePlatformHotels({
+    page: currentPage,
+    limit: itemsPerPage,
+    search: searchQuery,
+    plan: planFilter,
+    sortBy: sortBy,
+  });
+
+  const createMutation = useCreatePlatformHotel();
   const updateMutation = useUpdatePlatformHotel();
   const deleteMutation = useDeletePlatformHotel();
   const navigate = useNavigate();
   const impersonate = useAuthStore.getState().impersonate;
 
   const [editingHotel, setEditingHotel] = useState<any>(null);
+  const [duplicatingHotel, setDuplicatingHotel] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [planFilter, setPlanFilter] = useState<PlanFilterValue>("all");
-  const [sortBy, setSortBy] = useState<SortValue>("name-asc");
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, planFilter, sortBy]);
 
   const getTextValue = (...values: Array<string | null | undefined>) => {
     for (const value of values) {
@@ -154,6 +175,22 @@ export function PlatformHotels() {
           : getTextValue(hotel.ownerEmail, hotel.email),
     });
     setIsEditDialogOpen(true);
+  };
+
+  const handleDuplicate = async (hotel: any) => {
+    try {
+      const fullHotel = await api.get(`platform/hotels/${hotel.id}`);
+      setDuplicatingHotel({
+        ...fullHotel,
+        name: `${fullHotel.name} (Copy)`,
+        ownerEmail: `copy.${fullHotel.email}`,
+        code: `${fullHotel.subdomain || fullHotel.name.toLowerCase().replace(/ /g, "-")}-copy`,
+        password: "", // Start with empty password for admin to provide
+      });
+      setIsDuplicateDialogOpen(true);
+    } catch (error) {
+      toast.error("Failed to fetch hotel details for duplication");
+    }
   };
 
   const handleStatusChange = async (hotel: any, newStatus: string) => {
@@ -200,6 +237,35 @@ export function PlatformHotels() {
     }
   };
 
+  const handleDuplicateSubmit = async () => {
+    if (!duplicatingHotel) return;
+
+    try {
+      let planValue = duplicatingHotel.plan.toUpperCase();
+      if (planValue === "PRO") planValue = "PROFESSIONAL";
+
+      const payload = {
+        name: duplicatingHotel.name.trim(),
+        ownerName: duplicatingHotel.ownerName?.trim(),
+        ownerEmail: duplicatingHotel.ownerEmail.trim(),
+        password: duplicatingHotel.password,
+        code: duplicatingHotel.code.trim(),
+        rooms: duplicatingHotel.totalRooms || duplicatingHotel.rooms,
+        plan: planValue,
+        features: duplicatingHotel.enabledFeatures,
+        primaryColor: duplicatingHotel.branding?.primaryColor,
+        accentColor: duplicatingHotel.branding?.accentColor,
+      };
+
+      await createMutation.mutateAsync(payload);
+      toast.success("Hotel duplicated successfully");
+      setIsDuplicateDialogOpen(false);
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to duplicate hotel");
+    }
+  };
+
   const handleImpersonate = async (hotel: any) => {
     try {
       await impersonate(hotel.id);
@@ -223,45 +289,8 @@ export function PlatformHotels() {
     return typeof rooms === "number" ? rooms : 0;
   };
 
-  const visibleHotels = [...(hotels ?? [])]
-    .filter((hotel) => {
-      const query = searchQuery.trim().toLowerCase();
-      const matchesSearch =
-        !query ||
-        hotel.name?.toLowerCase().includes(query) ||
-        (hotel.ownerName ?? hotel.owner ?? "").toLowerCase().includes(query) ||
-        (hotel.email ?? hotel.ownerEmail ?? "").toLowerCase().includes(query) ||
-        String(getRoomsCount(hotel)).includes(query);
-
-      const matchesPlan =
-        planFilter === "all" ||
-        (hotel.plan ?? "").toLowerCase() === planFilter.toLowerCase();
-
-      return matchesSearch && matchesPlan;
-    })
-    .sort((left, right) => {
-      switch (sortBy) {
-        case "name-desc":
-          return right.name.localeCompare(left.name);
-        case "rooms-asc":
-          return getRoomsCount(left) - getRoomsCount(right);
-        case "rooms-desc":
-          return getRoomsCount(right) - getRoomsCount(left);
-        case "created-asc":
-          return (
-            new Date(left.created ?? 0).getTime() -
-            new Date(right.created ?? 0).getTime()
-          );
-        case "created-desc":
-          return (
-            new Date(right.created ?? 0).getTime() -
-            new Date(left.created ?? 0).getTime()
-          );
-        case "name-asc":
-        default:
-          return left.name.localeCompare(right.name);
-      }
-    });
+  const totalPages = hotels?.totalPages ?? 0;
+  const visibleHotels = hotels?.items ?? [];
 
   return (
     <div className='space-y-8'>
@@ -546,6 +575,12 @@ export function PlatformHotels() {
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className='gap-2'
+                              onClick={() => handleDuplicate(hotel)}
+                            >
+                              <Copy className='w-4 h-4' /> Duplicate Property
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className='gap-2'
                               onClick={() => handleImpersonate(hotel)}
                             >
                               <ShieldAlert className='w-4 h-4' /> Impersonate
@@ -600,28 +635,67 @@ export function PlatformHotels() {
         </CardContent>
       </Card>
 
-      <div className='flex items-center justify-between text-xs text-muted-foreground mt-4 px-2'>
-        <p>
-          Showing {visibleHotels?.length} of {hotels?.length} properties
-        </p>
-        <div className='flex gap-2'>
+      <div className='flex flex-col items-center justify-center gap-4 mt-8'>
+        <div className='flex items-center justify-center gap-2'>
           <Button
             variant='outline'
             size='sm'
-            disabled
-            className='h-8 border-slate-200'
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className='h-9 px-4 border-slate-200 text-[#0F1B2D] hover:bg-[#0F1B2D] hover:text-white transition-colors'
           >
             Previous
           </Button>
+
+          <div className='hidden md:flex items-center gap-1'>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((page) => {
+                // Show first, last, current, and pages around current
+                return (
+                  page === 1 ||
+                  page === totalPages ||
+                  Math.abs(page - currentPage) <= 1
+                );
+              })
+              .map((page, i, array) => (
+                <React.Fragment key={page}>
+                  {i > 0 && array[i - 1] !== page - 1 && (
+                    <span className='px-2 text-slate-400'>...</span>
+                  )}
+                  <Button
+                    variant={currentPage === page ? "default" : "outline"}
+                    size='sm'
+                    onClick={() => setCurrentPage(page)}
+                    className={cn(
+                      "h-9 w-9 p-0 font-medium transition-all",
+                      currentPage === page
+                        ? "bg-[#0F1B2D] text-white hover:bg-[#1a2a3a]"
+                        : "border-slate-200 text-[#0F1B2D] hover:border-[#0F1B2D] hover:bg-[#0F1B2D]/5",
+                    )}
+                  >
+                    {page}
+                  </Button>
+                </React.Fragment>
+              ))}
+          </div>
+
+          <div className='md:hidden flex items-center px-4 font-medium text-sm text-[#0F1B2D]'>
+            Page {currentPage} of {totalPages || 1}
+          </div>
+
           <Button
             variant='outline'
             size='sm'
-            disabled
-            className='h-8 border-slate-200'
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages || totalPages === 0}
+            className='h-9 px-4 border-slate-200 text-[#0F1B2D] hover:bg-[#0F1B2D] hover:text-white transition-colors'
           >
             Next
           </Button>
         </div>
+        <p className='text-[10px] text-muted-foreground uppercase tracking-wider font-bold'>
+          Showing {visibleHotels?.length} of {hotels?.total ?? 0} properties
+        </p>
       </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -729,6 +803,137 @@ export function PlatformHotels() {
                 <Loader2 className='w-4 h-4 mr-2 animate-spin' />
               ) : (
                 "Apply Updates"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isDuplicateDialogOpen}
+        onOpenChange={setIsDuplicateDialogOpen}
+      >
+        <DialogContent className='max-w-md'>
+          <DialogHeader>
+            <DialogTitle className='font-serif text-2xl'>
+              Duplicate Property
+            </DialogTitle>
+            <DialogDescription>
+              Create a new property based on "{duplicatingHotel?.name}". Unique
+              fields must be updated.
+            </DialogDescription>
+          </DialogHeader>
+
+          {duplicatingHotel && (
+            <div className='space-y-4 py-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='dup-name'>New Hotel Name</Label>
+                <Input
+                  id='dup-name'
+                  value={duplicatingHotel.name}
+                  onChange={(e) =>
+                    setDuplicatingHotel({
+                      ...duplicatingHotel,
+                      name: e.target.value,
+                    })
+                  }
+                  placeholder='Grand Peninsula (Copy)'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='dup-code'>New Hotel Code (Slug)</Label>
+                <Input
+                  id='dup-code'
+                  value={duplicatingHotel.code}
+                  onChange={(e) =>
+                    setDuplicatingHotel({
+                      ...duplicatingHotel,
+                      code: e.target.value,
+                    })
+                  }
+                  placeholder='gp-copy'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='dup-owner-email'>New Owner Email</Label>
+                <Input
+                  id='dup-owner-email'
+                  type='email'
+                  value={duplicatingHotel.ownerEmail}
+                  onChange={(e) =>
+                    setDuplicatingHotel({
+                      ...duplicatingHotel,
+                      ownerEmail: e.target.value,
+                    })
+                  }
+                  placeholder='owner@newhotel.com'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='dup-owner-name'>New Owner Name</Label>
+                <Input
+                  id='dup-owner-name'
+                  value={duplicatingHotel.ownerName || ""}
+                  onChange={(e) =>
+                    setDuplicatingHotel({
+                      ...duplicatingHotel,
+                      ownerName: e.target.value,
+                    })
+                  }
+                  placeholder='John Doe'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='dup-password'>Temporary Password</Label>
+                <Input
+                  id='dup-password'
+                  type='password'
+                  value={duplicatingHotel.password}
+                  onChange={(e) =>
+                    setDuplicatingHotel({
+                      ...duplicatingHotel,
+                      password: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='dup-plan'>Subscription Plan</Label>
+                <Select
+                  value={duplicatingHotel.plan}
+                  onValueChange={(val) =>
+                    setDuplicatingHotel({ ...duplicatingHotel, plan: val })
+                  }
+                >
+                  <SelectTrigger id='dup-plan'>
+                    <SelectValue placeholder='Select plan' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='Basic'>Basic</SelectItem>
+                    <SelectItem value='Pro'>Pro</SelectItem>
+                    <SelectItem value='Enterprise'>Enterprise</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant='ghost'
+              onClick={() => setIsDuplicateDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className='bg-[#0F1B2D] hover:bg-[#1a2a3a]'
+              onClick={handleDuplicateSubmit}
+              disabled={createMutation.isPending}
+            >
+              {createMutation.isPending ? (
+                <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+              ) : (
+                "Duplicate Now"
               )}
             </Button>
           </DialogFooter>

@@ -123,11 +123,32 @@ export function usePlatformBillingReport() {
 // Hotels
 // ──────────────────────────────────────────────
 
-export function usePlatformHotels() {
-  return useQuery<any[]>({
-    queryKey: ["platform-hotels"],
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export function usePlatformHotels(options: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  plan?: string;
+  sortBy?: string;
+} = {}) {
+  return useQuery<PaginatedResult<any>>({
+    queryKey: ["platform-hotels", options],
     queryFn: async () => {
-      return api.get("platform/hotels");
+      const params = new URLSearchParams();
+      if (options.page) params.set("page", options.page.toString());
+      if (options.limit) params.set("limit", options.limit.toString());
+      if (options.search) params.set("search", options.search);
+      if (options.plan) params.set("plan", options.plan);
+      if (options.sortBy) params.set("sortBy", options.sortBy);
+      const qs = params.toString();
+      return api.get(`platform/hotels${qs ? `?${qs}` : ""}`);
     },
   });
 }
