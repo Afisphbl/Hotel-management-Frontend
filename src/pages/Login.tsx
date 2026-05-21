@@ -76,71 +76,64 @@ export function LoginPage() {
     {
       category: "Platform Control Board",
       items: [
-        {
-          name: "Super Admin",
-          email: "superadmin@platform.com",
-          pass: "Admin123!",
-          hotelId: "",
-        },
-        {
-          name: "Platform Admin",
-          email: "admin@platform.com",
-          pass: "Admin123!",
-          hotelId: "",
-        },
+        { name: "System Admin", email: "admin@platform.com", pass: "Admin123!" },
+        { name: "Hotel Admin", email: "admin@hotels.com", pass: "Admin123!" },
       ],
     },
     {
-      category: "The Grand Budapest Hotel (Tenant Panel)",
+      category: "The Grand Budapest Hotel",
+      hotelId: "f4dfac16-a26b-41c8-ab62-991ea7f703f5",
       items: [
-        {
-          name: "Hotel Owner",
-          email: "hotel_owner@budapest.com",
-          pass: "Test123!",
-          hotelId: "ba639778-b602-4600-b44f-8996f69e90fe",
-        },
-        {
-          name: "Hotel Manager",
-          email: "hotel_manager@budapest.com",
-          pass: "Test123!",
-          hotelId: "ba639778-b602-4600-b44f-8996f69e90fe",
-        },
-        {
-          name: "Revenue Manager",
-          email: "revenue_manager@budapest.com",
-          pass: "Test123!",
-          hotelId: "ba639778-b602-4600-b44f-8996f69e90fe",
-        },
-        {
-          name: "Front Desk Staff",
-          email: "front_desk@budapest.com",
-          pass: "Test123!",
-          hotelId: "ba639778-b602-4600-b44f-8996f69e90fe",
-        },
-        {
-          name: "Accountant Desk",
-          email: "accountant@budapest.com",
-          pass: "Test123!",
-          hotelId: "ba639778-b602-4600-b44f-8996f69e90fe",
-        },
-        {
-          name: "HK Supervisor",
-          email: "housekeeping_supervisor@budapest.com",
-          pass: "Test123!",
-          hotelId: "ba639778-b602-4600-b44f-8996f69e90fe",
-        },
-        {
-          name: "Housekeeper Staff",
-          email: "housekeeping_staff@budapest.com",
-          pass: "Test123!",
-          hotelId: "ba639778-b602-4600-b44f-8996f69e90fe",
-        },
-        {
-          name: "Maintenance Staff",
-          email: "maintenance_staff@budapest.com",
-          pass: "Test123!",
-          hotelId: "ba639778-b602-4600-b44f-8996f69e90fe",
-        },
+        { name: "Owner", email: "hotel_owner@budapest.com", pass: "Admin123!" },
+        { name: "Manager", email: "hotel_manager@budapest.com", pass: "Admin123!" },
+        { name: "Revenue Mgr", email: "revenue_manager@budapest.com", pass: "Admin123!" },
+        { name: "Front Desk", email: "front_desk@budapest.com", pass: "Admin123!" },
+        { name: "Accountant", email: "accountant@budapest.com", pass: "Admin123!" },
+        { name: "HK Supervisor", email: "housekeeping_supervisor@budapest.com", pass: "Admin123!" },
+        { name: "Housekeeper", email: "housekeeping_staff@budapest.com", pass: "Admin123!" },
+        { name: "Maintenance", email: "maintenance_staff@budapest.com", pass: "Admin123!" },
+      ],
+    },
+    {
+      category: "Seaside Resort & Spa",
+      hotelId: "e55c4324-7483-4986-acdf-a85b7d517f9d",
+      items: [
+        { name: "Owner", email: "hotel_owner@seaside.com", pass: "Admin123!" },
+        { name: "Manager", email: "hotel_manager@seaside.com", pass: "Admin123!" },
+        { name: "Revenue Mgr", email: "revenue_manager@seaside.com", pass: "Admin123!" },
+        { name: "Front Desk", email: "front_desk@seaside.com", pass: "Admin123!" },
+        { name: "Accountant", email: "accountant@seaside.com", pass: "Admin123!" },
+        { name: "HK Supervisor", email: "housekeeping_supervisor@seaside.com", pass: "Admin123!" },
+        { name: "Housekeeper", email: "housekeeping_staff@seaside.com", pass: "Admin123!" },
+        { name: "Maintenance", email: "maintenance_staff@seaside.com", pass: "Admin123!" },
+      ],
+    },
+    {
+      category: "Mountain View Lodge",
+      hotelId: "ba1c95ad-921b-4965-bd1f-13c64e151ada",
+      items: [
+        { name: "Owner", email: "hotel_owner@mountain.com", pass: "Admin123!" },
+        { name: "Manager", email: "hotel_manager@mountain.com", pass: "Admin123!" },
+        { name: "Revenue Mgr", email: "revenue_manager@mountain.com", pass: "Admin123!" },
+        { name: "Front Desk", email: "front_desk@mountain.com", pass: "Admin123!" },
+        { name: "Accountant", email: "accountant@mountain.com", pass: "Admin123!" },
+        { name: "HK Supervisor", email: "housekeeping_supervisor@mountain.com", pass: "Admin123!" },
+        { name: "Housekeeper", email: "housekeeping_staff@mountain.com", pass: "Admin123!" },
+        { name: "Maintenance", email: "maintenance_staff@mountain.com", pass: "Admin123!" },
+      ],
+    },
+    {
+      category: "City Center Business Hotel",
+      hotelId: "8252c54a-78ce-491b-98e6-f6c8b856319c",
+      items: [
+        { name: "Owner", email: "hotel_owner@business.com", pass: "Admin123!" },
+        { name: "Manager", email: "hotel_manager@business.com", pass: "Admin123!" },
+        { name: "Revenue Mgr", email: "revenue_manager@business.com", pass: "Admin123!" },
+        { name: "Front Desk", email: "front_desk@business.com", pass: "Admin123!" },
+        { name: "Accountant", email: "accountant@business.com", pass: "Admin123!" },
+        { name: "HK Supervisor", email: "housekeeping_supervisor@business.com", pass: "Admin123!" },
+        { name: "Housekeeper", email: "housekeeping_staff@business.com", pass: "Admin123!" },
+        { name: "Maintenance", email: "maintenance_staff@business.com", pass: "Admin123!" },
       ],
     },
   ];
@@ -182,7 +175,7 @@ export function LoginPage() {
                     size='sm'
                     className='text-[10px] border-[#0F1B2D]/10 bg-white text-[#0F1B2D] hover:bg-[#0F1B2D] hover:text-white transition-all py-1 px-2.5 h-auto rounded-[3px] font-semibold'
                     onClick={() =>
-                      handleQuickFill(item.email, item.pass, item.hotelId)
+                      handleQuickFill(item.email, item.pass, group.hotelId ?? "")
                     }
                   >
                     {item.name}
