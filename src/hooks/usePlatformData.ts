@@ -36,22 +36,23 @@ export function usePlatformOccupancyData() {
 // Hotels & Tenants
 // ──────────────────────────────────────────────
 
-export function usePlatformHotels(params: {
-  page: number;
-  limit: number;
+export function usePlatformHotels(params?: {
+  page?: number;
+  limit?: number;
   search?: string;
   plan?: string;
   sortBy?: string;
 }) {
+  const { page = 1, limit = 15, search, plan, sortBy } = params ?? {};
   return useQuery({
     queryKey: ["platform-hotels", params],
     queryFn: async () => {
       const searchParams = new URLSearchParams();
-      searchParams.append("page", params.page.toString());
-      searchParams.append("limit", params.limit.toString());
-      if (params.search) searchParams.append("search", params.search);
-      if (params.plan) searchParams.append("plan", params.plan);
-      if (params.sortBy) searchParams.append("sortBy", params.sortBy);
+      searchParams.append("page", page.toString());
+      searchParams.append("limit", limit.toString());
+      if (search) searchParams.append("search", search);
+      if (plan) searchParams.append("plan", plan);
+      if (sortBy) searchParams.append("sortBy", sortBy);
 
       return api.get(`platform/hotels?${searchParams.toString()}`);
     },
@@ -63,6 +64,52 @@ export function usePlatformSubscriptions() {
     queryKey: ["platform-subscriptions"],
     queryFn: async () => {
       return api.get("platform/subscriptions");
+    },
+  });
+}
+
+export function useTopSubscriptions() {
+  return useQuery({
+    queryKey: ["top-subscriptions"],
+    queryFn: async () => {
+      return api.get("platform/subscriptions/top");
+    },
+  });
+}
+
+export function useCreatePlatformSubscription() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: any) => {
+      return api.post("platform/subscriptions", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform-subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["top-subscriptions"] });
+    },
+  });
+}
+
+export function useUpdatePlatformSubscription() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      return api.patch(`platform/subscriptions/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform-subscriptions"] });
+    },
+  });
+}
+
+export function useDeletePlatformSubscription() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      return api.delete(`platform/subscriptions/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform-subscriptions"] });
     },
   });
 }
