@@ -93,6 +93,8 @@ export function PlatformSubscriptions() {
       await updateMutation.mutateAsync({
         id: editingPlan.id,
         data: {
+          name: editingPlan.name,
+          plan: editingPlan.name,
           price: Number(editingPlan.price),
           features: { enabledFeatures: editingPlan.features.split(',').map((f: string) => f.trim()).filter(Boolean) },
         },
@@ -132,7 +134,11 @@ export function PlatformSubscriptions() {
     }
   };
 
-  const topHotels = Array.isArray(topSubs) ? topSubs : topSubs?.items ?? topSubs ?? [];
+  const topHotels = Array.isArray(topSubs)
+    ? topSubs
+    : Array.isArray(topSubs?.items)
+      ? topSubs.items
+      : [];
 
   return (
     <div className="space-y-6">
