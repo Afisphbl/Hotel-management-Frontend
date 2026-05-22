@@ -9,171 +9,62 @@ export function usePlatformKPIs() {
   return useQuery({
     queryKey: ["platform-kpis"],
     queryFn: async () => {
-      const [global, revenueSummary, mrr] = await Promise.all([
-        api.get("platform/analytics/global"),
-        api.get("platform/analytics/revenue-summary").catch(() => null),
-        api.get("platform/analytics/mrr").catch(() => null),
-      ]);
-      return {
-        totalHotels: revenueSummary?.totalHotels ?? global?.totalHotels ?? 0,
-        activeSubscriptions:
-          revenueSummary?.activeSubscriptions ?? mrr?.totalSubscriptions ?? 0,
-        mrr: revenueSummary?.mrr ?? mrr?.totalMRR ?? 0,
-        totalBookings: 0,
-        activeUsers: global?.totalUsers ?? 0,
-        mrrGrowth: mrr?.mrrGrowth ?? 0,
-        hotelsGrowth: 0,
-      };
+      return api.get("platform/analytics/kpis");
     },
   });
 }
 
-export function usePlatformRevenueChart() {
+export function usePlatformRevenueData() {
   return useQuery({
-    queryKey: ["platform-revenue-chart"],
+    queryKey: ["platform-revenue"],
     queryFn: async () => {
-      return api.get("platform/analytics/revenue-chart");
+      return api.get("platform/analytics/revenue");
     },
   });
 }
 
-export function usePlatformHotelsByTier() {
+export function usePlatformOccupancyData() {
   return useQuery({
-    queryKey: ["platform-hotels-by-tier"],
+    queryKey: ["platform-occupancy"],
     queryFn: async () => {
-      return api.get("platform/analytics/hotels-by-tier");
-    },
-  });
-}
-
-export function usePlatformAuditLogs() {
-  return useQuery({
-    queryKey: ["platform-audit-logs"],
-    queryFn: async () => {
-      return api.get("platform/analytics/audit-logs");
-    },
-  });
-}
-
-export function usePlatformRevenueSummary() {
-  return useQuery({
-    queryKey: ["platform-revenue-summary"],
-    queryFn: async () => {
-      return api.get("platform/analytics/revenue-summary");
-    },
-  });
-}
-
-export function usePlatformMrr() {
-  return useQuery({
-    queryKey: ["platform-mrr"],
-    queryFn: async () => {
-      return api.get("platform/analytics/mrr");
-    },
-  });
-}
-
-export function usePlatformChurn() {
-  return useQuery({
-    queryKey: ["platform-churn"],
-    queryFn: async () => {
-      return api.get("platform/analytics/churn");
-    },
-  });
-}
-
-export function usePlatformFinancialReport(
-  startDate?: string,
-  endDate?: string,
-) {
-  return useQuery({
-    queryKey: ["platform-financial-report", startDate, endDate],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (startDate) params.set("startDate", startDate);
-      if (endDate) params.set("endDate", endDate);
-      const qs = params.toString();
-      return api.get(
-        `platform/analytics/financial-report${qs ? `?${qs}` : ""}`,
-      );
-    },
-  });
-}
-
-export function usePlatformProjections(months?: number) {
-  return useQuery({
-    queryKey: ["platform-projections", months],
-    queryFn: async () => {
-      const qs = months ? `?months=${months}` : "";
-      return api.get(`platform/analytics/projections${qs}`);
-    },
-  });
-}
-
-export function usePlatformBillingReport() {
-  return useQuery({
-    queryKey: ["platform-billing-report"],
-    queryFn: async () => {
-      return api.get("platform/analytics/billing-report");
+      return api.get("platform/analytics/occupancy");
     },
   });
 }
 
 // ──────────────────────────────────────────────
-// Hotels
+// Hotels & Tenants
 // ──────────────────────────────────────────────
 
-export interface PaginatedResult<T> {
-  items: T[];
-  total: number;
+export function usePlatformHotels(params: {
   page: number;
   limit: number;
-  totalPages: number;
-}
-
-export function usePlatformHotels(options: {
-  page?: number;
-  limit?: number;
   search?: string;
   plan?: string;
   sortBy?: string;
-} = {}) {
-  return useQuery<PaginatedResult<any>>({
-    queryKey: ["platform-hotels", options],
+}) {
+  return useQuery({
+    queryKey: ["platform-hotels", params],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (options.page) params.set("page", options.page.toString());
-      if (options.limit) params.set("limit", options.limit.toString());
-      if (options.search) params.set("search", options.search);
-      if (options.plan) params.set("plan", options.plan);
-      if (options.sortBy) params.set("sortBy", options.sortBy);
-      const qs = params.toString();
-      return api.get(`platform/hotels${qs ? `?${qs}` : ""}`);
+      const searchParams = new URLSearchParams();
+      searchParams.append("page", params.page.toString());
+      searchParams.append("limit", params.limit.toString());
+      if (params.search) searchParams.append("search", params.search);
+      if (params.plan) searchParams.append("plan", params.plan);
+      if (params.sortBy) searchParams.append("sortBy", params.sortBy);
+
+      return api.get(`platform/hotels?${searchParams.toString()}`);
     },
   });
 }
 
 export function usePlatformHotel(id: string) {
-  return useQuery<any>({
+  return useQuery({
     queryKey: ["platform-hotel", id],
     queryFn: async () => {
       return api.get(`platform/hotels/${id}`);
     },
-  });
-}
-
-export function useUpdatePlatformHotel() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      return api.patch(`platform/hotels/${id}`, data);
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["platform-hotels"] });
-      queryClient.invalidateQueries({
-        queryKey: ["platform-hotel", variables.id],
-      });
-    },
+    enabled: !!id,
   });
 }
 
@@ -189,20 +80,175 @@ export function useCreatePlatformHotel() {
   });
 }
 
-export function useDeletePlatformHotel() {
+export function useUpdatePlatformHotel() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      return api.delete(`platform/hotels/${id}`);
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      return api.patch(`platform/hotels/${id}`, data);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["platform-hotel", variables.id],
+      });
       queryClient.invalidateQueries({ queryKey: ["platform-hotels"] });
     },
   });
 }
 
 // ──────────────────────────────────────────────
-// Hotel Details – Domains, Branding, Security, etc.
+// Users & Access
+// ──────────────────────────────────────────────
+
+export function usePlatformUsers(params: {
+  page: number;
+  limit: number;
+  search?: string;
+}) {
+  return useQuery({
+    queryKey: ["platform-users", params],
+    queryFn: async () => {
+      const searchParams = new URLSearchParams();
+      searchParams.append("page", params.page.toString());
+      searchParams.append("limit", params.limit.toString());
+      if (params.search) searchParams.append("search", params.search);
+
+      return api.get(`platform/users?${searchParams.toString()}`);
+    },
+  });
+}
+
+export function useUpdatePlatformUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      return api.patch(`platform/users/${id}`, data);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["platform-users"] });
+      queryClient.invalidateQueries({ queryKey: ["hotel-users"] });
+    },
+  });
+}
+
+export function useSuspendPlatformUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason?: string }) => {
+      return api.post(`platform/users/${id}/suspend`, { reason });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform-users"] });
+      queryClient.invalidateQueries({ queryKey: ["hotel-users"] });
+    },
+  });
+}
+
+export function useActivatePlatformUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      return api.post(`platform/users/${id}/activate`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform-users"] });
+      queryClient.invalidateQueries({ queryKey: ["hotel-users"] });
+    },
+  });
+}
+
+export function useSendPasswordResetLink() {
+  return useMutation({
+    mutationFn: async (id: string) => {
+      return api.post(`platform/users/${id}/send-reset-link`);
+    },
+  });
+}
+
+export function useTransferOwnership() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      hotelId,
+      newOwnerId,
+    }: {
+      hotelId: string;
+      newOwnerId: string;
+    }) => {
+      return api.post(`platform/hotels/${hotelId}/transfer-ownership`, {
+        newOwnerId,
+      });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["platform-hotel", variables.hotelId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["hotel-users", variables.hotelId],
+      });
+    },
+  });
+}
+
+export function useCreateTenantUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ hotelId, data }: { hotelId: string; data: any }) => {
+      return api.post(`platform/hotels/${hotelId}/users`, data);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["hotel-users", variables.hotelId],
+      });
+    },
+  });
+}
+
+export function useRemoveTenantUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      hotelId,
+      userId,
+    }: {
+      hotelId: string;
+      userId: string;
+    }) => {
+      return api.delete(`platform/hotels/${hotelId}/users/${userId}`);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["hotel-users", variables.hotelId],
+      });
+    },
+  });
+}
+
+// ──────────────────────────────────────────────
+// Audit Logs
+// ──────────────────────────────────────────────
+
+export function usePlatformAuditLogs(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  hotelId?: string;
+}) {
+  return useQuery({
+    queryKey: ["platform-audit-logs", params],
+    queryFn: async () => {
+      const searchParams = new URLSearchParams();
+      if (params?.page) searchParams.append("page", params.page.toString());
+      if (params?.limit) searchParams.append("limit", params.limit.toString());
+      if (params?.search) searchParams.append("search", params.search);
+      if (params?.hotelId) searchParams.append("hotelId", params.hotelId);
+
+      return api.get(`platform/audit-logs?${searchParams.toString()}`);
+    },
+  });
+}
+
+// ──────────────────────────────────────────────
+// Tenant Specific Management
 // ──────────────────────────────────────────────
 
 export function useTenantDomains(hotelId: string) {
@@ -210,36 +256,12 @@ export function useTenantDomains(hotelId: string) {
     queryKey: ["tenant-domains", hotelId],
     queryFn: async () => {
       const hotel = await api.get(`platform/hotels/${hotelId}`);
-      const subdomain =
-        hotel.subdomain ||
-        hotel.name?.toLowerCase().replace(/ /g, "-") ||
-        "tenant";
-      const customDomain = hotel.customDomain || null;
       return {
-        subdomain,
-        customDomain,
-        sslStatus: hotel.sslStatus || "active",
-        verificationStatus: hotel.verificationStatus || "verified",
-        dnsRecords: hotel.dnsRecords || [
-          {
-            type: "CNAME",
-            host: "stay",
-            value: "hotels.pms.cloud",
-            status: "verified",
-          },
-          {
-            type: "TXT",
-            host: "@",
-            value: `pms-verification=${(hotel.id || "").slice(0, 8)}`,
-            status: "verified",
-          },
-        ],
-        urls: {
-          dashboard: `https://${subdomain}.pms.cloud`,
-          staffLogin: `https://${subdomain}.pms.cloud/auth/login`,
-          guestPortal: `https://${subdomain}.pms.cloud/guest`,
-          bookingEngine: `https://book.${subdomain}.com`,
-        },
+        subdomain: hotel.subdomain,
+        customDomain: hotel.customDomain || null,
+        status: hotel.domainStatus || "active",
+        sslStatus: hotel.sslStatus || "valid",
+        sslExpires: hotel.sslExpires || null,
       };
     },
   });
@@ -308,13 +330,13 @@ export function useTenantInfrastructure(hotelId: string) {
         api.get("platform/monitoring/health/detailed").catch(() => null),
       ]);
       return {
-        healthScore: health?.overallScore ?? hotel.healthScore ?? 98,
-        uptime: health?.uptime ?? hotel.uptime ?? "99.99%",
+        healthScore: health?.overallScore ?? hotel.healthScore ?? null,
+        uptime: health?.uptime ?? hotel.uptime ?? null,
         sslExpires:
           hotel.sslExpires ||
           new Date(Date.now() + 180 * 86400000).toISOString(),
-        bandwidth: hotel.bandwidth ?? "45.2 GB",
-        apiRequests: hotel.apiRequests ?? "840k",
+        bandwidth: hotel.bandwidth || null,
+        apiRequests: hotel.apiRequests || null,
         storageLimit: 50,
         storageUsed: hotel.storageUsedMb ? hotel.storageUsedMb / 1024 : null,
         userLimit: 50,
@@ -349,6 +371,33 @@ export function useHotelUsers(hotelId: string) {
         });
       }
       return result;
+    },
+  });
+}
+
+export function useToggleHotelFeature() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      hotelId,
+      featureId,
+      enabled,
+    }: {
+      hotelId: string;
+      featureId: string;
+      enabled: boolean;
+    }) => {
+      return api.post(`platform/hotels/${hotelId}/features/${featureId}/toggle`, {
+        enabled,
+      });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["hotel-features", variables.hotelId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["platform-hotel", variables.hotelId],
+      });
     },
   });
 }
@@ -412,333 +461,34 @@ export function useHotelUsageMetrics(hotelId: string) {
         api.get(`platform/quota/snapshot/${hotelId}`).catch(() => null),
       ]);
       return {
-        bookings: quota?.bookings ||
-          hotel.bookings || [120, 145, 132, 168, 154, 182],
-        revenue:
-          quota?.revenue ||
-          Array.from({ length: 6 }).map(() => hotel.monthlyRevenue || 299),
-        occupancy: quota?.occupancy ?? hotel.currentOccupancy ?? 78,
+        bookings: quota?.bookings || hotel.bookings || null,
+        revenue: quota?.revenue || hotel.revenue || null,
+        occupancy: quota?.occupancy ?? hotel.currentOccupancy ?? null,
         storage: quota?.storageUsedMb
           ? quota.storageUsedMb / 1024
-          : hotel.storageUsedMb
-            ? hotel.storageUsedMb / 1024
-            : null,
-        apiCalls: quota?.apiCalls || hotel.apiCalls || 4500,
-        activeUsers: quota?.activeUsers ?? hotel.activeUsers ?? null,
+          : hotel.storageUsedMb || null,
       };
     },
   });
 }
 
-// ──────────────────────────────────────────────
-// Subscriptions & Plans
-// ──────────────────────────────────────────────
-
-export function usePlatformSubscriptions() {
+export function useHotelUsageMetricsExtended(hotelId: string) {
   return useQuery({
-    queryKey: ["platform-subscriptions"],
+    queryKey: ["hotel-metrics-extended", hotelId],
     queryFn: async () => {
-      return api.get("platform/subscriptions/plans");
-    },
-  });
-}
-
-// ──────────────────────────────────────────────
-// Feature Flags
-// ──────────────────────────────────────────────
-
-export function usePlatformGlobalFeatureFlags() {
-  return useQuery({
-    queryKey: ["platform-global-features"],
-    queryFn: async () => {
-      return api.get("platform/feature-flags");
-    },
-  });
-}
-
-// ──────────────────────────────────────────────
-// Roles & Permissions
-// ──────────────────────────────────────────────
-
-export function usePlatformRoles() {
-  return useQuery({
-    queryKey: ["platform-roles"],
-    queryFn: async () => {
-      return api.get("platform/permissions/predefined-roles");
-    },
-  });
-}
-
-export function usePlatformPermissions() {
-  return useQuery({
-    queryKey: ["platform-permissions"],
-    queryFn: async () => {
-      return api.get("platform/permissions");
-    },
-  });
-}
-
-// ──────────────────────────────────────────────
-// Settings (global platform config)
-// ──────────────────────────────────────────────
-
-export function usePlatformSettings() {
-  return useQuery({
-    queryKey: ["platform-settings"],
-    queryFn: async () => {
-      return api.get("platform/settings");
-    },
-  });
-}
-
-export function useUpdatePlatformSettings() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (data: {
-      key: string;
-      value: any;
-      category?: string;
-    }) => {
-      return api.post("platform/settings", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["platform-settings"] });
-    },
-  });
-}
-
-// ──────────────────────────────────────────────
-// SMTP Config
-// ──────────────────────────────────────────────
-
-export function usePlatformConfigSmtp() {
-  return useQuery({
-    queryKey: ["platform-config-smtp"],
-    queryFn: async () => {
-      return api.get("platform/config/smtp");
-    },
-  });
-}
-
-export function useUpdatePlatformConfigSmtp() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (data: any) => {
-      return api.post("platform/config/smtp", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["platform-config-smtp"] });
-    },
-  });
-}
-
-// ──────────────────────────────────────────────
-// Payment Gateway Config
-// ──────────────────────────────────────────────
-
-export function usePlatformPaymentGateway() {
-  return useQuery({
-    queryKey: ["platform-payment-gateway"],
-    queryFn: async () => {
-      return api.get("platform/config/payment-gateway");
-    },
-  });
-}
-
-export function useUpdatePlatformPaymentGateway() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (data: any) => {
-      return api.post("platform/config/payment-gateway", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["platform-payment-gateway"] });
-    },
-  });
-}
-
-// ──────────────────────────────────────────────
-// Password Policy / Compliance
-// ──────────────────────────────────────────────
-
-export function usePlatformPasswordPolicy() {
-  return useQuery({
-    queryKey: ["platform-password-policy"],
-    queryFn: async () => {
-      return api.get("platform/compliance/password-policy");
-    },
-  });
-}
-
-export function useUpdatePlatformPasswordPolicy() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (data: any) => {
-      return api.patch("platform/compliance/password-policy", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["platform-password-policy"] });
-    },
-  });
-}
-
-// ──────────────────────────────────────────────
-// Monitoring & Health
-// ──────────────────────────────────────────────
-
-export function usePlatformMonitoringHealth() {
-  return useQuery({
-    queryKey: ["platform-monitoring-health"],
-    queryFn: async () => {
-      return api.get("platform/monitoring/health");
-    },
-    refetchInterval: 30000,
-  });
-}
-
-export function usePlatformMonitoringSystem() {
-  return useQuery({
-    queryKey: ["platform-monitoring-system"],
-    queryFn: async () => {
-      return api.get("platform/monitoring/system");
-    },
-    refetchInterval: 60000,
-  });
-}
-
-export function usePlatformMonitoringMetrics() {
-  return useQuery({
-    queryKey: ["platform-monitoring-metrics"],
-    queryFn: async () => {
-      return api.get("platform/monitoring/metrics");
-    },
-    refetchInterval: 60000,
-  });
-}
-
-export function usePlatformUptime(hours?: number) {
-  return useQuery({
-    queryKey: ["platform-uptime", hours],
-    queryFn: async () => {
-      const qs = hours ? `?hours=${hours}` : "";
-      return api.get(`platform/monitoring/uptime${qs}`);
-    },
-    refetchInterval: 60000,
-  });
-}
-
-// ──────────────────────────────────────────────
-// Tax Rules
-// ──────────────────────────────────────────────
-
-export function usePlatformTaxRules() {
-  return useQuery({
-    queryKey: ["platform-tax-rules"],
-    queryFn: async () => {
-      return api.get("platform/tax-rules");
-    },
-  });
-}
-
-// ──────────────────────────────────────────────
-// User Management
-// ──────────────────────────────────────────────
-
-export function usePlatformUsers() {
-  return useQuery({
-    queryKey: ["platform-users"],
-    queryFn: async () => {
-      return api.get("platform/users");
-    },
-  });
-}
-
-export function useUpdatePlatformUser() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      return api.patch(`platform/users/${id}`, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["platform-users"] });
-    },
-  });
-}
-
-export function useSuspendPlatformUser() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, reason }: { id: string; reason?: string }) => {
-      return api.post(`platform/users/${id}/suspend`, { reason });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["platform-users"] });
-    },
-  });
-}
-
-export function useActivatePlatformUser() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      return api.post(`platform/users/${id}/activate`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["platform-users"] });
-    },
-  });
-}
-
-export function useResetUserPassword() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({
-      id,
-      currentPassword,
-      newPassword,
-    }: {
-      id: string;
-      currentPassword: string;
-      newPassword: string;
-    }) => {
-      return api.post(`platform/users/${id}/change-password`, {
-        currentPassword,
-        newPassword,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["platform-users"] });
-    },
-  });
-}
-
-// ──────────────────────────────────────────────
-// Tenant Quota & Utilization
-// ──────────────────────────────────────────────
-
-export function useTenantQuotaSnapshot(hotelId: string) {
-  return useQuery({
-    queryKey: ["tenant-quota-snapshot", hotelId],
-    queryFn: async () => {
-      return api.get(`platform/quota/snapshot/${hotelId}`);
-    },
-  });
-}
-
-export function useTenantQuotaUtilization(hotelId: string) {
-  return useQuery({
-    queryKey: ["tenant-quota-utilization", hotelId],
-    queryFn: async () => {
-      return api.get(`platform/quota/utilization/${hotelId}`);
-    },
-  });
-}
-
-export function useTenantQuotaOverage(hotelId: string) {
-  return useQuery({
-    queryKey: ["tenant-quota-overage", hotelId],
-    queryFn: async () => {
-      return api.get(`platform/quota/overage/${hotelId}`);
+      const [hotel, quota] = await Promise.all([
+        api.get(`platform/hotels/${hotelId}`),
+        api.get(`platform/quota/snapshot/${hotelId}`).catch(() => null),
+      ]);
+      return {
+        storageUsed: quota?.storageUsedMb
+          ? quota.storageUsedMb / 1024
+          : hotel.storageUsedMb
+            ? hotel.storageUsedMb / 1024
+            : null,
+        apiCalls: quota?.apiCalls || hotel.apiCalls || null,
+        activeUsers: quota?.activeUsers ?? hotel.activeUsers ?? null,
+      };
     },
   });
 }

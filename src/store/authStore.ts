@@ -61,6 +61,7 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       token: null,
+      originalToken: null,
       login: async (email, password, hotelId) => {
         try {
           console.log(`Connecting to backend login API for ${email}...`);
@@ -96,7 +97,7 @@ export const useAuthStore = create<AuthState>()(
                   ] ||
                   [],
               };
-              set({ user: apiUser, token: response.access_token });
+              set({ user: apiUser, token: response.access_token, originalToken: null });
               console.log(
                 "Successfully logged in against Live API and synced state!",
               );
@@ -112,9 +113,10 @@ export const useAuthStore = create<AuthState>()(
           );
         }
       },
-      logout: () => set({ user: null, token: null }),
+      logout: () => set({ user: null, token: null, originalToken: null }),
       impersonate: async (hotelId: string) => {
         try {
+          const currentToken = get().token;
           const response = await api.post("auth/impersonate", { hotelId });
           if (response && response.access_token) {
             const payload = decodeJwt(response.access_token);
@@ -128,13 +130,48 @@ export const useAuthStore = create<AuthState>()(
                 hotel_id: payload.hotel_id,
                 permissions: payload.permissions || ["*"],
               };
-              set({ user: apiUser, token: response.access_token });
+              set({ 
+                user: apiUser, 
+                token: response.access_token, 
+                originalToken: currentToken 
+              });
               return;
             }
           }
         } catch (error: any) {
           console.error("Impersonation Error:", error);
           throw new Error(error.message || "Failed to start impersonation session.");
+        }
+      },
+      stopImpersonating: () => {
+        const { originalToken } = get();
+        if (originalToken) {
+          const payload = decodeJwt(originalToken);
+          if (payload) {
+            const rawName = payload.email
+              ? payload.email.split("@")[0]
+              : "User";
+            const formattedName = rawName
+              .split(/[._-]/)
+              .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+              .join(" ");
+
+            const apiUser: AuthUser = {
+              sub: payload.sub,
+              email: payload.email,
+              name: formattedName,
+              role: (payload.role || "SUPER_ADMIN") as UserRole,
+              scope: (payload.scope || "platform") as "platform" | "hotel",
+              hotel_id: payload.hotel_id,
+              permissions: payload.permissions || ["*"],
+            };
+            set({ 
+              user: apiUser, 
+              token: originalToken, 
+              originalToken: null 
+            });
+            window.location.href = "/platform/dashboard";
+          }
         }
       },
       hasPermission: (permission) => {

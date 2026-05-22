@@ -1,14 +1,44 @@
 
 import { useParams } from '@tanstack/react-router';
-import { useHotelFeatureFlags } from '@/hooks/usePlatformData';
+import { useHotelFeatureFlags, useToggleHotelFeature } from '@/hooks/usePlatformData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, ShieldCheck, Database } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, Database, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { useState } from 'react';
 
 export function HotelFeatureFlags() {
-  const { id } = useParams({ from: '/auth/platform/hotels/$id' });
-  const { data: features } = useHotelFeatureFlags(id);
+  const { id: hotelId } = useParams({ from: '/auth/platform/hotels/$id' });
+  const { data: features, isLoading, isError, refetch } = useHotelFeatureFlags(hotelId);
+  const toggleMutation = useToggleHotelFeature();
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
+  const handleToggle = async (feature: any) => {
+    setProcessingId(feature.id);
+    try {
+      await toggleMutation.mutateAsync({
+        hotelId,
+        featureId: feature.id,
+        enabled: !feature.enabled
+      });
+      toast.success(`${feature.name} ${!feature.enabled ? 'enabled' : 'disabled'} successfully`);
+    } catch (err: any) {
+      toast.error(err.message || `Failed to toggle ${feature.name}`);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="shadow-sm border-none bg-white">
+        <CardContent className="p-12 flex justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-slate-300" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-sm border-none bg-white">
@@ -33,8 +63,18 @@ export function HotelFeatureFlags() {
                     <p className="text-[10px] uppercase text-muted-foreground font-bold tracking-widest">{feature.category}</p>
                   </div>
                 </div>
-                <Button variant={feature.enabled ? "default" : "outline"} size="sm" className={feature.enabled ? "bg-green-600 hover:bg-green-700" : ""}>
-                  {feature.enabled ? "Enabled" : "Disabled"}
+                <Button 
+                  variant={feature.enabled ? "default" : "outline"} 
+                  size="sm" 
+                  className={feature.enabled ? "bg-green-600 hover:bg-green-700" : ""}
+                  onClick={() => handleToggle(feature)}
+                  disabled={processingId === feature.id}
+                >
+                  {processingId === feature.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    feature.enabled ? "Enabled" : "Disabled"
+                  )}
                 </Button>
               </div>
             ))}
