@@ -58,6 +58,15 @@ export function usePlatformHotels(params: {
   });
 }
 
+export function usePlatformSubscriptions() {
+  return useQuery({
+    queryKey: ["platform-subscriptions"],
+    queryFn: async () => {
+      return api.get("platform/subscriptions");
+    },
+  });
+}
+
 export function usePlatformHotel(id: string) {
   return useQuery({
     queryKey: ["platform-hotel", id],
@@ -90,6 +99,18 @@ export function useUpdatePlatformHotel() {
       queryClient.invalidateQueries({
         queryKey: ["platform-hotel", variables.id],
       });
+      queryClient.invalidateQueries({ queryKey: ["platform-hotels"] });
+    },
+  });
+}
+
+export function useDeletePlatformHotel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      return api.delete(`platform/hotels/${id}`);
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["platform-hotels"] });
     },
   });
@@ -189,6 +210,15 @@ export function useTransferOwnership() {
   });
 }
 
+export function usePlatformGlobalFeatureFlags() {
+  return useQuery({
+    queryKey: ["platform-global-flags"],
+    queryFn: async () => {
+      return api.get("platform/feature-flags");
+    },
+  });
+}
+
 export function useCreateTenantUser() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -242,7 +272,59 @@ export function usePlatformAuditLogs(params?: {
       if (params?.search) searchParams.append("search", params.search);
       if (params?.hotelId) searchParams.append("hotelId", params.hotelId);
 
-      return api.get(`platform/audit-logs?${searchParams.toString()}`);
+      const query = searchParams.toString();
+      const endpoint = query
+        ? `platform/analytics/audit-logs?${query}`
+        : "platform/analytics/audit-logs";
+
+      return api.get(endpoint);
+    },
+  });
+}
+
+export function usePlatformSettings() {
+  return useQuery({
+    queryKey: ["platform-settings"],
+    queryFn: async () => {
+      return api.get("platform/settings");
+    },
+  });
+}
+
+export function useUpdatePlatformSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      key,
+      value,
+      category,
+    }: {
+      key: string;
+      value: any;
+      category?: string;
+    }) => {
+      return api.patch("platform/settings", { key, value, category });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform-settings"] });
+    },
+  });
+}
+
+export function usePlatformRoles() {
+  return useQuery({
+    queryKey: ["platform-roles"],
+    queryFn: async () => {
+      return api.get("platform/roles");
+    },
+  });
+}
+
+export function usePlatformPermissions() {
+  return useQuery({
+    queryKey: ["platform-permissions"],
+    queryFn: async () => {
+      return api.get("platform/permissions");
     },
   });
 }
@@ -335,10 +417,10 @@ export function useTenantInfrastructure(hotelId: string) {
         sslExpires:
           hotel.sslExpires ||
           new Date(Date.now() + 180 * 86400000).toISOString(),
-        bandwidth: hotel.bandwidth || null,
-        apiRequests: hotel.apiRequests || null,
+        bandwidth: hotel.bandwidth ?? null,
+        apiRequests: hotel.apiRequests ?? null,
         storageLimit: 50,
-        storageUsed: hotel.storageUsedMb ? hotel.storageUsedMb / 1024 : null,
+        storageUsed: hotel.storageUsedMb != null ? hotel.storageUsedMb / 1024 : null,
         userLimit: 50,
         usersUsed: hotel.activeUsers ?? null,
         roomLimit: 200,
@@ -387,9 +469,12 @@ export function useToggleHotelFeature() {
       featureId: string;
       enabled: boolean;
     }) => {
-      return api.post(`platform/hotels/${hotelId}/features/${featureId}/toggle`, {
-        enabled,
-      });
+      return api.post(
+        `platform/hotels/${hotelId}/features/${featureId}/toggle`,
+        {
+          enabled,
+        },
+      );
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -461,12 +546,12 @@ export function useHotelUsageMetrics(hotelId: string) {
         api.get(`platform/quota/snapshot/${hotelId}`).catch(() => null),
       ]);
       return {
-        bookings: quota?.bookings || hotel.bookings || null,
-        revenue: quota?.revenue || hotel.revenue || null,
+        bookings: quota?.bookings ?? hotel.bookings ?? null,
+        revenue: quota?.revenue ?? hotel.revenue ?? null,
         occupancy: quota?.occupancy ?? hotel.currentOccupancy ?? null,
         storage: quota?.storageUsedMb
           ? quota.storageUsedMb / 1024
-          : hotel.storageUsedMb || null,
+          : hotel.storageUsedMb ?? null,
       };
     },
   });
@@ -481,24 +566,33 @@ export function useHotelUsageMetricsExtended(hotelId: string) {
         api.get(`platform/quota/snapshot/${hotelId}`).catch(() => null),
       ]);
       return {
-        storageUsed: quota?.storageUsedMb
-          ? quota.storageUsedMb / 1024
-          : hotel.storageUsedMb
-            ? hotel.storageUsedMb / 1024
-            : null,
-        apiCalls: quota?.apiCalls || hotel.apiCalls || null,
+        storageUsed:
+          quota?.storageUsedMb != null
+            ? quota.storageUsedMb / 1024
+            : hotel.storageUsedMb != null
+              ? hotel.storageUsedMb / 1024
+              : null,
+        apiCalls: quota?.apiCalls ?? hotel.apiCalls ?? null,
         activeUsers: quota?.activeUsers ?? hotel.activeUsers ?? null,
       };
     },
   });
 }
 
-export function useTenantQuotaAlerts(hotelId?: string) {
+export function usePlatformHotelsByTier() {
   return useQuery({
-    queryKey: ["tenant-quota-alerts", hotelId],
+    queryKey: ["platform-hotels-by-tier"],
     queryFn: async () => {
-      const qs = hotelId ? `?hotelId=${hotelId}` : "";
-      return api.get(`platform/quota/alerts${qs}`);
+      return api.get("platform/analytics/hotels-by-tier");
+    },
+  });
+}
+
+export function usePlatformRevenueChart() {
+  return useQuery({
+    queryKey: ["platform-revenue-chart"],
+    queryFn: async () => {
+      return api.get("platform/analytics/revenue-chart");
     },
   });
 }

@@ -58,11 +58,29 @@ export function HotelBranding() {
         toast.error('File size must be less than 2MB');
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, logo: reader.result as string });
+      const uploadLogo = async () => {
+        try {
+          const payload = new FormData();
+          payload.append('logo', file);
+
+          const response = await fetch(`/platform/hotels/${id}/branding/logo`, {
+            method: 'POST',
+            body: payload,
+          });
+
+          if (!response.ok) {
+            throw new Error('Logo upload failed');
+          }
+
+          const result = await response.json();
+          setFormData({ ...formData, logo: result.url });
+          toast.success('Logo uploaded');
+        } catch {
+          toast.error('Failed to upload logo');
+        }
       };
-      reader.readAsDataURL(file);
+
+      void uploadLogo();
     }
   };
 
@@ -84,13 +102,13 @@ export function HotelBranding() {
         <Card className="shadow-sm border-none bg-white">
           <CardHeader>
             <CardTitle className="font-serif text-xl flex items-center gap-2">
-              <Palette className="w-5 h-5 text-[#C9973A]" />
-              Visual Identity
-            </CardTitle>
-            <CardDescription>Managed branding isolation for this tenant.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleFileChange}
+                  />
               <Label>Tenant Logo</Label>
               <div className="flex items-center gap-6 p-4 border-2 border-dashed rounded-xl group hover:border-[#C9973A] transition-colors">
                 <div className="w-20 h-20 rounded bg-slate-50 flex items-center justify-center overflow-hidden border">
