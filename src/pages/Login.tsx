@@ -33,10 +33,7 @@ export function LoginPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
 
-  const handleQuickFill = (
-    emailVal: string,
-    passwordVal: string,
-  ) => {
+  const handleQuickFill = (emailVal: string, passwordVal: string) => {
     setError(null);
     setEmail(emailVal);
     setPassword(passwordVal);
@@ -53,13 +50,21 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      await login(email, password, domain || undefined);
-      const user = useAuthStore.getState().user;
-      if (user?.scope === "platform") {
-        navigate({ to: "/platform/dashboard" });
-      } else {
-        navigate({ to: "/hotel/dashboard" });
+      const dashboardRoute = await login(email, password, domain || undefined);
+      if (typeof dashboardRoute === "string" && dashboardRoute.length > 0) {
+        navigate({ to: dashboardRoute });
+        return;
       }
+
+      const user = useAuthStore.getState().user;
+      navigate({
+        to:
+          user?.scope === "platform"
+            ? "/platform/dashboard"
+            : user?.role === "HOTEL_OWNER"
+              ? "/hotel/owner/dashboard"
+              : "/hotel/dashboard",
+      });
     } catch (err: any) {
       setError(
         err.message ||
@@ -74,15 +79,16 @@ export function LoginPage() {
     {
       category: "Platform Control Board",
       items: [
-        { name: "System Admin", email: "admin@platform.com", pass: "Admin123!" },
-        { name: "Hotel Admin", email: "admin@hotels.com", pass: "Admin123!" },
-      ],
-    },
-    {
-      category: "The Grand Budapest Hotel",
-      items: [
-        { name: "Owner", email: "hotel_owner@budapest.com", pass: "Admin123!" },
-        { name: "Manager", email: "hotel_manager@budapest.com", pass: "Admin123!" },
+        {
+          name: "System Admin",
+          email: "admin@platform.com",
+          pass: "Admin123!",
+        },
+        {
+          name: "Hotel Owner (Multi-Hotel)",
+          email: "admin@hotels.com",
+          pass: "Admin123!",
+        },
       ],
     },
   ];
@@ -91,7 +97,7 @@ export function LoginPage() {
     <div className='min-h-screen bg-[#F8F7F4] flex flex-col lg:flex-row items-center justify-center p-4 gap-8 max-w-6xl mx-auto'>
       {/* Brand Context Card */}
       <div className='w-full lg:max-w-lg space-y-5 text-center lg:text-left'>
-        <div className='inline-flex w-12 h-12 bg-[#0F1B2D] rounded-[4px] items-center justify-center shadow-lg'>
+        <div className='inline-flex w-12 h-12 bg-[#0F1B2D] rounded-md items-center justify-center shadow-lg'>
           <Hotel className='text-[#C9973A] w-6 h-6' />
         </div>
         <div>
@@ -100,8 +106,8 @@ export function LoginPage() {
           </h1>
           <p className='text-xs text-gray-500 mt-1.5 leading-relaxed'>
             Enter your email and password to access your portal. Super Admins
-            and Hotel Owners may optionally provide a domain for specific
-            tenant access.
+            and Hotel Owners may optionally provide a domain for specific tenant
+            access.
           </p>
         </div>
 
@@ -123,9 +129,7 @@ export function LoginPage() {
                     variant='outline'
                     size='sm'
                     className='text-[10px] border-[#0F1B2D]/10 bg-white text-[#0F1B2D] hover:bg-[#0F1B2D] hover:text-white transition-all py-1 px-2.5 h-auto rounded-[3px] font-semibold'
-                    onClick={() =>
-                      handleQuickFill(item.email, item.pass)
-                    }
+                    onClick={() => handleQuickFill(item.email, item.pass)}
                   >
                     {item.name}
                   </Button>
@@ -150,7 +154,7 @@ export function LoginPage() {
         <form onSubmit={handleSubmit}>
           <CardContent className='space-y-4 pt-6 pb-6 px-8'>
             {error && (
-              <div className='bg-red-50 text-red-700 text-xs p-3 rounded-[4px] flex items-start gap-2 border border-red-100'>
+              <div className='bg-red-50 text-red-700 text-xs p-3 rounded-md flex items-start gap-2 border border-red-100'>
                 <AlertCircle className='w-4 h-4 shrink-0 mt-0.5 text-red-500' />
                 <span>{error}</span>
               </div>
@@ -170,7 +174,7 @@ export function LoginPage() {
                   id='email'
                   type='email'
                   placeholder='admin@platform.com'
-                  className='pl-10 h-11 border-gray-200 rounded-[4px] focus-visible:ring-[#C9973A]'
+                  className='pl-10 h-11 border-gray-200 rounded-md focus-visible:ring-[#C9973A]'
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -192,7 +196,7 @@ export function LoginPage() {
                   id='password'
                   type='password'
                   placeholder='••••••••'
-                  className='pl-10 h-11 border-gray-200 rounded-[4px] focus-visible:ring-[#C9973A]'
+                  className='pl-10 h-11 border-gray-200 rounded-md focus-visible:ring-[#C9973A]'
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -219,7 +223,7 @@ export function LoginPage() {
                   id='domain'
                   type='text'
                   placeholder='optional-domain'
-                  className='pl-10 h-11 border-gray-200 rounded-[4px] focus-visible:ring-[#C9973A]'
+                  className='pl-10 h-11 border-gray-200 rounded-md focus-visible:ring-[#C9973A]'
                   value={domain}
                   onChange={(e) => setDomain(e.target.value)}
                 />
@@ -231,7 +235,7 @@ export function LoginPage() {
             <Button
               type='submit'
               disabled={loading}
-              className='w-full h-11 rounded-[4px] bg-[#C9973A] text-white hover:bg-[#b0812e] disabled:bg-gray-700 transition-all font-bold text-xs uppercase tracking-wider shrink-0 flex items-center justify-center gap-2'
+              className='w-full h-11 rounded-md bg-[#C9973A] text-white hover:bg-[#b0812e] disabled:bg-gray-700 transition-all font-bold text-xs uppercase tracking-wider shrink-0 flex items-center justify-center gap-2'
             >
               {loading ? (
                 <>

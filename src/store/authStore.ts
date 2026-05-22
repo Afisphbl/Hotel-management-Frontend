@@ -105,7 +105,7 @@ export const useAuthStore = create<AuthState>()(
               console.log(
                 "Successfully logged in against Live API and synced state!",
               );
-              return;
+              return response.dashboard_route;
             }
           }
           throw new Error("Authentication response empty.");

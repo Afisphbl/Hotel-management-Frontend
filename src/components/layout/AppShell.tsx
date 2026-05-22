@@ -136,6 +136,64 @@ const HOTEL_NAV: NavItem[] = [
   },
 ];
 
+const HOTEL_OWNER_NAV: NavItem[] = [
+  {
+   title: "Dashboard",
+   href: "/hotel/owner/dashboard",
+   icon: LayoutDashboard,
+  },
+  {
+   title: "Bookings",
+   href: "/hotel/owner/bookings",
+   icon: Calendar,
+  },
+  {
+   title: "Payments",
+   href: "/hotel/owner/payments",
+   icon: CreditCard,
+  },
+  {
+   title: "Rooms",
+   href: "/hotel/owner/rooms",
+   icon: Bed,
+  },
+  {
+   title: "Staff",
+   href: "/hotel/owner/staff",
+   icon: Users,
+  },
+  {
+   title: "Pricing",
+   href: "/hotel/owner/pricing",
+   icon: Tag,
+  },
+  {
+   title: "Invoices",
+   href: "/hotel/owner/invoices",
+   icon: CreditCard,
+  },
+  {
+   title: "Housekeeping",
+   href: "/hotel/owner/housekeeping",
+   icon: ClipboardList,
+  },
+  {
+   title: "Maintenance",
+   href: "/hotel/owner/maintenance",
+   icon: Wrench,
+  },
+  {
+   title: "Guests",
+   href: "/hotel/owner/guests",
+   icon: Users,
+  },
+  {
+   title: "Reports",
+   href: "/hotel/owner/reports",
+   icon: BarChart3,
+  },
+];
+
 export function AppShell() {
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -150,13 +208,33 @@ export function AppShell() {
   const isImpersonating = !!originalToken;
 
   const navItems =
-    user?.scope === "platform"
+    user?.role === "HOTEL_OWNER"
+      ? HOTEL_OWNER_NAV
+      : user?.scope === "platform"
       ? PLATFORM_NAV
       : HOTEL_NAV.filter(
           (item) => !item.permission || hasPermission(item.permission),
         );
+  
+  // Debug logging
+  React.useEffect(() => {
+    console.log("🔍 AppShell Navigation Debug:", { 
+      user_email: user?.email,
+      user_scope: user?.scope,
+      user_role: user?.role,
+      user_hotel_id: user?.hotel_id,
+      navItemsCount: navItems.length,
+      navItems: navItems.map(n => n.title),
+      timestamp: new Date().toISOString()
+    });
+  }, [user, navItems]);
+
   const notificationHref =
-    user?.scope === "platform" ? "/platform/audit-logs" : "/hotel/dashboard";
+    user?.role === "HOTEL_OWNER"
+      ? "/hotel/owner/dashboard"
+      : user?.scope === "platform" 
+      ? "/platform/audit-logs" 
+      : "/hotel/dashboard";
   const settingsHref =
     user?.scope === "platform" ? "/platform/settings" : "/hotel/settings";
 
