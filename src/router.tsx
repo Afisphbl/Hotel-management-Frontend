@@ -54,6 +54,7 @@ import {
   Maintenance as HotelOwnerMaintenance,
   Guests as HotelOwnerGuests,
   Reports as HotelOwnerReports,
+  Hotels as HotelOwnerHotels,
 } from "@/pages/hotel-owner";
 
 // Root Layout
@@ -394,6 +395,13 @@ const hotelOwnerReportsRoute = createRoute({
   component: HotelOwnerReports,
 });
 
+const hotelOwnerHotelsRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "owner/hotels",
+  loader: hotelOwnerLoader,
+  component: HotelOwnerHotels,
+});
+
 const unauthorizedRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "unauthorized",
@@ -452,6 +460,7 @@ export const routeTree = rootRoute.addChildren([
       hotelOwnerMaintenanceRoute,
       hotelOwnerGuestsRoute,
       hotelOwnerReportsRoute,
+      hotelOwnerHotelsRoute,
     ]),
   ]),
 ]);

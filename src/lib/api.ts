@@ -1,7 +1,7 @@
 // Lightweight fetch-based API client for connecting Frontend to NestJS Backend
 
 const BASE_URL =
-  (import.meta as any).env?.VITE_API_URL || "http://localhost:5000/api/v1";
+  (import.meta as any).env?.VITE_API_URL || "http://localhost:3000/api";
 
 interface RequestOptions extends RequestInit {
   bodyData?: any;

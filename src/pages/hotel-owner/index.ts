@@ -10,3 +10,4 @@ export { HousekeepingPage as Housekeeping } from './Housekeeping';
 export { MaintenancePage as Maintenance } from './Maintenance';
 export { GuestsPage as Guests } from './Guests';
 export { ReportsPage as Reports } from './Reports';
+export { HotelsPage as Hotels } from './Hotels';

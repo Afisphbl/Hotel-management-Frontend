@@ -143,9 +143,9 @@ const HOTEL_OWNER_NAV: NavItem[] = [
    icon: LayoutDashboard,
   },
   {
-   title: "Bookings",
-   href: "/hotel/owner/bookings",
-   icon: Calendar,
+   title: "Hotel & Branch Management",
+   href: "/hotel/owner/hotels",
+   icon: Hotel,
   },
   {
    title: "Payments",
