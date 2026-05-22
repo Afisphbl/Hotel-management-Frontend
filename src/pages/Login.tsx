@@ -29,19 +29,17 @@ export function LoginPage() {
 
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [hotelId, setHotelId] = React.useState("");
+  const [domain, setDomain] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
 
   const handleQuickFill = (
     emailVal: string,
     passwordVal: string,
-    hotelIdVal: string,
   ) => {
     setError(null);
     setEmail(emailVal);
     setPassword(passwordVal);
-    setHotelId(hotelIdVal);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,7 +53,7 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      await login(email, password, hotelId || undefined);
+      await login(email, password, domain || undefined);
       const user = useAuthStore.getState().user;
       if (user?.scope === "platform") {
         navigate({ to: "/platform/dashboard" });
@@ -82,58 +80,9 @@ export function LoginPage() {
     },
     {
       category: "The Grand Budapest Hotel",
-      hotelId: "f4dfac16-a26b-41c8-ab62-991ea7f703f5",
       items: [
         { name: "Owner", email: "hotel_owner@budapest.com", pass: "Admin123!" },
         { name: "Manager", email: "hotel_manager@budapest.com", pass: "Admin123!" },
-        { name: "Revenue Mgr", email: "revenue_manager@budapest.com", pass: "Admin123!" },
-        { name: "Front Desk", email: "front_desk@budapest.com", pass: "Admin123!" },
-        { name: "Accountant", email: "accountant@budapest.com", pass: "Admin123!" },
-        { name: "HK Supervisor", email: "housekeeping_supervisor@budapest.com", pass: "Admin123!" },
-        { name: "Housekeeper", email: "housekeeping_staff@budapest.com", pass: "Admin123!" },
-        { name: "Maintenance", email: "maintenance_staff@budapest.com", pass: "Admin123!" },
-      ],
-    },
-    {
-      category: "Seaside Resort & Spa",
-      hotelId: "e55c4324-7483-4986-acdf-a85b7d517f9d",
-      items: [
-        { name: "Owner", email: "hotel_owner@seaside.com", pass: "Admin123!" },
-        { name: "Manager", email: "hotel_manager@seaside.com", pass: "Admin123!" },
-        { name: "Revenue Mgr", email: "revenue_manager@seaside.com", pass: "Admin123!" },
-        { name: "Front Desk", email: "front_desk@seaside.com", pass: "Admin123!" },
-        { name: "Accountant", email: "accountant@seaside.com", pass: "Admin123!" },
-        { name: "HK Supervisor", email: "housekeeping_supervisor@seaside.com", pass: "Admin123!" },
-        { name: "Housekeeper", email: "housekeeping_staff@seaside.com", pass: "Admin123!" },
-        { name: "Maintenance", email: "maintenance_staff@seaside.com", pass: "Admin123!" },
-      ],
-    },
-    {
-      category: "Mountain View Lodge",
-      hotelId: "ba1c95ad-921b-4965-bd1f-13c64e151ada",
-      items: [
-        { name: "Owner", email: "hotel_owner@mountain.com", pass: "Admin123!" },
-        { name: "Manager", email: "hotel_manager@mountain.com", pass: "Admin123!" },
-        { name: "Revenue Mgr", email: "revenue_manager@mountain.com", pass: "Admin123!" },
-        { name: "Front Desk", email: "front_desk@mountain.com", pass: "Admin123!" },
-        { name: "Accountant", email: "accountant@mountain.com", pass: "Admin123!" },
-        { name: "HK Supervisor", email: "housekeeping_supervisor@mountain.com", pass: "Admin123!" },
-        { name: "Housekeeper", email: "housekeeping_staff@mountain.com", pass: "Admin123!" },
-        { name: "Maintenance", email: "maintenance_staff@mountain.com", pass: "Admin123!" },
-      ],
-    },
-    {
-      category: "City Center Business Hotel",
-      hotelId: "8252c54a-78ce-491b-98e6-f6c8b856319c",
-      items: [
-        { name: "Owner", email: "hotel_owner@business.com", pass: "Admin123!" },
-        { name: "Manager", email: "hotel_manager@business.com", pass: "Admin123!" },
-        { name: "Revenue Mgr", email: "revenue_manager@business.com", pass: "Admin123!" },
-        { name: "Front Desk", email: "front_desk@business.com", pass: "Admin123!" },
-        { name: "Accountant", email: "accountant@business.com", pass: "Admin123!" },
-        { name: "HK Supervisor", email: "housekeeping_supervisor@business.com", pass: "Admin123!" },
-        { name: "Housekeeper", email: "housekeeping_staff@business.com", pass: "Admin123!" },
-        { name: "Maintenance", email: "maintenance_staff@business.com", pass: "Admin123!" },
       ],
     },
   ];
@@ -150,9 +99,9 @@ export function LoginPage() {
             LuxeHotel Portals
           </h1>
           <p className='text-xs text-gray-500 mt-1.5 leading-relaxed'>
-            Enter your credentials manually, or select one of the database
-            seeded roles from the presets below to automatically fill the form
-            inputs.
+            Enter your email and password to access your portal. Super Admins
+            and Hotel Owners may optionally provide a domain for specific
+            tenant access.
           </p>
         </div>
 
@@ -175,7 +124,7 @@ export function LoginPage() {
                     size='sm'
                     className='text-[10px] border-[#0F1B2D]/10 bg-white text-[#0F1B2D] hover:bg-[#0F1B2D] hover:text-white transition-all py-1 px-2.5 h-auto rounded-[3px] font-semibold'
                     onClick={() =>
-                      handleQuickFill(item.email, item.pass, group.hotelId ?? "")
+                      handleQuickFill(item.email, item.pass)
                     }
                   >
                     {item.name}
@@ -251,28 +200,28 @@ export function LoginPage() {
               </div>
             </div>
 
-            {/* Hotel ID Field (Optional / Tenant scope) */}
+            {/* Domain Field (Optional / Tenant scope) */}
             <div className='space-y-1.5 pt-1'>
               <div className='flex justify-between items-center'>
                 <Label
-                  htmlFor='hotelId'
+                  htmlFor='domain'
                   className='text-xs font-bold text-[#0F1B2D] uppercase tracking-wider'
                 >
-                  Hotel ID (Required for staff)
+                  Domain (Optional)
                 </Label>
                 <span className='text-[10px] text-gray-400 font-medium italic'>
-                  Optional for Platform Admin
+                  Super Admin / Owners only
                 </span>
               </div>
               <div className='relative'>
                 <Key className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4' />
                 <Input
-                  id='hotelId'
+                  id='domain'
                   type='text'
-                  placeholder='00000000-0000-0000-0000-000000000001'
+                  placeholder='optional-domain'
                   className='pl-10 h-11 border-gray-200 rounded-[4px] focus-visible:ring-[#C9973A]'
-                  value={hotelId}
-                  onChange={(e) => setHotelId(e.target.value)}
+                  value={domain}
+                  onChange={(e) => setDomain(e.target.value)}
                 />
               </div>
             </div>

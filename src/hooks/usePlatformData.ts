@@ -447,6 +447,15 @@ export function usePlatformRoles() {
   });
 }
 
+export function usePlatformRolesSummary() {
+  return useQuery({
+    queryKey: ["platform-roles-summary"],
+    queryFn: async () => {
+      return api.get("platform/roles/summary");
+    },
+  });
+}
+
 export function usePlatformPermissions() {
   return useQuery({
     queryKey: ["platform-permissions"],
