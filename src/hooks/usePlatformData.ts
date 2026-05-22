@@ -257,11 +257,91 @@ export function useTransferOwnership() {
   });
 }
 
-export function usePlatformGlobalFeatureFlags() {
+export function usePlatformGlobalFeatureFlags(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  strategy?: string;
+  scope?: string;
+}) {
   return useQuery({
-    queryKey: ["platform-global-flags"],
+    queryKey: ["platform-global-flags", params],
     queryFn: async () => {
-      return api.get("platform/feature-flags");
+      const searchParams = new URLSearchParams();
+      if (params?.page) searchParams.append("page", params.page.toString());
+      if (params?.limit) searchParams.append("limit", params.limit.toString());
+      if (params?.search) searchParams.append("search", params.search);
+      if (params?.status) searchParams.append("status", params.status);
+      if (params?.strategy) searchParams.append("strategy", params.strategy);
+      if (params?.scope) searchParams.append("scope", params.scope);
+      const query = searchParams.toString();
+      return api.get(`platform/feature-flags${query ? `?${query}` : ""}`);
+    },
+  });
+}
+
+export function useCreateFeatureFlag() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: any) => {
+      return api.post("platform/feature-flags", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform-global-flags"] });
+      queryClient.invalidateQueries({ queryKey: ["platform-rollout-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["hotel-features"] });
+    },
+  });
+}
+
+export function useUpdateFeatureFlag() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      return api.patch(`platform/feature-flags/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform-global-flags"] });
+      queryClient.invalidateQueries({ queryKey: ["platform-rollout-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["hotel-features"] });
+    },
+  });
+}
+
+export function useDeleteFeatureFlag() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      return api.delete(`platform/feature-flags/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform-global-flags"] });
+      queryClient.invalidateQueries({ queryKey: ["platform-rollout-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["hotel-features"] });
+    },
+  });
+}
+
+export function useToggleFeatureFlag() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      return api.post(`platform/feature-flags/${id}/toggle`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform-global-flags"] });
+      queryClient.invalidateQueries({ queryKey: ["platform-rollout-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["hotel-features"] });
+    },
+  });
+}
+
+export function useFeatureFlagRolloutSummary() {
+  return useQuery({
+    queryKey: ["platform-rollout-summary"],
+    queryFn: async () => {
+      return api.get("platform/feature-flags/rollout-summary");
     },
   });
 }
@@ -530,6 +610,8 @@ export function useToggleHotelFeature() {
       queryClient.invalidateQueries({
         queryKey: ["platform-hotel", variables.hotelId],
       });
+      queryClient.invalidateQueries({ queryKey: ["platform-global-flags"] });
+      queryClient.invalidateQueries({ queryKey: ["platform-rollout-summary"] });
     },
   });
 }
