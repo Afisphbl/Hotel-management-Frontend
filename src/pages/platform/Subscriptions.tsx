@@ -66,7 +66,7 @@ export function PlatformSubscriptions() {
                 <div className="space-y-3">
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Included Features</p>
                   <ul className="space-y-2">
-                    {(plan.features ?? plan.featureList ?? []).map((feature: string, i: number) => (
+                    {(Array.isArray(plan.features) ? plan.features : Array.isArray(plan.featureList) ? plan.featureList : plan.features?.enabledFeatures ?? []).map((feature: string, i: number) => (
                       <li key={i} className="flex items-center gap-2 text-sm text-slate-600">
                         <div className="w-4 h-4 rounded-full bg-green-50 flex items-center justify-center">
                           <Check className="w-2.5 h-2.5 text-green-600" />

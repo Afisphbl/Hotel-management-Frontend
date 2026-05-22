@@ -411,13 +411,11 @@ export function HotelUsers() {
                         <TableCell>
                           {user.lastLogin ? (
                             <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className='text-xs text-slate-500 cursor-help border-b border-dotted border-slate-300'>
-                                  {formatDistanceToNow(
-                                    new Date(user.lastLogin),
-                                    { addSuffix: true },
-                                  )}
-                                </span>
+                              <TooltipTrigger render={<span className='text-xs text-slate-500 cursor-help border-b border-dotted border-slate-300' />}>
+                                {formatDistanceToNow(
+                                  new Date(user.lastLogin),
+                                  { addSuffix: true },
+                                )}
                               </TooltipTrigger>
                               <TooltipContent
                                 side='top'
@@ -456,14 +454,8 @@ export function HotelUsers() {
                         </TableCell>
                         <TableCell className='text-right'>
                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant='ghost'
-                                size='icon'
-                                className='h-8 w-8 hover:bg-slate-100'
-                              >
-                                <MoreVertical className='w-4 h-4' />
-                              </Button>
+                            <DropdownMenuTrigger render={<Button variant='ghost' size='icon' className='h-8 w-8 hover:bg-slate-100' />}>
+                              <MoreVertical className='w-4 h-4' />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align='end' className='w-48'>
                               <DropdownMenuGroup>

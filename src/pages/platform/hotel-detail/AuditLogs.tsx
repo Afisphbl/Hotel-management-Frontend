@@ -22,7 +22,8 @@ import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 
 export function HotelAuditLogs() {
-  const { data: logs } = usePlatformAuditLogs();
+  const { id: hotelId } = useParams({ from: '/auth/platform/hotels/$id' });
+  const { data: logs } = usePlatformAuditLogs({ hotelId });
 
   return (
     <Card className='shadow-sm border-none bg-white'>
@@ -88,7 +89,7 @@ export function HotelAuditLogs() {
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Database className="w-8 h-8 text-slate-300 mb-2" />
             <p className="text-sm text-slate-400">No audit logs found</p>
-            <p className="text-[10px] text-slate-300 mt-1">This section has no database or data available</p>
+            <p className="text-[10px] text-slate-300 mt-1">Hotel-specific audit logging will be implemented soon</p>
           </div>
         )}
       </CardContent>
