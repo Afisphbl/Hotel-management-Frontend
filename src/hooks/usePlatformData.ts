@@ -620,48 +620,13 @@ export function useHotelFeatureFlags(hotelId: string) {
   return useQuery({
     queryKey: ["hotel-features", hotelId],
     queryFn: async () => {
-      const [hotel, globalFlags] = await Promise.all([
-        api.get(`platform/hotels/${hotelId}`),
-        api.get("platform/feature-flags").catch(() => []),
-      ]);
-      const enabledFeatures = hotel.enabledFeatures || [];
-      const predefined = [
-        {
-          id: "housekeeping",
-          name: "Housekeeping Module",
-          category: "Operations",
-        },
-        {
-          id: "maintenance",
-          name: "Maintenance Module",
-          category: "Operations",
-        },
-        { id: "pos", name: "POS Integration", category: "Integrations" },
-        {
-          id: "whatsapp",
-          name: "WhatsApp Notifications",
-          category: "Guest Services",
-        },
-        { id: "analytics", name: "Advanced Analytics", category: "Business" },
-        {
-          id: "guest-portal",
-          name: "Guest Self-Service Portal",
-          category: "Guest Services",
-        },
-      ];
-      const items = predefined.map((f) => ({
-        ...f,
-        enabled: enabledFeatures.includes(f.id),
+      const data = await api.get(`platform/hotels/${hotelId}/features`);
+      return (data || []).map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        enabled: f.status === "ENABLED",
+        category: f.category || "Global",
       }));
-      const extras = (Array.isArray(globalFlags) ? globalFlags : []).map(
-        (gf: any) => ({
-          id: gf.id || gf.key,
-          name: gf.name || gf.key,
-          enabled: gf.status === "enabled" || enabledFeatures.includes(gf.id),
-          category: gf.category || "Global",
-        }),
-      );
-      return [...items, ...extras];
     },
   });
 }

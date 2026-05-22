@@ -49,7 +49,7 @@ export function HotelFeatureFlags() {
       <CardContent className="space-y-8">
         {features && features.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {features.map(feature => (
+            {features.map((feature: any) => (
               <div key={feature.id} className="flex items-center justify-between p-4 rounded-xl bg-[#F8F7F4]">
                 <div className="flex items-center gap-3">
                   <div className={cn(
