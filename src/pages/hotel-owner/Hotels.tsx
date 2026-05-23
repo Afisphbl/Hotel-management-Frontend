@@ -6,11 +6,11 @@ import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Plus, Edit, Trash, UploadCloud, FileUp, Settings, 
-  CreditCard, BarChart3, Shield, Activity, Bell, 
+import {
+  Plus, Edit, Trash, UploadCloud, FileUp, Settings,
+  CreditCard, BarChart3, Shield, Activity, Bell,
   FileText, Globe, DollarSign, Percent, Save,
-  Building2, MapPin, Mail, User, CheckCircle2
+  Building2, MapPin, Mail, User, CheckCircle2, Hotel
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,13 +22,33 @@ export function HotelsPage() {
   const [hotels, setHotels] = useState<any[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   
-  // New Hotel Form
+  // New Hotel Form - All database fields
   const [newHotel, setNewHotel] = useState({
     name: '',
+    slug: '',
+    type: 'BOUTIQUE',
+    schemaName: '',
+    status: 'ACTIVE',
+    subdomain: '',
     location: '',
+    region: '',
     timezone: 'UTC',
     currency: 'ETB',
-    rooms: 10
+    ownerName: '',
+    ownerEmail: '',
+    branding: {},
+    settings: {
+      taxes: {},
+      bookingPolicies: {},
+      modulesEnabled: {},
+      notifications: {}
+    },
+    subscription: {},
+    paymentMethods: [],
+    cancellationPolicy: {},
+    storageUsedMb: 0,
+    rooms: 120,
+    maintenanceMode: false
   });
 
   const [selectedHotel, setSelectedHotel] = useState<any | null>(null);
@@ -61,8 +81,61 @@ export function HotelsPage() {
       return;
     }
     try {
-      await api.post('hotel/owner/hotels', newHotel);
-      setNewHotel({ name: '', location: '', timezone: 'UTC', currency: 'ETB', rooms: 10 });
+      // Send all database fields for hotel creation
+      const hotelData = {
+        name: newHotel.name,
+        slug: newHotel.slug || (newHotel.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        type: newHotel.type,
+        schemaName: newHotel.schemaName,
+        status: newHotel.status,
+        subdomain: newHotel.subdomain,
+        location: newHotel.location,
+        region: newHotel.region,
+        timezone: newHotel.timezone,
+        currency: newHotel.currency,
+        ownerName: newHotel.ownerName,
+        ownerEmail: newHotel.ownerEmail,
+        branding: newHotel.branding,
+        settings: newHotel.settings,
+        subscription: newHotel.subscription,
+        paymentMethods: newHotel.paymentMethods,
+        cancellationPolicy: newHotel.cancellationPolicy,
+        storageUsedMb: newHotel.storageUsedMb,
+        rooms: newHotel.rooms,
+        maintenanceMode: newHotel.maintenanceMode
+      };
+      
+      await api.post('hotel/owner/hotels', hotelData);
+      
+      // Reset form with defaults
+      setNewHotel({
+        name: '',
+        slug: '',
+        type: 'BOUTIQUE',
+        schemaName: '',
+        status: 'ACTIVE',
+        subdomain: '',
+        location: '',
+        region: '',
+        timezone: 'UTC',
+        currency: 'ETB',
+        ownerName: '',
+        ownerEmail: '',
+        branding: {},
+        settings: {
+          taxes: {},
+          bookingPolicies: {},
+          modulesEnabled: {},
+          notifications: {}
+        },
+        subscription: {},
+        paymentMethods: [],
+        cancellationPolicy: {},
+        storageUsedMb: 0,
+        rooms: 120,
+        maintenanceMode: false
+      });
+      
       setIsCreating(false);
       toast.success('Hotel created successfully');
       fetchHotels();
@@ -209,26 +282,208 @@ export function HotelsPage() {
             <CardDescription>Enter the basic details to register a new property.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-medium">Hotel Name</label>
-                <Input placeholder="e.g. Grand Plaza" value={newHotel.name} onChange={e => setNewHotel({...newHotel, name: e.target.value})} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold border-b pb-2">Basic Information</h3>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Hotel Name *</label>
+                  <Input placeholder="e.g. Grand Plaza" value={newHotel.name} onChange={e => setNewHotel({...newHotel, name: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Slug (URL) *</label>
+                  <Input placeholder="grand-plaza" value={newHotel.slug} onChange={e => setNewHotel({...newHotel, slug: e.target.value})} />
+                  <p className="text-xs text-muted-foreground">URL-friendly identifier (auto-generated if empty)</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Location *</label>
+                  <Input placeholder="e.g. London, UK" value={newHotel.location} onChange={e => setNewHotel({...newHotel, location: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Region</label>
+                  <Input placeholder="e.g. Europe" value={newHotel.region} onChange={e => setNewHotel({...newHotel, region: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Hotel Type</label>
+                  <select 
+                    className="flex w-full h-10 px-3 py-2 border border-input bg-background rounded-md text-sm"
+                    value={newHotel.type}
+                    onChange={e => setNewHotel({...newHotel, type: e.target.value})}
+                  >
+                    <option value="BOUTIQUE">Boutique</option>
+                    <option value="CHAIN">Chain</option>
+                    <option value="RESORT">Resort</option>
+                    <option value="MOTEL">Motel</option>
+                    <option value="LUXURY">Luxury</option>
+                  </select>
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium">Location</label>
-                <Input placeholder="e.g. London, UK" value={newHotel.location} onChange={e => setNewHotel({...newHotel, location: e.target.value})} />
+
+              {/* Configuration */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold border-b pb-2">Configuration</h3>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Timezone *</label>
+                  <Input placeholder="UTC" value={newHotel.timezone} onChange={e => setNewHotel({...newHotel, timezone: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Currency *</label>
+                  <Input placeholder="ETB" value={newHotel.currency} onChange={e => setNewHotel({...newHotel, currency: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Total Rooms</label>
+                  <Input type="number" min="1" placeholder="120" value={newHotel.rooms} onChange={e => setNewHotel({...newHotel, rooms: parseInt(e.target.value) || 0})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Subdomain (Optional)</label>
+                  <Input placeholder="hotelname" value={newHotel.subdomain} onChange={e => setNewHotel({...newHotel, subdomain: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Schema Name (Optional)</label>
+                  <Input placeholder="hotel_schema_001" value={newHotel.schemaName} onChange={e => setNewHotel({...newHotel, schemaName: e.target.value})} />
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium">Timezone</label>
-                <Input placeholder="UTC" value={newHotel.timezone} onChange={e => setNewHotel({...newHotel, timezone: e.target.value})} />
+            </div>
+
+            {/* Owner Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold border-b pb-2">Owner Information</h3>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Owner Name</label>
+                  <Input placeholder="John Doe" value={newHotel.ownerName} onChange={e => setNewHotel({...newHotel, ownerName: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Owner Email</label>
+                  <Input placeholder="owner@hotel.com" value={newHotel.ownerEmail} onChange={e => setNewHotel({...newHotel, ownerEmail: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Hotel Status</label>
+                  <select 
+                    className="flex w-full h-10 px-3 py-2 border border-input bg-background rounded-md text-sm"
+                    value={newHotel.status}
+                    onChange={e => setNewHotel({...newHotel, status: e.target.value})}
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                    <option value="SUSPENDED">Suspended</option>
+                  </select>
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium">Currency</label>
-                <Input placeholder="ETB" value={newHotel.currency} onChange={e => setNewHotel({...newHotel, currency: e.target.value})} />
+
+              {/* Advanced Settings */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold border-b pb-2">Advanced Settings</h3>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Storage Used (MB)</label>
+                  <Input type="number" min="0" placeholder="0" value={newHotel.storageUsedMb} onChange={e => setNewHotel({...newHotel, storageUsedMb: parseInt(e.target.value) || 0})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Maintenance Mode</label>
+                  <Switch
+                    checked={newHotel.maintenanceMode}
+                    onCheckedChange={checked => setNewHotel({...newHotel, maintenanceMode: checked})}
+                  />
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium">Rooms</label>
-                <Input type="number" min="1" placeholder="10" value={newHotel.rooms} onChange={e => setNewHotel({...newHotel, rooms: parseInt(e.target.value) || 0})} />
+            </div>
+
+            {/* Configuration Options */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold border-b pb-2">Initial Settings</h3>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Tax Configuration</label>
+                  <textarea
+                    className="w-full p-2 bg-slate-50 border rounded text-xs font-mono h-20"
+                    placeholder={`{
+  "vat": 0,
+  "service": 0,
+  "tourism": 0
+}`}
+                    value={JSON.stringify(newHotel.settings.taxes, null, 2)}
+                    onChange={e => {
+                      try {
+                        const taxes = JSON.parse(e.target.value);
+                        setNewHotel({...newHotel, settings: {...newHotel.settings, taxes}});
+                      } catch(e) {}
+                    }}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Booking Policies</label>
+                  <textarea
+                    className="w-full p-2 bg-slate-50 border rounded text-xs font-mono h-20"
+                    placeholder={`{
+  "checkInTime": "14:00",
+  "checkOutTime": "11:00",
+  "minimumStay": 1
+}`}
+                    value={JSON.stringify(newHotel.settings.bookingPolicies, null, 2)}
+                    onChange={e => {
+                      try {
+                        const bp = JSON.parse(e.target.value);
+                        setNewHotel({...newHotel, settings: {...newHotel.settings, bookingPolicies: bp}});
+                      } catch(e) {}
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold border-b pb-2">Business Rules</h3>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Cancellation Policy</label>
+                  <textarea
+                    className="w-full p-2 bg-slate-50 border rounded text-xs font-mono h-20"
+                    placeholder={`{
+  "freeCancellation": 24,
+  "partialRefund": true
+}`}
+                    value={JSON.stringify(newHotel.cancellationPolicy, null, 2)}
+                    onChange={e => {
+                      try {
+                        const policy = JSON.parse(e.target.value);
+                        setNewHotel({...newHotel, cancellationPolicy: policy});
+                      } catch(e) {}
+                    }}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Payment Methods</label>
+                  <textarea
+                    className="w-full p-2 bg-slate-50 border rounded text-xs font-mono h-20"
+                    placeholder={`[
+  {"type": "credit_card", "name": "Credit Card"},
+  {"type": "cash", "name": "Cash on Arrival"}
+]`}
+                    value={JSON.stringify(newHotel.paymentMethods, null, 2)}
+                    onChange={e => {
+                      try {
+                        const methods = JSON.parse(e.target.value);
+                        setNewHotel({...newHotel, paymentMethods: methods});
+                      } catch(e) {}
+                    }}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Notifications</label>
+                  <textarea
+                    className="w-full p-2 bg-slate-50 border rounded text-xs font-mono h-20"
+                    placeholder={`{
+  "email": true,
+  "sms": false,
+  "push": true
+}`}
+                    value={JSON.stringify(newHotel.settings.notifications, null, 2)}
+                    onChange={e => {
+                      try {
+                        const nt = JSON.parse(e.target.value);
+                        setNewHotel({...newHotel, settings: {...newHotel.settings, notifications: nt}});
+                      } catch(e) {}
+                    }}
+                  />
+                </div>
               </div>
             </div>
             <div className="mt-4 flex justify-end">
