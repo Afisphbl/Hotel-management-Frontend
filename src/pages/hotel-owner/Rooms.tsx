@@ -4,17 +4,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+import {
   Bed,
   Search,
   CheckCircle,
   Lock,
   Wrench,
   AlertTriangle,
-  Info,
   X,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 
 type RoomStatus = 'available' | 'occupied' | 'dirty' | 'maintenance' | 'out_of_order';
 
@@ -23,11 +33,20 @@ interface Room {
   roomNumber: string;
   floor: string;
   status: RoomStatus;
+  basePrice?: number | null;
+  baseCapacity?: number | null;
   roomType?: {
     name: string;
     baseCapacity: number;
     basePrice: number;
   };
+}
+
+interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 const STATUS_OPTIONS: { value: RoomStatus; label: string; color: string }[] = [
@@ -44,15 +63,54 @@ export function RoomsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta>({ total: 0, page: 1, limit: 12, totalPages: 1 });
+  const [sortBy, setSortBy] = useState('roomNumber');
+  const [summary, setSummary] = useState<Record<string, any>>({});
 
-  // Status update modal state
+  // Edit modal state
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
+  const [editTab, setEditTab] = useState<'status' | 'details'>('status');
+
+  // Status update state
   const [newStatus, setNewStatus] = useState<RoomStatus>('available');
   const [updating, setUpdating] = useState(false);
 
+  // Details edit state
+  const [editRoomNumber, setEditRoomNumber] = useState('');
+  const [editFloor, setEditFloor] = useState('');
+  const [editBasePrice, setEditBasePrice] = useState('');
+  const [editBaseCapacity, setEditBaseCapacity] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  // Create room modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newRoomNumber, setNewRoomNumber] = useState('');
+  const [newRoomFloor, setNewRoomFloor] = useState('');
+  const [newRoomPrice, setNewRoomPrice] = useState('');
+  const [newRoomCapacity, setNewRoomCapacity] = useState('');
+  const [creating, setCreating] = useState(false);
+
   useEffect(() => {
     fetchRooms();
-  }, [selectedStatus]);
+  }, [selectedStatus, page]);
+
+  useEffect(() => {
+    fetchSummary();
+  }, []);
+
+  const fetchSummary = async () => {
+    try {
+      const res = await api.get('hotel/rooms/summary');
+      if (res?.data) {
+        setSummary(res.data);
+      } else if (res?.total != null) {
+        setSummary(res);
+      }
+    } catch (err) {
+      console.error('Failed to fetch room summary:', err);
+    }
+  };
 
   const fetchRooms = async () => {
     try {
@@ -60,11 +118,14 @@ export function RoomsPage() {
       setError(null);
       const params = new URLSearchParams();
       if (selectedStatus !== 'ALL') params.append('status', selectedStatus);
-      params.append('limit', '200');
+      params.append('page', String(page));
+      params.append('limit', String(pagination.limit));
 
       const response = await api.get(`hotel/rooms?${params.toString()}`);
-      // Support both paginated { data: [...] } and direct array responses
       const items: Room[] = response.data ?? response.items ?? response ?? [];
+      if (response.meta) {
+        setPagination(response.meta);
+      }
       setRooms(items);
     } catch (err: any) {
       console.error('Failed to fetch rooms:', err);
@@ -74,45 +135,123 @@ export function RoomsPage() {
     }
   };
 
+  const goToPage = (p: number) => {
+    if (p < 1 || p > pagination.totalPages) return;
+    setPage(p);
+  };
+
+  const openEditModal = (room: Room, tab: 'status' | 'details') => {
+    setEditingRoom(room);
+    setEditTab(tab);
+    if (tab === 'status') {
+      setNewStatus(room.status);
+    } else {
+      setEditRoomNumber(room.roomNumber);
+      setEditFloor(room.floor);
+      setEditBasePrice(room.basePrice ? String(room.basePrice) : '');
+      setEditBaseCapacity(room.baseCapacity ? String(room.baseCapacity) : '');
+    }
+  };
+
   const handleStatusUpdate = async () => {
     if (!editingRoom) return;
     try {
       setUpdating(true);
       await api.patch(`hotel/rooms/${editingRoom.id}/status`, { status: newStatus });
-      // Optimistically update local state
       setRooms((prev) =>
         prev.map((r) => (r.id === editingRoom.id ? { ...r, status: newStatus } : r))
       );
       setEditingRoom(null);
+      fetchSummary();
+      toast.success('Room status updated');
     } catch (err: any) {
-      alert(err.message || 'Failed to update room status');
+      toast.error(err.message || 'Failed to update room status');
     } finally {
       setUpdating(false);
     }
   };
 
-  const openStatusModal = (room: Room) => {
-    setEditingRoom(room);
-    setNewStatus(room.status);
+  const handleDetailsSave = async () => {
+    if (!editingRoom) return;
+    try {
+      setSaving(true);
+      const payload: any = {
+        roomNumber: editRoomNumber,
+        floor: editFloor,
+      };
+      if (editBasePrice) payload.basePrice = parseFloat(editBasePrice);
+      else payload.basePrice = null;
+      if (editBaseCapacity) payload.baseCapacity = parseInt(editBaseCapacity, 10);
+      else payload.baseCapacity = null;
+
+      await api.patch(`hotel/rooms/${editingRoom.id}`, payload);
+      setRooms((prev) =>
+        prev.map((r) =>
+          r.id === editingRoom.id
+            ? { ...r, roomNumber: editRoomNumber, floor: editFloor, basePrice: payload.basePrice, baseCapacity: payload.baseCapacity }
+            : r
+        )
+      );
+      setEditingRoom(null);
+      fetchSummary();
+      toast.success('Room details saved');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update room details');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const filteredRooms = rooms.filter(
-    (room) =>
-      room.roomNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      room.roomType?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      room.floor?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleCreateRoom = async () => {
+    if (!newRoomNumber.trim()) return;
+    try {
+      setCreating(true);
+      const payload: any = {
+        roomNumber: newRoomNumber.trim(),
+        floor: newRoomFloor.trim() || 'Ground',
+      };
+      if (newRoomPrice) payload.basePrice = parseFloat(newRoomPrice);
+      if (newRoomCapacity) payload.baseCapacity = parseInt(newRoomCapacity, 10);
 
-  const countByStatus = (s: string) => rooms.filter((r) => r.status === s).length;
+      await api.post('hotel/rooms', payload);
+      setShowCreateModal(false);
+      setNewRoomNumber('');
+      setNewRoomFloor('');
+      setNewRoomPrice('');
+      setNewRoomCapacity('');
+      setPage(1);
+      await Promise.all([fetchRooms(), fetchSummary()]);
+      toast.success(`Room ${newRoomNumber.trim()} created`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to create room');
+    } finally {
+      setCreating(false);
+    }
+  };
 
-  const statuses = [
-    { value: 'ALL', label: 'All Rooms' },
-    { value: 'available', label: 'Available' },
-    { value: 'occupied', label: 'Occupied' },
-    { value: 'dirty', label: 'Dirty' },
-    { value: 'maintenance', label: 'Maintenance' },
-    { value: 'out_of_order', label: 'Out of Order' },
-  ];
+  const filteredRooms = rooms
+    .filter(
+      (room) =>
+        room.roomNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        room.roomType?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        room.floor?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'roomNumber':
+          return a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true });
+        case 'basePrice':
+          return (a.basePrice ?? Infinity) - (b.basePrice ?? Infinity);
+        case 'baseCapacity':
+          return (a.baseCapacity ?? 0) - (b.baseCapacity ?? 0);
+        case 'floor':
+          return a.floor.localeCompare(b.floor, undefined, { numeric: true });
+        case 'status':
+          return a.status.localeCompare(b.status);
+        default:
+          return 0;
+      }
+    });
 
   return (
     <div className="space-y-8 pb-10">
@@ -121,24 +260,38 @@ export function RoomsPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-serif text-[#0F1B2D]">Rooms</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            View your room inventory and update room status
+            Manage your room inventory, prices, and status
           </p>
         </div>
-        {/* Info note — rooms are created by the platform admin */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-blue-50 border border-blue-100 rounded-lg px-4 py-2">
-          <Info className="w-4 h-4 text-blue-400 shrink-0" />
-          <span>Rooms are added by the platform admin. You can update room status here.</span>
-        </div>
+        {summary.total != null && summary.roomLimit != null && summary.total >= summary.roomLimit ? (
+          <Button
+            className="bg-[#C9973A] hover:bg-[#b8882e] text-white"
+          >
+            Upgrade Plan
+          </Button>
+        ) : (
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-[#0F1B2D] hover:bg-[#1a2a3a]"
+          >
+            + Add Room
+          </Button>
+        )}
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card className="shadow-sm border-none bg-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase">Total Rooms</p>
-                <h3 className="text-2xl font-bold text-[#0F1B2D] mt-1">{rooms.length}</h3>
+                <h3 className="text-2xl font-bold text-[#0F1B2D] mt-1">{summary.total ?? 0}</h3>
+                {summary.roomLimit && (
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    Limit: {summary.roomLimit} ({summary.plan})
+                  </p>
+                )}
               </div>
               <Bed className="w-10 h-10 text-blue-600 opacity-20" />
             </div>
@@ -150,7 +303,7 @@ export function RoomsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase">Available</p>
-                <h3 className="text-2xl font-bold text-green-600 mt-1">{countByStatus('available')}</h3>
+                <h3 className="text-2xl font-bold text-green-600 mt-1">{summary.available ?? 0}</h3>
               </div>
               <CheckCircle className="w-10 h-10 text-green-600 opacity-20" />
             </div>
@@ -162,7 +315,7 @@ export function RoomsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase">Occupied</p>
-                <h3 className="text-2xl font-bold text-blue-600 mt-1">{countByStatus('occupied')}</h3>
+                <h3 className="text-2xl font-bold text-blue-600 mt-1">{summary.occupied ?? 0}</h3>
               </div>
               <Lock className="w-10 h-10 text-blue-600 opacity-20" />
             </div>
@@ -173,10 +326,34 @@ export function RoomsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase">Dirty</p>
+                <h3 className="text-2xl font-bold text-yellow-600 mt-1">{summary.dirty ?? 0}</h3>
+              </div>
+              <AlertTriangle className="w-10 h-10 text-yellow-600 opacity-20" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-none bg-white">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase">Maintenance</p>
-                <h3 className="text-2xl font-bold text-orange-600 mt-1">{countByStatus('maintenance')}</h3>
+                <h3 className="text-2xl font-bold text-orange-600 mt-1">{summary.maintenance ?? 0}</h3>
               </div>
               <Wrench className="w-10 h-10 text-orange-600 opacity-20" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-none bg-white">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase">Out of Order</p>
+                <h3 className="text-2xl font-bold text-red-600 mt-1">{summary.out_of_order ?? 0}</h3>
+              </div>
+              <X className="w-10 h-10 text-red-600 opacity-20" />
             </div>
           </CardContent>
         </Card>
@@ -197,21 +374,32 @@ export function RoomsPage() {
                 />
               </div>
             </div>
-            <div className="flex gap-2 overflow-x-auto">
-              {statuses.map((s) => (
-                <button
-                  key={s.value}
-                  onClick={() => setSelectedStatus(s.value)}
-                  className={cn(
-                    'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition',
-                    selectedStatus === s.value
-                      ? 'bg-[#C9973A] text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  )}
-                >
-                  {s.label}
-                </button>
-              ))}
+            <div className="flex gap-2">
+              <Select value={selectedStatus} onValueChange={(v) => { setSelectedStatus(v || 'ALL'); setPage(1); }}>
+                <SelectTrigger className="w-[160px] bg-white">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Rooms</SelectItem>
+                  <SelectItem value="available">Available</SelectItem>
+                  <SelectItem value="occupied">Occupied</SelectItem>
+                  <SelectItem value="dirty">Dirty</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="out_of_order">Out of Order</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v || 'roomNumber')}>
+                <SelectTrigger className="w-[160px] bg-white">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="roomNumber">Room Number</SelectItem>
+                  <SelectItem value="basePrice">Price</SelectItem>
+                  <SelectItem value="baseCapacity">Capacity</SelectItem>
+                  <SelectItem value="floor">Floor</SelectItem>
+                  <SelectItem value="status">Status</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
@@ -231,7 +419,7 @@ export function RoomsPage() {
         {isLoading ? (
           Array(6)
             .fill(0)
-            .map((_, i) => <Skeleton key={i} className="h-48 w-full" />)
+            .map((_, i) => <Skeleton key={i} className="h-56 w-full" />)
         ) : filteredRooms.length > 0 ? (
           filteredRooms.map((room) => (
             <Card
@@ -251,30 +439,42 @@ export function RoomsPage() {
                   <RoomStatusBadge status={room.status} />
                 </div>
 
-                <div className="space-y-2 mb-5 text-sm">
+                <div className="space-y-2 mb-4 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Capacity:</span>
                     <span className="font-medium">
-                      {room.roomType?.baseCapacity ?? '—'} guests
+                      {room.baseCapacity ?? room.roomType?.baseCapacity ?? '—'} guests
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Base Rate:</span>
+                    <span className="text-muted-foreground">Rate:</span>
                     <span className="font-medium text-[#C9973A]">
-                      {room.roomType?.basePrice != null
-                        ? `$${Number(room.roomType.basePrice).toFixed(2)}/night`
-                        : '—'}
+                      {room.basePrice != null
+                        ? `${formatCurrency(Number(room.basePrice))}/night`
+                        : room.roomType?.basePrice != null
+                          ? `${formatCurrency(Number(room.roomType.basePrice))}/night`
+                          : '—'}
                     </span>
                   </div>
                 </div>
 
-                <Button
-                  variant="outline"
-                  className="w-full text-xs border-[#0F1B2D]/20 hover:bg-[#0F1B2D] hover:text-white transition"
-                  onClick={() => openStatusModal(room)}
-                >
-                  Update Status
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 text-xs border-[#0F1B2D]/20 hover:bg-[#0F1B2D] hover:text-white transition"
+                    onClick={() => openEditModal(room, 'status')}
+                  >
+                    Status
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1 text-xs border-[#0F1B2D]/20 hover:bg-[#0F1B2D] hover:text-white transition"
+                    onClick={() => openEditModal(room, 'details')}
+                  >
+                    <Settings className="w-3 h-3 mr-1" />
+                    Edit
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))
@@ -286,13 +486,59 @@ export function RoomsPage() {
         )}
       </div>
 
-      {/* Status Update Modal */}
+      {/* Pagination */}
+      {!isLoading && pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between pt-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)}–{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} rooms
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => goToPage(page - 1)}
+              disabled={page <= 1}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+              .filter((p) => p === 1 || p === pagination.totalPages || Math.abs(p - page) <= 1)
+              .map((p, idx, arr) => (
+                <span key={p} className="flex items-center gap-1">
+                  {idx > 0 && arr[idx - 1] !== p - 1 && <span className="text-muted-foreground px-1">…</span>}
+                  <button
+                    onClick={() => goToPage(p)}
+                    className={cn(
+                      'w-8 h-8 rounded-lg text-sm font-medium transition',
+                      p === page
+                        ? 'bg-[#C9973A] text-white'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    )}
+                  >
+                    {p}
+                  </button>
+                </span>
+              ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= pagination.totalPages}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
       {editingRoom && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-5">
+            {/* Tab switcher */}
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-[#0F1B2D]">
-                Room {editingRoom.roomNumber} — Update Status
+                Room {editingRoom.roomNumber}
               </h2>
               <button
                 onClick={() => setEditingRoom(null)}
@@ -302,46 +548,210 @@ export function RoomsPage() {
               </button>
             </div>
 
-            <p className="text-sm text-muted-foreground">
-              Current status:{' '}
-              <span className="font-medium capitalize text-[#0F1B2D]">
-                {editingRoom.status.replace('_', ' ')}
-              </span>
-            </p>
+            <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setEditTab('status')}
+                className={cn(
+                  'flex-1 px-3 py-2 rounded-md text-sm font-medium transition',
+                  editTab === 'status' ? 'bg-white shadow-sm text-[#0F1B2D]' : 'text-gray-500 hover:text-gray-700'
+                )}
+              >
+                Status
+              </button>
+              <button
+                onClick={() => setEditTab('details')}
+                className={cn(
+                  'flex-1 px-3 py-2 rounded-md text-sm font-medium transition',
+                  editTab === 'details' ? 'bg-white shadow-sm text-[#0F1B2D]' : 'text-gray-500 hover:text-gray-700'
+                )}
+              >
+                Details
+              </button>
+            </div>
 
-            <div className="space-y-2">
-              {STATUS_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setNewStatus(opt.value)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-sm font-medium transition',
-                    newStatus === opt.value
-                      ? 'border-[#C9973A] bg-[#C9973A]/5 text-[#0F1B2D]'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                  )}
-                >
-                  <span className={cn('w-3 h-3 rounded-full shrink-0', opt.color)} />
-                  {opt.label}
-                </button>
-              ))}
+            {/* Status tab */}
+            {editTab === 'status' && (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Current status:{' '}
+                  <span className="font-medium capitalize text-[#0F1B2D]">
+                    {editingRoom.status.replace('_', ' ')}
+                  </span>
+                </p>
+
+                <div className="space-y-2">
+                  {STATUS_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setNewStatus(opt.value)}
+                      className={cn(
+                        'w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-sm font-medium transition',
+                        newStatus === opt.value
+                          ? 'border-[#C9973A] bg-[#C9973A]/5 text-[#0F1B2D]'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      )}
+                    >
+                      <span className={cn('w-3 h-3 rounded-full shrink-0', opt.color)} />
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setEditingRoom(null)}
+                    disabled={updating}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 bg-[#0F1B2D] hover:bg-[#1a2a3a]"
+                    onClick={handleStatusUpdate}
+                    disabled={updating || newStatus === editingRoom.status}
+                  >
+                    {updating ? 'Saving…' : 'Save'}
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {/* Details tab */}
+            {editTab === 'details' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Room Number</label>
+                  <Input
+                    value={editRoomNumber}
+                    onChange={(e) => setEditRoomNumber(e.target.value)}
+                    placeholder="e.g. 101"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Floor</label>
+                  <Input
+                    value={editFloor}
+                    onChange={(e) => setEditFloor(e.target.value)}
+                    placeholder="e.g. First, Ground"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Base Price (ETB/night)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={editBasePrice}
+                    onChange={(e) => setEditBasePrice(e.target.value)}
+                    placeholder="e.g. 199.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Capacity (guests)</label>
+                  <Input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={editBaseCapacity}
+                    onChange={(e) => setEditBaseCapacity(e.target.value)}
+                    placeholder="e.g. 2"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setEditingRoom(null)}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 bg-[#0F1B2D] hover:bg-[#1a2a3a]"
+                    onClick={handleDetailsSave}
+                    disabled={saving}
+                  >
+                    {saving ? 'Saving…' : 'Save'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Create Room Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-[#0F1B2D]">Add Room</h2>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-muted-foreground hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Room Number *</label>
+                <Input
+                  value={newRoomNumber}
+                  onChange={(e) => setNewRoomNumber(e.target.value)}
+                  placeholder="e.g. 101"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Floor</label>
+                <Input
+                  value={newRoomFloor}
+                  onChange={(e) => setNewRoomFloor(e.target.value)}
+                  placeholder="e.g. First, Ground"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Base Price (ETB/night)</label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={newRoomPrice}
+                  onChange={(e) => setNewRoomPrice(e.target.value)}
+                  placeholder="e.g. 199.00"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Capacity (guests)</label>
+                <Input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={newRoomCapacity}
+                  onChange={(e) => setNewRoomCapacity(e.target.value)}
+                  placeholder="e.g. 2"
+                />
+              </div>
             </div>
 
             <div className="flex gap-3 pt-2">
               <Button
                 variant="outline"
                 className="flex-1"
-                onClick={() => setEditingRoom(null)}
-                disabled={updating}
+                onClick={() => setShowCreateModal(false)}
+                disabled={creating}
               >
                 Cancel
               </Button>
               <Button
                 className="flex-1 bg-[#0F1B2D] hover:bg-[#1a2a3a]"
-                onClick={handleStatusUpdate}
-                disabled={updating || newStatus === editingRoom.status}
+                onClick={handleCreateRoom}
+                disabled={creating || !newRoomNumber.trim()}
               >
-                {updating ? 'Saving…' : 'Save'}
+                {creating ? 'Creating…' : 'Add Room'}
               </Button>
             </div>
           </div>

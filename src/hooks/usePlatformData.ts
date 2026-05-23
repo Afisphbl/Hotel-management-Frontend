@@ -56,6 +56,7 @@ export function usePlatformHotels(params?: {
 
       return api.get(`platform/hotels?${searchParams.toString()}`);
     },
+    refetchInterval: 15000,
   });
 }
 
@@ -121,6 +122,7 @@ export function usePlatformHotel(id: string) {
       return api.get(`platform/hotels/${id}`);
     },
     enabled: !!id,
+    refetchInterval: 15000,
   });
 }
 

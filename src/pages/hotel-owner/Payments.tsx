@@ -13,7 +13,7 @@ import {
   AlertCircle,
   RefreshCw
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 
 export function PaymentsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -80,7 +80,7 @@ export function PaymentsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase">Total Revenue</p>
-                <h3 className="text-2xl font-bold text-[#0F1B2D] mt-1">${totalRevenue.toFixed(2)}</h3>
+                <h3 className="text-2xl font-bold text-[#0F1B2D] mt-1">{formatCurrency(totalRevenue)}</h3>
               </div>
               <DollarSign className="w-12 h-12 text-green-600 opacity-20" />
             </div>
@@ -176,7 +176,7 @@ export function PaymentsPage() {
                     <tr key={payment.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
                       <td className="py-3 px-4 text-xs font-mono text-[#0F1B2D]">{payment.transactionId?.slice(0, 8)}</td>
                       <td className="py-3 px-4 text-xs font-mono text-[#0F1B2D]">{payment.invoiceId?.slice(0, 8)}</td>
-                      <td className="py-3 px-4 font-semibold text-[#0F1B2D]">${payment.amount?.toFixed(2) || '0.00'}</td>
+                      <td className="py-3 px-4 font-semibold text-[#0F1B2D]">{formatCurrency(payment.amount || 0)}</td>
                       <td className="py-3 px-4 text-sm capitalize">{payment.method || 'N/A'}</td>
                       <td className="py-3 px-4">
                         <PaymentStatusBadge status={payment.status} />

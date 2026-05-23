@@ -102,9 +102,16 @@ export const useAuthStore = create<AuthState>()(
                 token: response.access_token,
                 originalToken: null,
               });
-              console.log(
-                "Successfully logged in against Live API and synced state!",
-              );
+              console.log("=== LOGIN FULL RESPONSE ===", response);
+              console.log("=== LOGIN FULL JWT PAYLOAD ===", payload);
+              console.log("=== LOGIN FULL USER ===", apiUser);
+              api.get("hotel/owner/hotels").then((hres: any) => {
+                console.log("=== LOGIN HOTELS ===", hres?.data ?? hres);
+              }).catch(() => {});
+              api.get("hotel/rooms?limit=1").then((rres: any) => {
+                const roomsData = rres?.data ?? rres;
+                console.log("=== LOGIN ROOMS COUNT ===", roomsData?.meta?.total ?? roomsData?.length ?? 0);
+              }).catch(() => {});
               return response.dashboard_route;
             }
           }

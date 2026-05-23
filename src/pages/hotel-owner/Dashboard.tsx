@@ -58,12 +58,7 @@ export function HotelOwnerDashboard() {
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
+    return `ETB ${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const getStatusColor = (status: string) => {
@@ -155,7 +150,7 @@ export function HotelOwnerDashboard() {
                     contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
                     formatter={(value, name) => {
                       if (name === 'occupancy') return [`${value}%`, 'Occupancy'];
-                      if (name === 'revenue') return [`$${value}`, 'Revenue'];
+                      if (name === 'revenue') return [formatCurrency(value), 'Revenue'];
                       return [value, name];
                     }}
                   />
@@ -242,7 +237,7 @@ export function HotelOwnerDashboard() {
                   <YAxis stroke="#999" fontSize={12} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
-                    formatter={(value) => [`$${value}`, 'Revenue']}
+                    formatter={(value) => [formatCurrency(value), 'Revenue']}
                   />
                   <Area
                     type="monotone"

@@ -6,6 +6,7 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell
 } from 'recharts';
+import { formatCurrency } from '@/lib/utils';
 import { 
   Download, 
   TrendingUp,
@@ -113,7 +114,7 @@ export function ReportsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="Total Revenue"
-          value={`$${reportData?.financialMetrics.totalRevenue?.toLocaleString() || '0'}`}
+          value={formatCurrency(reportData?.financialMetrics.totalRevenue || 0)}
           icon={DollarSign}
           color="text-green-600"
           loading={isLoading}
@@ -127,7 +128,7 @@ export function ReportsPage() {
         />
         <KPICard
           title="Avg Daily Rate"
-          value={`$${reportData?.financialMetrics.averageDailyRate || '0'}`}
+          value={formatCurrency(reportData?.financialMetrics.averageDailyRate || 0)}
           icon={TrendingUp}
           color="text-purple-600"
           loading={isLoading}

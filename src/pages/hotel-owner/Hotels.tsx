@@ -27,7 +27,8 @@ export function HotelsPage() {
     name: '',
     location: '',
     timezone: 'UTC',
-    currency: 'USD'
+    currency: 'ETB',
+    rooms: 10
   });
 
   const [selectedHotel, setSelectedHotel] = useState<any | null>(null);
@@ -61,7 +62,7 @@ export function HotelsPage() {
     }
     try {
       await api.post('hotel/owner/hotels', newHotel);
-      setNewHotel({ name: '', location: '', timezone: 'UTC', currency: 'USD' });
+      setNewHotel({ name: '', location: '', timezone: 'UTC', currency: 'ETB', rooms: 10 });
       setIsCreating(false);
       toast.success('Hotel created successfully');
       fetchHotels();
@@ -223,7 +224,11 @@ export function HotelsPage() {
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium">Currency</label>
-                <Input placeholder="USD" value={newHotel.currency} onChange={e => setNewHotel({...newHotel, currency: e.target.value})} />
+                <Input placeholder="ETB" value={newHotel.currency} onChange={e => setNewHotel({...newHotel, currency: e.target.value})} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium">Rooms</label>
+                <Input type="number" min="1" placeholder="10" value={newHotel.rooms} onChange={e => setNewHotel({...newHotel, rooms: parseInt(e.target.value) || 0})} />
               </div>
             </div>
             <div className="mt-4 flex justify-end">

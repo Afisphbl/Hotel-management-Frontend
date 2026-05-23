@@ -12,7 +12,7 @@ import {
   Clock,
   Download
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 
 export function InvoicesPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -82,7 +82,7 @@ export function InvoicesPage() {
             </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase">Total Paid</p>
-              <h3 className="text-3xl font-bold text-green-600 mt-2">${totalAmount.toFixed(2)}</h3>
+              <h3 className="text-3xl font-bold text-green-600 mt-2">{formatCurrency(totalAmount)}</h3>
             </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase">Pending</p>
@@ -158,7 +158,7 @@ export function InvoicesPage() {
                     <tr key={invoice.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
                       <td className="py-3 px-4 font-mono text-[#0F1B2D]">{invoice.invoiceNumber}</td>
                       <td className="py-3 px-4 text-xs font-mono">{invoice.bookingId?.slice(0, 8)}</td>
-                      <td className="py-3 px-4 font-semibold text-[#0F1B2D]">${invoice.amount?.toFixed(2) || '0.00'}</td>
+                      <td className="py-3 px-4 font-semibold text-[#0F1B2D]">{formatCurrency(invoice.amount || 0)}</td>
                       <td className="py-3 px-4 text-sm">{invoice.issueDate}</td>
                       <td className="py-3 px-4 text-sm text-muted-foreground">{invoice.dueDate}</td>
                       <td className="py-3 px-4">
