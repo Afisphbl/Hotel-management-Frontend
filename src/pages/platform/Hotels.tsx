@@ -163,8 +163,14 @@ export function PlatformHotels() {
   };
 
   const handleEdit = (hotel: any) => {
+    const planMap: Record<string, string> = {
+      basic: "BASIC", Basic: "BASIC",
+      pro: "PROFESSIONAL", Pro: "PROFESSIONAL",
+      enterprise: "ENTERPRISE", Enterprise: "ENTERPRISE",
+    };
     setEditingHotel({
       ...hotel,
+      plan: planMap[hotel.plan] ?? hotel.plan,
       ownerName:
         getTextValue(hotel.ownerName, hotel.owner) === "—"
           ? ""
@@ -224,11 +230,27 @@ export function PlatformHotels() {
   const handleUpdate = async () => {
     if (!editingHotel) return;
 
+    // Normalize plan to DB enum value
+    const planMap: Record<string, string> = {
+      basic: "BASIC", Basic: "BASIC", BASIC: "BASIC",
+      pro: "PROFESSIONAL", Pro: "PROFESSIONAL", PROFESSIONAL: "PROFESSIONAL",
+      enterprise: "ENTERPRISE", Enterprise: "ENTERPRISE", ENTERPRISE: "ENTERPRISE",
+    };
+    const normalizedPlan = planMap[editingHotel.plan] ?? editingHotel.plan;
+
     try {
       await updateMutation.mutateAsync({
         id: editingHotel.id,
         data: editingHotel,
       });
+
+      // Update subscription plan if hotel has an active subscription
+      if (editingHotel.subscriptionId && normalizedPlan) {
+        await api.patch(`platform/subscriptions/${editingHotel.subscriptionId}`, {
+          plan: normalizedPlan,
+        });
+      }
+
       toast.success("Hotel updated successfully");
       setIsEditDialogOpen(false);
       refetch();
@@ -762,9 +784,9 @@ export function PlatformHotels() {
                       <SelectValue placeholder='Select plan' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value='Basic'>Basic</SelectItem>
-                      <SelectItem value='Pro'>Pro</SelectItem>
-                      <SelectItem value='Enterprise'>Enterprise</SelectItem>
+                      <SelectItem value='BASIC'>Basic</SelectItem>
+                      <SelectItem value='PROFESSIONAL'>Professional</SelectItem>
+                      <SelectItem value='ENTERPRISE'>Enterprise</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
