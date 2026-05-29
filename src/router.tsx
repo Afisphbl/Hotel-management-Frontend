@@ -45,14 +45,9 @@ import { ComingSoon } from "@/components/shared/ComingSoon";
 import {
   Dashboard as HotelOwnerDashboard,
   Bookings as HotelOwnerBookings,
-  Payments as HotelOwnerPayments,
   Rooms as HotelOwnerRooms,
   Staff as HotelOwnerStaff,
   Pricing as HotelOwnerPricing,
-  Invoices as HotelOwnerInvoices,
-  Housekeeping as HotelOwnerHousekeeping,
-  Maintenance as HotelOwnerMaintenance,
-  Guests as HotelOwnerGuests,
   Reports as HotelOwnerReports,
   Hotels as HotelOwnerHotels,
   FinanceSettings as HotelOwnerFinanceSettings,
@@ -333,12 +328,6 @@ const hotelOwnerBookingsRoute = createRoute({
   component: HotelOwnerBookings,
 });
 
-const hotelOwnerPaymentsRoute = createRoute({
-  getParentRoute: () => hotelLayoutRoute,
-  path: "owner/payments",
-  loader: hotelOwnerLoader,
-  component: HotelOwnerPayments,
-});
 
 const hotelOwnerRoomsRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
@@ -361,33 +350,7 @@ const hotelOwnerPricingRoute = createRoute({
   component: HotelOwnerPricing,
 });
 
-const hotelOwnerInvoicesRoute = createRoute({
-  getParentRoute: () => hotelLayoutRoute,
-  path: "owner/invoices",
-  loader: hotelOwnerLoader,
-  component: HotelOwnerInvoices,
-});
 
-const hotelOwnerHousekeepingRoute = createRoute({
-  getParentRoute: () => hotelLayoutRoute,
-  path: "owner/housekeeping",
-  loader: hotelOwnerLoader,
-  component: HotelOwnerHousekeeping,
-});
-
-const hotelOwnerMaintenanceRoute = createRoute({
-  getParentRoute: () => hotelLayoutRoute,
-  path: "owner/maintenance",
-  loader: hotelOwnerLoader,
-  component: HotelOwnerMaintenance,
-});
-
-const hotelOwnerGuestsRoute = createRoute({
-  getParentRoute: () => hotelLayoutRoute,
-  path: "owner/guests",
-  loader: hotelOwnerLoader,
-  component: HotelOwnerGuests,
-});
 
 const hotelOwnerReportsRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
@@ -459,14 +422,9 @@ export const routeTree = rootRoute.addChildren([
       // Hotel Owner Routes
       hotelOwnerDashboardRoute,
       hotelOwnerBookingsRoute,
-      hotelOwnerPaymentsRoute,
       hotelOwnerRoomsRoute,
       hotelOwnerStaffRoute,
       hotelOwnerPricingRoute,
-      hotelOwnerInvoicesRoute,
-      hotelOwnerHousekeepingRoute,
-      hotelOwnerMaintenanceRoute,
-      hotelOwnerGuestsRoute,
       hotelOwnerReportsRoute,
       hotelOwnerHotelsRoute,
       hotelOwnerFinanceSettingsRoute,

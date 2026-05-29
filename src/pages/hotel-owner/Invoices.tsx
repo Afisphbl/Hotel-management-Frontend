@@ -292,9 +292,15 @@ export function InvoicesPage() {
     }
   };
 
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
   const submitCreateInvoice = async () => {
     if (!createForm.bookingId.trim()) {
       toast.error('Booking ID is required');
+      return;
+    }
+    if (!UUID_RE.test(createForm.bookingId.trim())) {
+      toast.error('Booking ID must be a valid UUID (e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)');
       return;
     }
 
@@ -318,7 +324,9 @@ export function InvoicesPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create invoice');
+        const err = await response.json().catch(() => null);
+        const msg = err?.message;
+        throw new Error(Array.isArray(msg) ? msg.join(', ') : (msg || 'Failed to create invoice'));
       }
 
       toast.success('Invoice created');
@@ -333,7 +341,7 @@ export function InvoicesPage() {
       await refreshInvoices();
     } catch (error) {
       console.error('Failed to create invoice:', error);
-      toast.error('Failed to create invoice');
+      toast.error(error instanceof Error ? error.message : 'Failed to create invoice');
     } finally {
       setActionLoading(null);
     }

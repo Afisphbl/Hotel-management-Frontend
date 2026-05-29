@@ -148,9 +148,9 @@ const HOTEL_OWNER_NAV: NavItem[] = [
     icon: Hotel,
   },
   {
-    title: "Payments",
-    href: "/hotel/owner/payments",
-    icon: CreditCard,
+    title: "Bookings",
+    href: "/hotel/owner/bookings",
+    icon: Calendar,
   },
   {
     title: "Rooms",
@@ -166,26 +166,6 @@ const HOTEL_OWNER_NAV: NavItem[] = [
     title: "Pricing",
     href: "/hotel/owner/pricing",
     icon: Tag,
-  },
-  {
-    title: "Invoices",
-    href: "/hotel/owner/invoices",
-    icon: CreditCard,
-  },
-  {
-    title: "Housekeeping",
-    href: "/hotel/owner/housekeeping",
-    icon: ClipboardList,
-  },
-  {
-    title: "Maintenance",
-    href: "/hotel/owner/maintenance",
-    icon: Wrench,
-  },
-  {
-    title: "Guests",
-    href: "/hotel/owner/guests",
-    icon: Users,
   },
   {
     title: "Reports",
