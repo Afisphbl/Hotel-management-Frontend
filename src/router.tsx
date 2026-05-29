@@ -51,6 +51,23 @@ import {
   Hotels as HotelOwnerHotels,
   FinanceSettings as HotelOwnerFinanceSettings,
 } from "@/pages/hotel-owner";
+// Hotel Admin Pages
+import {
+  Dashboard as HotelAdminDashboard,
+  Property as HotelAdminProperty,
+  Rooms as HotelAdminRooms,
+  Bookings as HotelAdminBookings,
+  Guests as HotelAdminGuests,
+  Staff as HotelAdminStaff,
+  Pricing as HotelAdminPricing,
+  Finance as HotelAdminFinance,
+  Invoices as HotelAdminInvoices,
+  Payments as HotelAdminPayments,
+  Housekeeping as HotelAdminHousekeeping,
+  Maintenance as HotelAdminMaintenance,
+  Reports as HotelAdminReports,
+  Settings as HotelAdminSettings,
+} from "@/pages/hotel-admin";
 
 // Root Layout
 const rootRoute = createRootRoute({
@@ -312,6 +329,17 @@ const hotelOwnerLoader = () => {
   }
 };
 
+const hotelAdminLoader = () => {
+  const { user } = useAuthStore.getState();
+  if (user?.scope !== "hotel") {
+    throw redirect({ to: "/unauthorized" });
+  }
+  const adminRoles = ["HOTEL_MANAGER", "HOTEL_ADMIN", "SUPER_ADMIN"];
+  if (!adminRoles.includes(user?.role ?? "")) {
+    throw redirect({ to: "/unauthorized" });
+  }
+};
+
 // Hotel Owner Routes
 const hotelOwnerDashboardRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
@@ -362,6 +390,105 @@ const hotelOwnerFinanceSettingsRoute = createRoute({
   component: HotelOwnerFinanceSettings,
 });
 
+// Hotel Admin Routes
+const hotelAdminDashboardRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "admin/dashboard",
+  loader: hotelAdminLoader,
+  component: HotelAdminDashboard,
+});
+
+const hotelAdminPropertyRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "admin/property",
+  loader: hotelAdminLoader,
+  component: HotelAdminProperty,
+});
+
+const hotelAdminRoomsRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "admin/rooms",
+  loader: hotelAdminLoader,
+  component: HotelAdminRooms,
+});
+
+const hotelAdminBookingsRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "admin/bookings",
+  loader: hotelAdminLoader,
+  component: HotelAdminBookings,
+});
+
+const hotelAdminGuestsRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "admin/guests",
+  loader: hotelAdminLoader,
+  component: HotelAdminGuests,
+});
+
+const hotelAdminStaffRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "admin/staff",
+  loader: hotelAdminLoader,
+  component: HotelAdminStaff,
+});
+
+const hotelAdminPricingRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "admin/pricing",
+  loader: hotelAdminLoader,
+  component: HotelAdminPricing,
+});
+
+const hotelAdminFinanceRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "admin/finance",
+  loader: hotelAdminLoader,
+  component: HotelAdminFinance,
+});
+
+const hotelAdminInvoicesRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "admin/invoices",
+  loader: hotelAdminLoader,
+  component: HotelAdminInvoices,
+});
+
+const hotelAdminPaymentsRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "admin/payments",
+  loader: hotelAdminLoader,
+  component: HotelAdminPayments,
+});
+
+const hotelAdminHousekeepingRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "admin/housekeeping",
+  loader: hotelAdminLoader,
+  component: HotelAdminHousekeeping,
+});
+
+const hotelAdminMaintenanceRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "admin/maintenance",
+  loader: hotelAdminLoader,
+  component: HotelAdminMaintenance,
+});
+
+const hotelAdminReportsRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "admin/reports",
+  loader: hotelAdminLoader,
+  component: HotelAdminReports,
+});
+
+const hotelAdminSettingsRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "admin/settings",
+  loader: hotelAdminLoader,
+  component: HotelAdminSettings,
+});
+
 const unauthorizedRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "unauthorized",
@@ -394,7 +521,7 @@ export const routeTree = rootRoute.addChildren([
       platformAuditRoute,
       platformSettingsRoute,
     ]),
-    hotelLayoutRoute.addChildren([
+      hotelLayoutRoute.addChildren([
       hotelDashboardRoute,
       hotelBookingsRoute,
       hotelRoomsRoute,
@@ -416,6 +543,21 @@ export const routeTree = rootRoute.addChildren([
       hotelOwnerReportsRoute,
       hotelOwnerHotelsRoute,
       hotelOwnerFinanceSettingsRoute,
+      // Hotel Admin Routes
+      hotelAdminDashboardRoute,
+      hotelAdminPropertyRoute,
+      hotelAdminRoomsRoute,
+      hotelAdminBookingsRoute,
+      hotelAdminGuestsRoute,
+      hotelAdminStaffRoute,
+      hotelAdminPricingRoute,
+      hotelAdminFinanceRoute,
+      hotelAdminInvoicesRoute,
+      hotelAdminPaymentsRoute,
+      hotelAdminHousekeepingRoute,
+      hotelAdminMaintenanceRoute,
+      hotelAdminReportsRoute,
+      hotelAdminSettingsRoute,
     ]),
   ]),
 ]);

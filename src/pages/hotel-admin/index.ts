@@ -1,0 +1,14 @@
+export { AdminDashboard as Dashboard } from "./Dashboard";
+export { PropertyPage as Property } from "./Property";
+export { AdminRooms as Rooms } from "./Rooms";
+export { AdminBookings as Bookings } from "./Bookings";
+export { AdminGuests as Guests } from "./Guests";
+export { AdminStaff as Staff } from "./Staff";
+export { AdminPricing as Pricing } from "./Pricing";
+export { AdminFinance as Finance } from "./Finance";
+export { AdminInvoices as Invoices } from "./Invoices";
+export { AdminPayments as Payments } from "./Payments";
+export { AdminHousekeeping as Housekeeping } from "./Housekeeping";
+export { AdminMaintenance as Maintenance } from "./Maintenance";
+export { AdminReports as Reports } from "./Reports";
+export { AdminSettings as Settings } from "./Settings";
