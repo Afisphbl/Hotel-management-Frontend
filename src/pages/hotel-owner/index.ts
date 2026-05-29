@@ -1,5 +1,4 @@
 export { HotelOwnerDashboard as Dashboard } from "./Dashboard";
-export { BookingsPage as Bookings } from "./Bookings";
 export { RoomsPage as Rooms } from "./Rooms";
 export { StaffPage as Staff } from "./Staff";
 export { PricingPage as Pricing } from "./Pricing";

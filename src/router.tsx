@@ -44,7 +44,6 @@ import { ComingSoon } from "@/components/shared/ComingSoon";
 // Hotel Owner Pages
 import {
   Dashboard as HotelOwnerDashboard,
-  Bookings as HotelOwnerBookings,
   Rooms as HotelOwnerRooms,
   Staff as HotelOwnerStaff,
   Pricing as HotelOwnerPricing,
@@ -321,14 +320,6 @@ const hotelOwnerDashboardRoute = createRoute({
   component: HotelOwnerDashboard,
 });
 
-const hotelOwnerBookingsRoute = createRoute({
-  getParentRoute: () => hotelLayoutRoute,
-  path: "owner/bookings",
-  loader: hotelOwnerLoader,
-  component: HotelOwnerBookings,
-});
-
-
 const hotelOwnerRoomsRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
   path: "owner/rooms",
@@ -349,8 +340,6 @@ const hotelOwnerPricingRoute = createRoute({
   loader: hotelOwnerLoader,
   component: HotelOwnerPricing,
 });
-
-
 
 const hotelOwnerReportsRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
@@ -421,7 +410,6 @@ export const routeTree = rootRoute.addChildren([
       hotelSettingsRoute,
       // Hotel Owner Routes
       hotelOwnerDashboardRoute,
-      hotelOwnerBookingsRoute,
       hotelOwnerRoomsRoute,
       hotelOwnerStaffRoute,
       hotelOwnerPricingRoute,

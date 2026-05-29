@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuthStore } from '@/store/authStore';
 import { 
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 
 export function ReportsPage() {
+  const { token } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [reportData, setReportData] = useState<any>(null);
   const [dateRange, setDateRange] = useState('30');
@@ -28,42 +30,11 @@ export function ReportsPage() {
   const fetchReportData = async () => {
     try {
       setIsLoading(true);
-      // Mock report data - replace with actual API call
-      const mockData = {
-        revenueByMonth: [
-          { month: 'Jan', revenue: 12000 },
-          { month: 'Feb', revenue: 19000 },
-          { month: 'Mar', revenue: 15000 },
-          { month: 'Apr', revenue: 22000 },
-          { month: 'May', revenue: 25000 },
-          { month: 'Jun', revenue: 28000 }
-        ],
-        occupancyTrend: [
-          { date: '2024-05-01', occupancy: 65 },
-          { date: '2024-05-08', occupancy: 72 },
-          { date: '2024-05-15', occupancy: 80 },
-          { date: '2024-05-22', occupancy: 78 },
-          { date: '2024-05-29', occupancy: 85 }
-        ],
-        bookingSource: [
-          { name: 'Direct', value: 45, color: '#C9973A' },
-          { name: 'OTA', value: 35, color: '#0F1B2D' },
-          { name: 'Referral', value: 20, color: '#FFB347' }
-        ],
-        guestStatistics: {
-          totalGuests: 1250,
-          newGuests: 145,
-          returningGuests: 780,
-          averageStay: 3.2
-        },
-        financialMetrics: {
-          totalRevenue: 125000,
-          averageDailyRate: 185,
-          revenuePAR: 145,
-          occupancyRate: 78
-        }
-      };
-      setReportData(mockData);
+      const res = await fetch('/api/v1/hotel/reports', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      setReportData(json.data ?? null);
     } catch (error) {
       console.error('Failed to fetch report data:', error);
     } finally {

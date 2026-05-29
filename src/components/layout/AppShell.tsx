@@ -148,11 +148,6 @@ const HOTEL_OWNER_NAV: NavItem[] = [
     icon: Hotel,
   },
   {
-    title: "Bookings",
-    href: "/hotel/owner/bookings",
-    icon: Calendar,
-  },
-  {
     title: "Rooms",
     href: "/hotel/owner/rooms",
     icon: Bed,
