@@ -30,8 +30,14 @@ import { RoomTypesDialog } from "@/components/shared/RoomTypesDialog";
 // ─── Simple inline modal ──────────────────────────────────────────────────────
 function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between p-5 border-b">
           <h2 className="font-semibold text-[#0F1B2D]">{title}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
@@ -56,7 +62,12 @@ interface Room {
   status: RoomStatus;
   basePrice?: number | null;
   baseCapacity?: number | null;
+  roomTypeId?: string | null;
+  effectivePrice?: number | null;
+  pricingReason?: string | null;
+  pricingType?: 'override' | 'promotion' | 'seasonal' | 'rate_plan' | null;
   roomType?: {
+    id: string;
     name: string;
     baseCapacity: number;
     basePrice: number;
@@ -196,7 +207,25 @@ export function RoomsPage() {
       setEditFloor(room.floor);
       setEditBasePrice(room.basePrice ? String(room.basePrice) : "");
       setEditBaseCapacity(room.baseCapacity ? String(room.baseCapacity) : "");
-      setEditRoomTypeId((room as any).roomTypeId || "");
+      setEditRoomTypeId(room.roomTypeId || "");
+    }
+  };
+
+  const handleEditRoomTypeChange = (id: string) => {
+    setEditRoomTypeId(id);
+    const rt = roomTypes.find(t => t.id === id);
+    if (rt) {
+      if (!editBasePrice) setEditBasePrice(String(rt.basePrice));
+      if (!editBaseCapacity) setEditBaseCapacity(String(rt.baseCapacity));
+    }
+  };
+
+  const handleCreateRoomTypeChange = (id: string) => {
+    setNewRoomTypeId(id);
+    const rt = roomTypes.find(t => t.id === id);
+    if (rt) {
+      if (!newRoomPrice) setNewRoomPrice(String(rt.basePrice));
+      if (!newRoomCapacity) setNewRoomCapacity(String(rt.baseCapacity));
     }
   };
 
@@ -548,11 +577,34 @@ export function RoomsPage() {
                   <div className='flex justify-between'>
                     <span className='text-muted-foreground'>Rate:</span>
                     <span className='font-medium text-[#C9973A]'>
-                      {room.basePrice != null
-                        ? `${formatCurrency(Number(room.basePrice))}/night`
-                        : room.roomType?.basePrice != null
-                          ? `${formatCurrency(Number(room.roomType.basePrice))}/night`
-                          : "—"}
+                      {room.effectivePrice != null && 
+                       room.effectivePrice !== (room.basePrice ?? room.roomType?.basePrice) ? (
+                        <div className="flex flex-col items-end">
+                          <span className="flex items-center gap-1.5">
+                            <span className="text-xs text-muted-foreground line-through">
+                              {formatCurrency(Number(room.basePrice ?? room.roomType?.basePrice ?? 0))}
+                            </span>
+                            <span>
+                              {room.pricingType === 'override' ? 'O' : 
+                               room.pricingType === 'promotion' ? 'P' : 
+                               room.pricingType === 'seasonal' ? 'S' : 
+                               room.pricingType === 'rate_plan' ? 'R' : ''}
+                              {room.effectivePrice}
+                            </span>
+                          </span>
+                          {room.pricingReason && (
+                            <span className="text-[10px] text-muted-foreground italic">
+                              ({room.pricingReason})
+                            </span>
+                          )}
+                        </div>
+                      ) : room.basePrice != null ? (
+                        `${formatCurrency(Number(room.basePrice))}/night`
+                      ) : room.roomType?.basePrice != null ? (
+                        `${formatCurrency(Number(room.roomType.basePrice))}/night`
+                      ) : (
+                        "—"
+                      )}
                     </span>
                   </div>
                 </div>
@@ -645,21 +697,11 @@ export function RoomsPage() {
 
       {/* Edit Modal */}
       {editingRoom && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm'>
-          <div className='bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-5'>
-            {/* Tab switcher */}
-            <div className='flex items-center justify-between'>
-              <h2 className='text-lg font-bold text-[#0F1B2D]'>
-                Room {editingRoom.roomNumber}
-              </h2>
-              <button
-                onClick={() => setEditingRoom(null)}
-                className='text-muted-foreground hover:text-gray-700'
-              >
-                <X className='w-5 h-5' />
-              </button>
-            </div>
-
+        <Modal 
+          title={`Room ${editingRoom.roomNumber}`} 
+          onClose={() => setEditingRoom(null)}
+        >
+          <div className='space-y-5'>
             <div className='flex gap-1 bg-gray-100 rounded-lg p-1'>
               <button
                 onClick={() => setEditTab("status")}
@@ -767,7 +809,7 @@ export function RoomsPage() {
                   </label>
                   <select
                     value={editRoomTypeId}
-                    onChange={(e) => setEditRoomTypeId(e.target.value)}
+                    onChange={(e) => handleEditRoomTypeChange(e.target.value)}
                     className='w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C9973A]'
                   >
                     <option value=''>Standard / Generic</option>
@@ -825,87 +867,75 @@ export function RoomsPage() {
               </div>
             )}
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Create Room Modal */}
       {showCreateModal && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm'>
-          <div className='bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-5'>
-            <div className='flex items-center justify-between'>
-              <h2 className='text-lg font-bold text-[#0F1B2D]'>Add Room</h2>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className='text-muted-foreground hover:text-gray-700'
-              >
-                <X className='w-5 h-5' />
-              </button>
+        <Modal title="Add Room" onClose={() => setShowCreateModal(false)}>
+          <div className='space-y-4'>
+            <div>
+              <label className='block text-sm font-medium text-gray-700 mb-1'>
+                Room Number *
+              </label>
+              <Input
+                value={newRoomNumber}
+                onChange={(e) => setNewRoomNumber(e.target.value)}
+                placeholder='e.g. 101'
+              />
             </div>
-
-            <div className='space-y-4'>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>
-                  Room Number *
-                </label>
-                <Input
-                  value={newRoomNumber}
-                  onChange={(e) => setNewRoomNumber(e.target.value)}
-                  placeholder='e.g. 101'
-                />
-              </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>
-                  Floor
-                </label>
-                <Input
-                  value={newRoomFloor}
-                  onChange={(e) => setNewRoomFloor(e.target.value)}
-                  placeholder='e.g. First, Ground'
-                />
-              </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>
-                  Room Type
-                </label>
-                <select
-                  value={newRoomTypeId}
-                  onChange={(e) => setNewRoomTypeId(e.target.value)}
-                  className='w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C9973A]'
-                >
-                  <option value=''>Standard / Generic</option>
-                  {roomTypes.map((rt) => (
-                    <option key={rt.id} value={rt.id}>
-                      {rt.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>
-                  Base Price (ETB/night)
-                </label>
-                <Input
-                  type='number'
-                  min='0'
-                  step='0.01'
-                  value={newRoomPrice}
-                  onChange={(e) => setNewRoomPrice(e.target.value)}
-                  placeholder='e.g. 199.00'
-                />
-              </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>
-                  Capacity (guests)
-                </label>
-                <Input
-                  type='number'
-                  min='1'
-                  step='1'
-                  value={newRoomCapacity}
-                  onChange={(e) => setNewRoomCapacity(e.target.value)}
-                  placeholder='e.g. 2'
-                />
-              </div>
+            <div>
+              <label className='block text-sm font-medium text-gray-700 mb-1'>
+                Floor
+              </label>
+              <Input
+                value={newRoomFloor}
+                onChange={(e) => setNewRoomFloor(e.target.value)}
+                placeholder='e.g. First, Ground'
+              />
+            </div>
+            <div>
+              <label className='block text-sm font-medium text-gray-700 mb-1'>
+                Room Type
+              </label>
+              <select
+                value={newRoomTypeId}
+                onChange={(e) => handleCreateRoomTypeChange(e.target.value)}
+                className='w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C9973A]'
+              >
+                <option value=''>Standard / Generic</option>
+                {roomTypes.map((rt) => (
+                  <option key={rt.id} value={rt.id}>
+                    {rt.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className='block text-sm font-medium text-gray-700 mb-1'>
+                Base Price (ETB/night)
+              </label>
+              <Input
+                type='number'
+                min='0'
+                step='0.01'
+                value={newRoomPrice}
+                onChange={(e) => setNewRoomPrice(e.target.value)}
+                placeholder='e.g. 199.00'
+              />
+            </div>
+            <div>
+              <label className='block text-sm font-medium text-gray-700 mb-1'>
+                Capacity (guests)
+              </label>
+              <Input
+                type='number'
+                min='1'
+                step='1'
+                value={newRoomCapacity}
+                onChange={(e) => setNewRoomCapacity(e.target.value)}
+                placeholder='e.g. 2'
+              />
             </div>
 
             <div className='flex gap-3 pt-2'>
@@ -926,7 +956,7 @@ export function RoomsPage() {
               </Button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Room Types Management Modal */}
