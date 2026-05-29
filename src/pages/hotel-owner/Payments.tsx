@@ -13,7 +13,7 @@ import {
   AlertCircle,
   RefreshCw
 } from 'lucide-react';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency, formatDate } from '@/lib/utils';
 
 export function PaymentsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -181,7 +181,7 @@ export function PaymentsPage() {
                       <td className="py-3 px-4">
                         <PaymentStatusBadge status={payment.status} />
                       </td>
-                      <td className="py-3 px-4 text-sm text-muted-foreground">{payment.date}</td>
+                      <td className="py-3 px-4 text-sm text-muted-foreground">{formatDate(payment.paidAt || payment.createdAt)}</td>
                       <td className="py-3 px-4">
                         <Button variant="ghost" size="sm">
                           <MoreHorizontal className="w-4 h-4" />

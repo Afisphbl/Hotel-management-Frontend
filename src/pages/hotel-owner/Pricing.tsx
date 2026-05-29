@@ -6,6 +6,7 @@ import { Plus, Trash2, Pencil, Tag, TrendingUp, Calendar, LayoutList } from 'luc
 import { api } from '@/lib/api';
 import { usePricingData } from '@/hooks/usePricingData';
 import { toast } from 'sonner';
+import { formatDate } from '@/lib/utils';
 import type { Promotion, SeasonalRate, RatePlan } from '@/hooks/usePricingData';
 import {
   OverrideDialog,
@@ -112,7 +113,7 @@ export function PricingPage() {
                 {overrides.map(o => (
                   <tr key={o.id} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="py-2 px-3 font-medium">{o.roomType?.name ?? rtName(o.roomTypeId)}</td>
-                    <td className="py-2 px-3">{o.date}</td>
+                    <td className="py-2 px-3">{formatDate(o.date)}</td>
                     <td className="py-2 px-3 font-semibold text-[#C9973A]">${o.price}</td>
                     <td className="py-2 px-3 text-xs text-muted-foreground">{o.reason ?? '—'}</td>
                     <td className="py-2 px-3">
@@ -141,7 +142,7 @@ export function PricingPage() {
                   {p.code && <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded font-mono">{p.code}</span>}
                   <div className="text-xs text-muted-foreground mt-0.5">
                     {p.discountType === 'percentage' ? `${p.discountValue}% off` : `$${p.discountValue} off`}
-                    {' · '}{p.startDate} → {p.endDate}
+                    {' · '}{formatDate(p.startDate)} → {formatDate(p.endDate)}
                     {p.roomTypeId && ` · ${p.roomType?.name ?? rtName(p.roomTypeId)}`}
                   </div>
                 </div>
@@ -170,7 +171,7 @@ export function PricingPage() {
                   <div>
                     <p className="font-medium text-sm text-[#0F1B2D]">{s.name}</p>
                     <p className="text-xs text-muted-foreground">{s.roomType?.name ?? rtName(s.roomTypeId)}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{s.startDate} → {s.endDate}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{formatDate(s.startDate)} → {formatDate(s.endDate)}</p>
                     <p className="text-sm font-semibold text-[#C9973A] mt-1">
                       {s.fixedPrice ? `$${s.fixedPrice} fixed` : s.multiplier ? `×${s.multiplier}` : '—'}
                     </p>

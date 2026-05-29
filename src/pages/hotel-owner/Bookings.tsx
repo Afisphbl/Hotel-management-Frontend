@@ -14,7 +14,7 @@ import {
   Clock,
   XCircle
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 
 export function BookingsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -138,8 +138,8 @@ export function BookingsPage() {
                           <div className="text-xs text-muted-foreground">{booking.guestEmail}</div>
                         </td>
                         <td className="py-3 px-4 text-sm">
-                          <div>{booking.checkIn}</div>
-                          <div className="text-xs text-muted-foreground">→ {booking.checkOut}</div>
+                          <div>{formatDate(booking.checkIn)}</div>
+                          <div className="text-xs text-muted-foreground">→ {formatDate(booking.checkOut)}</div>
                         </td>
                         <td className="py-3 px-4 font-medium text-[#0F1B2D]">{booking.roomNumber}</td>
                         <td className="py-3 px-4 font-semibold text-[#0F1B2D]">${booking.totalAmount || '0'}</td>

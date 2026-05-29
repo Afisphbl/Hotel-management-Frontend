@@ -12,7 +12,7 @@ import {
   CheckCircle,
   Clock
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 
 export function MaintenancePage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -180,7 +180,7 @@ export function MaintenancePage() {
                       <td className="py-3 px-4">
                         <MaintenanceStatusBadge status={ticket.status} />
                       </td>
-                      <td className="py-3 px-4 text-sm text-muted-foreground">{ticket.createdDate}</td>
+                      <td className="py-3 px-4 text-sm text-muted-foreground">{formatDate(ticket.createdDate)}</td>
                       <td className="py-3 px-4">
                         <Button variant="ghost" size="sm">
                           <MoreHorizontal className="w-4 h-4" />

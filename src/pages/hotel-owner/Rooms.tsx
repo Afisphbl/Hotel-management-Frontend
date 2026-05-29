@@ -574,38 +574,44 @@ export function RoomsPage() {
                       guests
                     </span>
                   </div>
-                  <div className='flex justify-between'>
-                    <span className='text-muted-foreground'>Rate:</span>
-                    <span className='font-medium text-[#C9973A]'>
+                  <div className='flex justify-between items-start'>
+                    <span className='text-muted-foreground mt-0.5'>Rate:</span>
+                    <div className='flex flex-col items-end'>
                       {room.effectivePrice != null && 
-                       room.effectivePrice !== (room.basePrice ?? room.roomType?.basePrice) ? (
-                        <div className="flex flex-col items-end">
-                          <span className="flex items-center gap-1.5">
-                            <span className="text-xs text-muted-foreground line-through">
+                       Math.round(Number(room.effectivePrice)) !== Math.round(Number(room.basePrice ?? room.roomType?.basePrice)) ? (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground line-through opacity-70">
                               {formatCurrency(Number(room.basePrice ?? room.roomType?.basePrice ?? 0))}
                             </span>
-                            <span>
-                              {room.pricingType === 'override' ? 'O' : 
-                               room.pricingType === 'promotion' ? 'P' : 
-                               room.pricingType === 'seasonal' ? 'S' : 
-                               room.pricingType === 'rate_plan' ? 'R' : ''}
-                              {room.effectivePrice}
+                            <span className="font-bold text-[#C9973A] text-base">
+                              {formatCurrency(Number(room.effectivePrice))}
                             </span>
-                          </span>
+                          </div>
                           {room.pricingReason && (
-                            <span className="text-[10px] text-muted-foreground italic">
-                              ({room.pricingReason})
-                            </span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="bg-[#C9973A]/10 text-[#C9973A] text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                {room.pricingType === 'override' ? 'Special Rate' : 
+                                 room.pricingType === 'promotion' ? 'Promo Applied' : 
+                                 room.pricingType === 'seasonal' ? 'Seasonal' : 'Adjusted'}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground italic max-w-[120px] truncate text-right">
+                                {room.pricingReason}
+                              </span>
+                            </div>
                           )}
-                        </div>
-                      ) : room.basePrice != null ? (
-                        `${formatCurrency(Number(room.basePrice))}/night`
-                      ) : room.roomType?.basePrice != null ? (
-                        `${formatCurrency(Number(room.roomType.basePrice))}/night`
+                        </>
                       ) : (
-                        "—"
+                        <span className='font-medium text-[#0F1B2D] text-base'>
+                          {room.basePrice != null
+                            ? formatCurrency(Number(room.basePrice))
+                            : room.roomType?.basePrice != null
+                              ? formatCurrency(Number(room.roomType.basePrice))
+                              : "—"}
+                          <span className="text-xs font-normal text-muted-foreground ml-1">/night</span>
+                        </span>
                       )}
-                    </span>
+                    </div>
                   </div>
                 </div>
 

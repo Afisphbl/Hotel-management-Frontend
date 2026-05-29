@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
+import { useAuthStore } from '@/store/authStore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +29,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
+import { printInvoice } from '@/lib/invoice';
 import { toast } from 'sonner';
 
 type InvoiceStatus =
@@ -142,6 +144,7 @@ const STATUS_META: Record<
 };
 
 export function InvoicesPage() {
+  const { token } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
@@ -168,8 +171,8 @@ export function InvoicesPage() {
   const fetchInvoices = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/hotel/invoices?limit=200', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      const response = await fetch('/api/v1/hotel/invoices?limit=200', {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) {
@@ -257,11 +260,11 @@ export function InvoicesPage() {
 
     try {
       const [invoiceResponse, paymentsResponse] = await Promise.all([
-        fetch(`/api/hotel/invoices/${invoiceId}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        fetch(`/api/v1/hotel/invoices/${invoiceId}`, {
+          headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`/api/hotel/payments?invoiceId=${invoiceId}&limit=20`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        fetch(`/api/v1/hotel/payments?invoiceId=${invoiceId}&limit=20`, {
+          headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
 
@@ -297,10 +300,10 @@ export function InvoicesPage() {
 
     try {
       setActionLoading('create');
-      const response = await fetch('/api/finance/invoices', {
+      const response = await fetch('/api/v1/finance/invoices', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -339,9 +342,9 @@ export function InvoicesPage() {
   const updateInvoiceStatus = async (invoiceId: string, action: 'issue' | 'paid' | 'overdue' | 'void') => {
     try {
       setActionLoading(`${invoiceId}:${action}`);
-      const response = await fetch(`/api/finance/invoices/${invoiceId}/${action}`, {
+      const response = await fetch(`/api/v1/finance/invoices/${invoiceId}/${action}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) {
@@ -555,6 +558,13 @@ export function InvoicesPage() {
                             >
                               <Download className="h-4 w-4" />
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => printInvoice(invoice)}
+                            >
+                              Print
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -740,6 +750,13 @@ export function InvoicesPage() {
                   <Download className="mr-2 h-4 w-4" />
                   Download
                 </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => printInvoice(activeInvoice)}
+                  disabled={actionLoading !== null}
+                >
+                  Print
+                </Button>
                 {normalizeStatus(activeInvoice.status) === 'draft' && (
                   <Button
                     className="bg-[#0F1B2D] hover:bg-[#1a2a3a]"
@@ -924,18 +941,29 @@ function normalizeStatus(status?: string): InvoiceStatus {
 }
 
 function normalizeInvoice(invoice: InvoiceRecord): InvoiceRecord {
+  const booking = invoice.booking;
+  let guest = booking?.guest;
+  
+  // Robust guest name handling for backend compatibility
+  if (guest && !guest.fullName && !guest.name) {
+    const firstName = guest.firstName || '';
+    const lastName = guest.lastName || '';
+    guest.fullName = `${firstName} ${lastName}`.trim() || 'Guest';
+  }
+
   return {
     ...invoice,
     status: normalizeStatus(invoice.status),
     amount: toNumber(invoice.amount),
     subtotal: toNumber(invoice.subtotal),
     taxTotal: toNumber(invoice.taxTotal),
-    booking: invoice.booking
+    booking: booking
       ? {
-          ...invoice.booking,
-          totalPrice: toNumber(invoice.booking.totalPrice),
+          ...booking,
+          guest,
+          totalPrice: toNumber(booking.totalPrice),
         }
-      : invoice.booking,
+      : booking,
     lineItems: (invoice.lineItems || []).map((item) => ({
       ...item,
       quantity: toNumber(item.quantity),
@@ -946,21 +974,17 @@ function normalizeInvoice(invoice: InvoiceRecord): InvoiceRecord {
   };
 }
 
-function formatDateTime(value?: string) {
-  if (!value) return 'N/A';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return format(date, 'dd MMM yyyy, HH:mm');
-}
-
-function formatDate(value?: string) {
-  if (!value) return 'N/A';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return format(date, 'dd MMM yyyy');
-}
-
 function toNumber(value: unknown) {
   const parsed = Number(value || 0);
   return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function formatDate(date?: string) {
+  if (!date) return 'N/A';
+  return format(new Date(date), 'MMM d, yyyy');
+}
+
+function formatDateTime(date?: string) {
+  if (!date) return 'N/A';
+  return format(new Date(date), 'MMM d, yyyy h:mm a');
 }
