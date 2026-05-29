@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 import type { RoomType, PriceOverride, Promotion, SeasonalRate, RatePlan } from '@/hooks/usePricingData';
 
 interface Props { roomTypes: RoomType[]; onDone: () => void; onClose: () => void; }
@@ -33,11 +34,17 @@ export function OverrideDialog({ roomTypes, onDone, onClose }: Props) {
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
   const submit = async () => {
-    if (!form.roomTypeId || !form.date || !form.price) return;
+    if (!form.roomTypeId || !form.date || !form.price) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
     setSaving(true);
     try {
       await api.post('hotel/pricing/overrides', { ...form, price: Number(form.price) });
+      toast.success('Price override created');
       onDone();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to create override');
     } finally { setSaving(false); }
   };
 
@@ -66,13 +73,23 @@ export function PromotionDialog({ roomTypes, onDone, onClose, initial }: Props &
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
 
   const submit = async () => {
-    if (!form.name || !form.discountValue || !form.startDate || !form.endDate) return;
+    if (!form.name || !form.discountValue || !form.startDate || !form.endDate) {
+      toast.error('Please fill in required fields (Name, Value, Dates)');
+      return;
+    }
     setSaving(true);
     try {
       const payload = { ...form, discountValue: Number(form.discountValue), roomTypeId: form.roomTypeId || null };
-      if (initial?.id) await api.patch(`hotel/pricing/promotions/${initial.id}`, payload);
-      else await api.post('hotel/pricing/promotions', payload);
+      if (initial?.id) {
+        await api.patch(`hotel/pricing/promotions/${initial.id}`, payload);
+        toast.success('Promotion updated');
+      } else {
+        await api.post('hotel/pricing/promotions', payload);
+        toast.success('Promotion created');
+      }
       onDone();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save promotion');
     } finally { setSaving(false); }
   };
 
@@ -119,7 +136,10 @@ export function SeasonalRateDialog({ roomTypes, onDone, onClose, initial }: Prop
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
 
   const submit = async () => {
-    if (!form.name || !form.roomTypeId || !form.startDate || !form.endDate) return;
+    if (!form.name || !form.roomTypeId || !form.startDate || !form.endDate) {
+      toast.error('Please fill in required fields (Name, Room Type, Dates)');
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
@@ -128,9 +148,16 @@ export function SeasonalRateDialog({ roomTypes, onDone, onClose, initial }: Prop
         multiplier: form.multiplier ? Number(form.multiplier) : null,
         priority: Number(form.priority),
       };
-      if (initial?.id) await api.patch(`hotel/pricing/seasonal-rates/${initial.id}`, payload);
-      else await api.post('hotel/pricing/seasonal-rates', payload);
+      if (initial?.id) {
+        await api.patch(`hotel/pricing/seasonal-rates/${initial.id}`, payload);
+        toast.success('Seasonal rate updated');
+      } else {
+        await api.post('hotel/pricing/seasonal-rates', payload);
+        toast.success('Seasonal rate created');
+      }
       onDone();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save seasonal rate');
     } finally { setSaving(false); }
   };
 
@@ -171,13 +198,23 @@ export function RatePlanDialog({ roomTypes, onDone, onClose, initial }: Props & 
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
 
   const submit = async () => {
-    if (!form.name || !form.roomTypeId) return;
+    if (!form.name || !form.roomTypeId) {
+      toast.error('Please fill in Name and Room Type');
+      return;
+    }
     setSaving(true);
     try {
       const payload = { ...form, weekdayAdjustment: Number(form.weekdayAdjustment), weekendAdjustment: Number(form.weekendAdjustment) };
-      if (initial?.id) await api.patch(`hotel/pricing/rate-plans/${initial.id}`, payload);
-      else await api.post('hotel/pricing/rate-plans', payload);
+      if (initial?.id) {
+        await api.patch(`hotel/pricing/rate-plans/${initial.id}`, payload);
+        toast.success('Rate plan updated');
+      } else {
+        await api.post('hotel/pricing/rate-plans', payload);
+        toast.success('Rate plan created');
+      }
       onDone();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save rate plan');
     } finally { setSaving(false); }
   };
 

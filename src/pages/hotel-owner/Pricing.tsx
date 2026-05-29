@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Trash2, Pencil, Tag, TrendingUp, Calendar, LayoutList } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePricingData } from '@/hooks/usePricingData';
+import { toast } from 'sonner';
 import type { Promotion, SeasonalRate, RatePlan } from '@/hooks/usePricingData';
 import {
   OverrideDialog,
@@ -71,8 +72,13 @@ export function PricingPage() {
 
   const del = async (endpoint: string) => {
     if (!confirm('Delete this item?')) return;
-    await api.delete(endpoint);
-    reload();
+    try {
+      await api.delete(endpoint);
+      toast.success('Item deleted');
+      reload();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete item');
+    }
   };
 
   const rtName = (id?: string) => roomTypes.find(r => r.id === id)?.name ?? '—';

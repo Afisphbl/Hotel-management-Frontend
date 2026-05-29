@@ -25,6 +25,22 @@ import {
 import { cn, formatCurrency } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { RoomTypesDialog } from "@/components/shared/RoomTypesDialog";
+
+// ─── Simple inline modal ──────────────────────────────────────────────────────
+function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-5 border-b">
+          <h2 className="font-semibold text-[#0F1B2D]">{title}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <div className="p-5">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 type RoomStatus =
   | "available"
@@ -78,6 +94,11 @@ export function RoomsPage() {
   const [sortBy, setSortBy] = useState("roomNumber");
   const [summary, setSummary] = useState<Record<string, any>>({});
 
+  // Room Type state
+  const [roomTypes, setRoomTypes] = useState<any[]>([]);
+  const [showRoomTypesModal, setShowRoomTypesModal] = useState(false);
+  const [isRoomTypesLoading, setIsRoomTypesLoading] = useState(false);
+
   // Edit modal state
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [editTab, setEditTab] = useState<"status" | "details">("status");
@@ -91,6 +112,7 @@ export function RoomsPage() {
   const [editFloor, setEditFloor] = useState("");
   const [editBasePrice, setEditBasePrice] = useState("");
   const [editBaseCapacity, setEditBaseCapacity] = useState("");
+  const [editRoomTypeId, setEditRoomTypeId] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Create room modal state
@@ -99,6 +121,7 @@ export function RoomsPage() {
   const [newRoomFloor, setNewRoomFloor] = useState("");
   const [newRoomPrice, setNewRoomPrice] = useState("");
   const [newRoomCapacity, setNewRoomCapacity] = useState("");
+  const [newRoomTypeId, setNewRoomTypeId] = useState("");
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -107,7 +130,20 @@ export function RoomsPage() {
 
   useEffect(() => {
     fetchSummary();
+    fetchRoomTypes();
   }, []);
+
+  const fetchRoomTypes = async () => {
+    try {
+      setIsRoomTypesLoading(true);
+      const res = await api.get("hotel/room-types");
+      setRoomTypes(res.data || res.items || res || []);
+    } catch (err) {
+      console.error("Failed to fetch room types:", err);
+    } finally {
+      setIsRoomTypesLoading(false);
+    }
+  };
 
   const fetchSummary = async () => {
     try {
@@ -160,6 +196,7 @@ export function RoomsPage() {
       setEditFloor(room.floor);
       setEditBasePrice(room.basePrice ? String(room.basePrice) : "");
       setEditBaseCapacity(room.baseCapacity ? String(room.baseCapacity) : "");
+      setEditRoomTypeId((room as any).roomTypeId || "");
     }
   };
 
@@ -192,6 +229,7 @@ export function RoomsPage() {
       const payload: any = {
         roomNumber: editRoomNumber,
         floor: editFloor,
+        roomTypeId: editRoomTypeId || null,
       };
       if (editBasePrice) payload.basePrice = parseFloat(editBasePrice);
       else payload.basePrice = null;
@@ -200,19 +238,8 @@ export function RoomsPage() {
       else payload.baseCapacity = null;
 
       await api.patch(`hotel/rooms/${editingRoom.id}`, payload);
-      setRooms((prev) =>
-        prev.map((r) =>
-          r.id === editingRoom.id
-            ? {
-                ...r,
-                roomNumber: editRoomNumber,
-                floor: editFloor,
-                basePrice: payload.basePrice,
-                baseCapacity: payload.baseCapacity,
-              }
-            : r,
-        ),
-      );
+      setPage(1);
+      await fetchRooms();
       setEditingRoom(null);
       fetchSummary();
       toast.success("Room details saved");
@@ -230,6 +257,7 @@ export function RoomsPage() {
       const payload: any = {
         roomNumber: newRoomNumber.trim(),
         floor: newRoomFloor.trim() || "Ground",
+        roomTypeId: newRoomTypeId || null,
       };
       if (newRoomPrice) payload.basePrice = parseFloat(newRoomPrice);
       if (newRoomCapacity) payload.baseCapacity = parseInt(newRoomCapacity, 10);
@@ -240,6 +268,7 @@ export function RoomsPage() {
       setNewRoomFloor("");
       setNewRoomPrice("");
       setNewRoomCapacity("");
+      setNewRoomTypeId("");
       setPage(1);
       await Promise.all([fetchRooms(), fetchSummary()]);
       toast.success(`Room ${newRoomNumber.trim()} created`);
@@ -295,12 +324,21 @@ export function RoomsPage() {
             Upgrade Plan
           </Button>
         ) : (
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className='bg-[#0F1B2D] hover:bg-[#1a2a3a]'
-          >
-            + Add Room
-          </Button>
+          <div className='flex gap-2'>
+            <Button
+              onClick={() => setShowRoomTypesModal(true)}
+              variant='outline'
+              className='border-[#0F1B2D]/20 text-[#0F1B2D]'
+            >
+              Manage Room Types
+            </Button>
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className='bg-[#0F1B2D] hover:bg-[#1a2a3a]'
+            >
+              + Add Room
+            </Button>
+          </div>
         )}
       </div>
 
@@ -725,6 +763,23 @@ export function RoomsPage() {
                 </div>
                 <div>
                   <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    Room Type
+                  </label>
+                  <select
+                    value={editRoomTypeId}
+                    onChange={(e) => setEditRoomTypeId(e.target.value)}
+                    className='w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C9973A]'
+                  >
+                    <option value=''>Standard / Generic</option>
+                    {roomTypes.map((rt) => (
+                      <option key={rt.id} value={rt.id}>
+                        {rt.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>
                     Base Price (ETB/night)
                   </label>
                   <Input
@@ -810,6 +865,23 @@ export function RoomsPage() {
               </div>
               <div>
                 <label className='block text-sm font-medium text-gray-700 mb-1'>
+                  Room Type
+                </label>
+                <select
+                  value={newRoomTypeId}
+                  onChange={(e) => setNewRoomTypeId(e.target.value)}
+                  className='w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C9973A]'
+                >
+                  <option value=''>Standard / Generic</option>
+                  {roomTypes.map((rt) => (
+                    <option key={rt.id} value={rt.id}>
+                      {rt.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-1'>
                   Base Price (ETB/night)
                 </label>
                 <Input
@@ -855,6 +927,16 @@ export function RoomsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Room Types Management Modal */}
+      {showRoomTypesModal && (
+        <Modal title='Room Types' onClose={() => setShowRoomTypesModal(false)}>
+          <RoomTypesDialog
+            onClose={() => setShowRoomTypesModal(false)}
+            onUpdate={() => fetchRoomTypes()}
+          />
+        </Modal>
       )}
     </div>
   );
