@@ -156,6 +156,7 @@ export function AdminInvoices() {
   const [page, setPage] = useState(1);
   const [activeInvoice, setActiveInvoice] = useState<InvoiceRecord | null>(null);
   const [activePayments, setActivePayments] = useState<PaymentRecord[]>([]);
+  const [activeRefunds, setActiveRefunds] = useState<any[]>([]);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -262,11 +263,13 @@ export function AdminInvoices() {
     setIsDetailOpen(true);
     setDetailLoading(true);
     setActivePayments([]);
+    setActiveRefunds([]);
 
     try {
-      const [invoiceResponse, paymentsResponse] = await Promise.all([
+      const [invoiceResponse, paymentsResponse, refundsResponse] = await Promise.all([
         api.get(`hotel/invoices/${invoiceId}`),
         api.get(`hotel/payments?invoiceId=${invoiceId}&limit=20`).catch(() => ({ data: [] })),
+        api.get(`finance/refunds?invoiceId=${invoiceId}&limit=20`).catch(() => ({ data: [] })),
       ]);
 
       const detailInvoice = normalizeInvoice(invoiceResponse.data || invoiceResponse);
@@ -277,6 +280,7 @@ export function AdminInvoices() {
           status: payment.status ? payment.status.toLowerCase() : payment.status,
         })),
       );
+      setActiveRefunds((refundsResponse as any)?.data || []);
     } catch (error) {
       console.error('Failed to load invoice details:', error);
       toast.error('Failed to load invoice details');
@@ -737,6 +741,38 @@ export function AdminInvoices() {
                   )}
                 </CardContent>
               </Card>
+
+              {activeRefunds.length > 0 && (
+                <Card className="border-none bg-white shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-base text-red-700">Refund History</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {activeRefunds.map((refund) => (
+                        <div
+                          key={refund.id}
+                          className="flex items-center justify-between rounded-lg bg-red-50 p-3"
+                        >
+                          <div>
+                            <p className="font-medium text-[#0F1B2D]">
+                              -{formatCurrency(Number(refund.amount), activeInvoice.currency || 'ETB')}
+                            </p>
+                            <p className="text-xs text-muted-foreground capitalize">
+                              {refund.reason?.replace(/_/g, ' ')} • {refund.status} •{' '}
+                              {formatDateTime(refund.processedAt || refund.createdAt)}
+                            </p>
+                            {refund.notes && (
+                              <p className="text-xs text-muted-foreground mt-0.5">{refund.notes}</p>
+                            )}
+                          </div>
+                          <span className="text-xs font-medium text-red-600">Refund</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {activeInvoice.notes && (
                 <Card className="border-none bg-white shadow-sm">
