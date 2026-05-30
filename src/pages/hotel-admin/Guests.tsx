@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import {
   Users, Search, Phone, Mail, MapPin, ChevronLeft, ChevronRight, Plus, Eye, Edit,
 } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -16,25 +16,28 @@ export function AdminGuests() {
   const [isLoading, setIsLoading] = useState(true);
   const [guests, setGuests] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState<'all' | 'vip' | 'recent'>('all');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedGuest, setSelectedGuest] = useState<any>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [createForm, setCreateForm] = useState({ fullName: '', email: '', phone: '', nationality: '', idNumber: '' });
+  const [createForm, setCreateForm] = useState({ fullName: '', email: '', phone: '', nationality: '', idNumber: '', isVip: false });
 
   const PAGE_SIZE = 15;
 
   useEffect(() => {
     fetchGuests();
-  }, [page]);
+  }, [page, filter]);
 
   const fetchGuests = async () => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
+      if (filter === 'vip') params.append('isVip', 'true');
+      if (filter === 'recent') params.append('recent', 'true');
       params.append('page', String(page));
       params.append('limit', String(PAGE_SIZE));
       const res = await api.get(`hotel/guests?${params.toString()}`);
@@ -52,22 +55,43 @@ export function AdminGuests() {
 
   useEffect(() => {
     setPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, filter]);
 
   const handleCreate = async () => {
     if (!createForm.fullName) { toast.error('Name is required'); return; }
+    
+    // Auto-split name
+    const parts = createForm.fullName.trim().split(/\s+/);
+    const firstName = parts[0];
+    const lastName = parts.slice(1).join(' ') || '';
+
     try {
       setCreating(true);
-      await api.post('hotel/guests', createForm);
+      await api.post('hotel/guests', {
+        firstName,
+        lastName,
+        email: createForm.email,
+        phone: createForm.phone,
+        nationality: createForm.nationality,
+        isVip: createForm.isVip,
+        documentNumber: createForm.idNumber
+      });
       toast.success('Guest created');
       setShowCreate(false);
-      setCreateForm({ fullName: '', email: '', phone: '', nationality: '', idNumber: '' });
+      setCreateForm({ fullName: '', email: '', phone: '', nationality: '', idNumber: '', isVip: false });
       fetchGuests();
     } catch (err: any) {
       toast.error('Failed to create guest: ' + err.message);
     } finally {
       setCreating(false);
     }
+  };
+
+  const getGuestName = (g: any) => {
+    if (g.firstName || g.lastName) {
+      return `${g.firstName || ''} ${g.lastName || ''}`.trim();
+    }
+    return g.fullName || g.name || 'N/A';
   };
 
   return (
@@ -82,15 +106,25 @@ export function AdminGuests() {
         </Button>
       </div>
 
-      <Card className="shadow-sm border-none bg-white">
-        <CardContent className="p-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search by name, email, or phone..." value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="md:col-span-3 shadow-sm border-none bg-white">
+          <CardContent className="p-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Search by name, email, or phone..." value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)} className="pl-10"
+                onKeyDown={(e) => e.key === 'Enter' && fetchGuests()} />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm border-none bg-white">
+          <CardContent className="p-2 flex gap-1 items-center h-full">
+            <Button variant={filter === 'all' ? 'default' : 'ghost'} size="sm" className={cn("flex-1", filter === 'all' && "bg-[#0F1B2D]")} onClick={() => setFilter('all')}>All</Button>
+            <Button variant={filter === 'vip' ? 'default' : 'ghost'} size="sm" className={cn("flex-1", filter === 'vip' && "bg-[#0F1B2D]")} onClick={() => setFilter('vip')}>VIP</Button>
+            <Button variant={filter === 'recent' ? 'default' : 'ghost'} size="sm" className={cn("flex-1", filter === 'recent' && "bg-[#0F1B2D]")} onClick={() => setFilter('recent')}>Recent</Button>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card className="shadow-sm border-none bg-white">
         <CardHeader><CardTitle className="text-lg">Guest Directory</CardTitle></CardHeader>
@@ -115,10 +149,15 @@ export function AdminGuests() {
                     <TableRow key={g.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-[#0F1B2D] text-[#C9973A] flex items-center justify-center text-sm font-bold">
-                            {(g.fullName || g.name)?.[0] || 'G'}
+                          <div className={cn("w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold", g.isVip ? "bg-[#C9973A] text-white" : "bg-[#0F1B2D] text-[#C9973A]")}>
+                            {getGuestName(g).charAt(0) || 'G'}
                           </div>
-                          <span>{g.fullName || g.name || 'N/A'}</span>
+                          <div className="flex flex-col">
+                            <span className="flex items-center gap-2">
+                              {getGuestName(g)}
+                              {g.isVip && <span className="text-[10px] bg-[#C9973A]/10 text-[#C9973A] px-1.5 py-0.5 rounded font-bold uppercase">VIP</span>}
+                            </span>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -173,18 +212,21 @@ export function AdminGuests() {
             </div>
             <div className="p-5 space-y-4">
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 rounded-full bg-[#0F1B2D] text-[#C9973A] flex items-center justify-center text-2xl font-bold">
-                  {(selectedGuest.fullName || selectedGuest.name)?.[0] || 'G'}
+                <div className={cn("w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold", selectedGuest.isVip ? "bg-[#C9973A] text-white" : "bg-[#0F1B2D] text-[#C9973A]")}>
+                  {getGuestName(selectedGuest).charAt(0) || 'G'}
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-[#0F1B2D]">{selectedGuest.fullName || selectedGuest.name}</h3>
+                  <h3 className="text-lg font-bold text-[#0F1B2D] flex items-center gap-2">
+                    {getGuestName(selectedGuest)}
+                    {selectedGuest.isVip && <span className="text-xs bg-[#C9973A]/10 text-[#C9973A] px-2 py-0.5 rounded font-bold uppercase">VIP</span>}
+                  </h3>
                   <p className="text-sm text-muted-foreground">{selectedGuest.email || 'No email'}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div><span className="text-muted-foreground">Phone</span><p className="font-medium">{selectedGuest.phone || '—'}</p></div>
                 <div><span className="text-muted-foreground">Nationality</span><p className="font-medium">{selectedGuest.nationality || '—'}</p></div>
-                <div><span className="text-muted-foreground">ID Number</span><p className="font-medium">{selectedGuest.idNumber || '—'}</p></div>
+                <div><span className="text-muted-foreground">ID Number</span><p className="font-medium">{selectedGuest.documentNumber || selectedGuest.idNumber || '—'}</p></div>
                 <div><span className="text-muted-foreground">Created</span><p className="font-medium">{selectedGuest.createdAt ? formatDate(selectedGuest.createdAt) : '—'}</p></div>
               </div>
             </div>
@@ -202,7 +244,7 @@ export function AdminGuests() {
             <div className="p-5 space-y-4">
               <div className="space-y-1.5">
                 <Label>Full Name *</Label>
-                <Input value={createForm.fullName} onChange={e => setCreateForm({ ...createForm, fullName: e.target.value })} />
+                <Input value={createForm.fullName} onChange={e => setCreateForm({ ...createForm, fullName: e.target.value })} placeholder="e.g. John Doe" />
               </div>
               <div className="space-y-1.5">
                 <Label>Email</Label>
@@ -221,6 +263,10 @@ export function AdminGuests() {
                   <Label>ID Number</Label>
                   <Input value={createForm.idNumber} onChange={e => setCreateForm({ ...createForm, idNumber: e.target.value })} />
                 </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2">
+                <input type="checkbox" id="isVip" checked={createForm.isVip} onChange={e => setCreateForm({ ...createForm, isVip: e.target.checked })} className="w-4 h-4 rounded border-gray-300 text-[#0F1B2D] focus:ring-[#0F1B2D]" />
+                <Label htmlFor="isVip" className="cursor-pointer">Mark as VIP Guest</Label>
               </div>
               <div className="flex gap-3 pt-2">
                 <Button variant="outline" className="flex-1" onClick={() => setShowCreate(false)}>Cancel</Button>
