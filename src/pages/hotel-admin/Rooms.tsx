@@ -57,6 +57,8 @@ interface Room {
   baseCapacity?: number | null;
   roomTypeId?: string | null;
   effectivePrice?: number | null;
+  pricingReason?: string | null;
+  pricingType?: 'override' | 'promotion' | 'seasonal' | 'rate_plan' | null;
   roomType?: {
     id: string;
     name: string;
@@ -338,15 +340,44 @@ export function AdminRooms() {
                     <span className='text-muted-foreground'>Capacity:</span>
                     <span className='font-medium'>{room.baseCapacity ?? room.roomType?.baseCapacity ?? "—"} guests</span>
                   </div>
-                  <div className='flex justify-between'>
-                    <span className='text-muted-foreground'>Rate:</span>
-                    <span className='font-medium'>
-                      {room.effectivePrice != null ? formatCurrency(Number(room.effectivePrice))
-                        : room.basePrice != null ? formatCurrency(Number(room.basePrice))
-                          : room.roomType?.basePrice != null ? formatCurrency(Number(room.roomType.basePrice))
-                            : "—"}
-                      <span className="text-xs font-normal text-muted-foreground ml-1">/night</span>
-                    </span>
+                  <div className='flex justify-between items-start'>
+                    <span className='text-muted-foreground mt-0.5'>Rate:</span>
+                    <div className='flex flex-col items-end'>
+                      {room.effectivePrice != null &&
+                       Math.round(Number(room.effectivePrice)) !== Math.round(Number(room.basePrice ?? room.roomType?.basePrice)) ? (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground line-through opacity-70">
+                              {formatCurrency(Number(room.basePrice ?? room.roomType?.basePrice ?? 0))}
+                            </span>
+                            <span className="font-bold text-[#C9973A] text-base">
+                              {formatCurrency(Number(room.effectivePrice))}
+                            </span>
+                          </div>
+                          {room.pricingReason && (
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="bg-[#C9973A]/10 text-[#C9973A] text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                {room.pricingType === 'override' ? 'Special Rate' :
+                                 room.pricingType === 'promotion' ? 'Promo Applied' :
+                                 room.pricingType === 'seasonal' ? 'Seasonal' : 'Adjusted'}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground italic max-w-[120px] truncate text-right">
+                                {room.pricingReason}
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <span className='font-medium text-[#0F1B2D] text-base'>
+                          {room.basePrice != null
+                            ? formatCurrency(Number(room.basePrice))
+                            : room.roomType?.basePrice != null
+                              ? formatCurrency(Number(room.roomType.basePrice))
+                              : "—"}
+                          <span className="text-xs font-normal text-muted-foreground ml-1">/night</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className='flex gap-2'>

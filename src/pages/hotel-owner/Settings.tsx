@@ -17,21 +17,16 @@ export function OwnerSettings() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Hotels list for selection
   const [hotels, setHotels] = useState<any[]>([]);
   const [selectedHotelId, setSelectedHotelId] = useState<string>('');
 
-  // Hotel info
   const [hotelInfo, setHotelInfo] = useState({ name: '', location: '', timezone: 'UTC', currency: 'ETB' });
-
-  // Settings sections
   const [notifications, setNotifications] = useState<Record<string, boolean>>({});
   const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
   const [newPaymentMethod, setNewPaymentMethod] = useState('');
   const [cancellationPolicy, setCancellationPolicy] = useState({ deadlineHours: 24, feePercent: 0 });
   const [bookingPolicies, setBookingPolicies] = useState({ checkInTime: '14:00', checkOutTime: '11:00', allowOnline: true });
 
-  // Profile / password
   const [profileName, setProfileName] = useState(user?.name ?? '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -46,10 +41,7 @@ export function OwnerSettings() {
       const list: any[] = res.data ?? res ?? [];
       setHotels(list);
       const firstId = user?.hotel_id ?? list[0]?.id ?? '';
-      if (firstId) {
-        setSelectedHotelId(firstId);
-        loadHotelSettings(firstId, list);
-      }
+      if (firstId) { setSelectedHotelId(firstId); applyHotel(firstId, list); }
     } catch (e: any) {
       toast.error('Failed to load hotels: ' + e.message);
     } finally {
@@ -57,7 +49,7 @@ export function OwnerSettings() {
     }
   };
 
-  const loadHotelSettings = (id: string, list?: any[]) => {
+  const applyHotel = (id: string, list?: any[]) => {
     const h = (list ?? hotels).find((x) => x.id === id);
     if (!h) return;
     setHotelInfo({ name: h.name ?? '', location: h.location ?? '', timezone: h.timezone ?? 'UTC', currency: h.currency ?? 'ETB' });
@@ -67,11 +59,6 @@ export function OwnerSettings() {
     setBookingPolicies(h.settings?.bookingPolicies ?? { checkInTime: '14:00', checkOutTime: '11:00', allowOnline: true });
   };
 
-  const onHotelChange = (id: string) => {
-    setSelectedHotelId(id);
-    loadHotelSettings(id);
-  };
-
   const save = async (endpoint: string, body: any) => {
     if (!selectedHotelId) return;
     setIsSaving(true);
@@ -79,7 +66,7 @@ export function OwnerSettings() {
       await api.patch(`hotel/owner/hotels/${selectedHotelId}/${endpoint}`, body);
       toast.success('Saved');
     } catch (e: any) {
-      toast.error('Failed to save: ' + e.message);
+      toast.error('Failed: ' + e.message);
     } finally {
       setIsSaving(false);
     }
@@ -87,13 +74,12 @@ export function OwnerSettings() {
 
   const handleChangePassword = async () => {
     if (newPassword !== confirmPassword) return toast.error('Passwords do not match');
-    if (newPassword.length < 6) return toast.error('Password must be at least 6 characters');
     try {
       await api.post('auth/change-password', { currentPassword, newPassword });
       toast.success('Password changed');
       setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
     } catch (e: any) {
-      toast.error(e?.response?.data?.message ?? e.message ?? 'Failed');
+      toast.error(e?.response?.data?.message ?? e.message);
     }
   };
 
@@ -105,7 +91,7 @@ export function OwnerSettings() {
       await api.patch('auth/profile', { firstName: parts[0], lastName: parts.slice(1).join(' ') || parts[0] });
       toast.success('Profile updated');
     } catch (e: any) {
-      toast.error(e?.response?.data?.message ?? e.message ?? 'Failed');
+      toast.error(e?.response?.data?.message ?? e.message);
     } finally {
       setIsSaving(false);
     }
@@ -144,24 +130,19 @@ export function OwnerSettings() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Hotel selector (shown on all hotel-related tabs) */}
         {hotels.length > 1 && (
           <div className="mt-4 flex items-center gap-3">
             <Label className="shrink-0 text-sm">Hotel:</Label>
-            <Select value={selectedHotelId} onValueChange={onHotelChange}>
-              <SelectTrigger className="w-64 bg-white">
-                <SelectValue placeholder="Select hotel" />
-              </SelectTrigger>
+            <Select value={selectedHotelId} onValueChange={(id) => { setSelectedHotelId(id); applyHotel(id); }}>
+              <SelectTrigger className="w-64 bg-white"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {hotels.map((h) => (
-                  <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
-                ))}
+                {hotels.map((h) => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
         )}
 
-        {/* ── Hotel Info ── */}
+        {/* Hotel Info */}
         <TabsContent value="hotel" className="mt-6 space-y-6">
           <Card className="border-none bg-white shadow-sm">
             <CardHeader><CardTitle className="text-lg">Hotel Information</CardTitle></CardHeader>
@@ -184,7 +165,7 @@ export function OwnerSettings() {
                   <Input value={hotelInfo.currency} onChange={e => setHotelInfo({ ...hotelInfo, currency: e.target.value })} placeholder="e.g. ETB, USD" />
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button onClick={() => save('info', { name: hotelInfo.name, location: hotelInfo.location })} disabled={isSaving} className="bg-[#0F1B2D] hover:bg-[#1a2a3a]">
                   <Save className="w-4 h-4 mr-2" /> Save Info
                 </Button>
@@ -196,7 +177,7 @@ export function OwnerSettings() {
           </Card>
         </TabsContent>
 
-        {/* ── Notifications ── */}
+        {/* Notifications */}
         <TabsContent value="notifications" className="mt-6">
           <Card className="border-none bg-white shadow-sm">
             <CardHeader><CardTitle className="text-lg">Notification Preferences</CardTitle></CardHeader>
@@ -216,13 +197,13 @@ export function OwnerSettings() {
                 </div>
               ))}
               <Button onClick={() => save('notifications', { notifications })} disabled={isSaving} className="bg-[#0F1B2D] hover:bg-[#1a2a3a]">
-                <Save className="w-4 h-4 mr-2" /> Save Notifications
+                <Save className="w-4 h-4 mr-2" /> Save
               </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* ── Payments ── */}
+        {/* Payments */}
         <TabsContent value="payments" className="mt-6">
           <Card className="border-none bg-white shadow-sm">
             <CardHeader><CardTitle className="text-lg">Payment Methods</CardTitle></CardHeader>
@@ -251,7 +232,7 @@ export function OwnerSettings() {
           </Card>
         </TabsContent>
 
-        {/* ── Policies ── */}
+        {/* Policies */}
         <TabsContent value="policies" className="mt-6">
           <Card className="border-none bg-white shadow-sm">
             <CardHeader><CardTitle className="text-lg">Booking & Cancellation Policies</CardTitle></CardHeader>
@@ -272,7 +253,6 @@ export function OwnerSettings() {
                   <Save className="w-4 h-4 mr-2" /> Save Cancellation Policy
                 </Button>
               </div>
-
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="text-sm font-semibold">Booking Policies</h3>
                 <div className="grid grid-cols-2 gap-4">
@@ -297,7 +277,7 @@ export function OwnerSettings() {
           </Card>
         </TabsContent>
 
-        {/* ── Profile ── */}
+        {/* Profile */}
         <TabsContent value="profile" className="mt-6 space-y-6">
           <Card className="border-none bg-white shadow-sm">
             <CardHeader><CardTitle className="text-lg">Profile Information</CardTitle></CardHeader>
