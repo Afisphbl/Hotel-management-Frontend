@@ -1,10 +1,16 @@
 import React from 'react';
 import { useHotelBookings, useHotelRooms } from '@/hooks/useHotelData';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   Users, 
   UserPlus, 
@@ -15,11 +21,13 @@ import {
   Calendar,
   MoreVertical,
   DoorOpen,
-  MapPin
+  MapPin,
+  Eye,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format } from 'date-fns';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 
 export function HotelFrontDesk() {
@@ -147,7 +155,19 @@ export function HotelFrontDesk() {
 
                       <div className="flex gap-2">
                         <Button className="flex-1 bg-[#C9973A] hover:bg-[#b08432] text-white font-bold h-9 text-xs">Check In</Button>
-                        <Button variant="outline" size="icon" className="h-9 w-9 bg-white border-slate-200"><MoreVertical className="w-4 h-4" /></Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger className="h-9 w-9 bg-white border border-slate-200 rounded-md flex items-center justify-center hover:bg-accent">
+                            <MoreVertical className="w-4 h-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem><Eye className="w-3.5 h-3.5 mr-2" /> View Details</DropdownMenuItem>
+                            <DropdownMenuItem><CheckCircle className="w-3.5 h-3.5 mr-2 text-green-600" /> Confirm</DropdownMenuItem>
+                            <DropdownMenuItem><LogIn className="w-3.5 h-3.5 mr-2 text-blue-600" /> Check In</DropdownMenuItem>
+                            <DropdownMenuItem><LogOut className="w-3.5 h-3.5 mr-2 text-orange-600" /> Check Out</DropdownMenuItem>
+                            <DropdownMenuItem className="text-gray-600"><XCircle className="w-3.5 h-3.5 mr-2" /> No Show</DropdownMenuItem>
+                            <DropdownMenuItem className="text-red-600"><XCircle className="w-3.5 h-3.5 mr-2" /> Cancel</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   </div>
@@ -190,7 +210,19 @@ export function HotelFrontDesk() {
 
                       <div className="flex gap-2">
                         <Button className="flex-1 bg-[#0F1B2D] hover:bg-[#1a2a3a] text-white font-bold h-9 text-xs">Check Out</Button>
-                        <Button variant="outline" size="icon" className="h-9 w-9 bg-white border-slate-200"><MoreVertical className="w-4 h-4" /></Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger className="h-9 w-9 bg-white border border-slate-200 rounded-md flex items-center justify-center hover:bg-accent">
+                            <MoreVertical className="w-4 h-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem><Eye className="w-3.5 h-3.5 mr-2" /> View Details</DropdownMenuItem>
+                            <DropdownMenuItem><CheckCircle className="w-3.5 h-3.5 mr-2 text-green-600" /> Confirm</DropdownMenuItem>
+                            <DropdownMenuItem><LogIn className="w-3.5 h-3.5 mr-2 text-blue-600" /> Check In</DropdownMenuItem>
+                            <DropdownMenuItem><LogOut className="w-3.5 h-3.5 mr-2" /> Check Out</DropdownMenuItem>
+                            <DropdownMenuItem className="text-gray-600"><XCircle className="w-3.5 h-3.5 mr-2" /> No Show</DropdownMenuItem>
+                            <DropdownMenuItem className="text-red-600"><XCircle className="w-3.5 h-3.5 mr-2" /> Cancel</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   </div>
@@ -233,8 +265,20 @@ export function HotelFrontDesk() {
                       </div>
 
                       <div className="flex justify-between items-center bg-white/50 p-2 rounded-lg">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Stay Period: May 15 - May 22</span>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white"><MoreVertical className="w-4 h-4 text-slate-400" /></Button>
+                        <span className="text-xs text-slate-500">{formatDate(booking.checkIn)} – {formatDate(booking.checkOut)}</span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded-md">
+                            <MoreVertical className="w-4 h-4 text-slate-400" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem><Eye className="w-3.5 h-3.5 mr-2" /> View Details</DropdownMenuItem>
+                            <DropdownMenuItem><CheckCircle className="w-3.5 h-3.5 mr-2 text-green-600" /> Confirm</DropdownMenuItem>
+                            <DropdownMenuItem><LogIn className="w-3.5 h-3.5 mr-2 text-blue-600" /> Check In</DropdownMenuItem>
+                            <DropdownMenuItem><LogOut className="w-3.5 h-3.5 mr-2 text-orange-600" /> Check Out</DropdownMenuItem>
+                            <DropdownMenuItem className="text-gray-600"><XCircle className="w-3.5 h-3.5 mr-2" /> No Show</DropdownMenuItem>
+                            <DropdownMenuItem className="text-red-600"><XCircle className="w-3.5 h-3.5 mr-2" /> Cancel</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   </div>

@@ -19,13 +19,23 @@ export function formatCurrency(
 
 export function formatDate(dateString: string | Date | undefined | null) {
   if (!dateString) return '—';
-  const date = new Date(dateString);
+  const date = parseDate(dateString);
   if (isNaN(date.getTime())) return '—';
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
+    timeZone: 'UTC',
   }).format(date);
+}
+
+function parseDate(value: string | Date): Date {
+  if (value instanceof Date) return new Date(value);
+  const parts = value.split('T')[0]?.split('-');
+  if (parts?.length === 3) {
+    return new Date(Date.UTC(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
+  }
+  return new Date(value);
 }
 
 export function formatDateTime(dateString: string | Date | undefined | null) {

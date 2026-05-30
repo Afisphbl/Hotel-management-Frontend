@@ -5,3 +5,4 @@ export { PricingPage as Pricing } from "./Pricing";
 export { ReportsPage as Reports } from "./Reports";
 export { HotelsPage as Hotels } from "./Hotels";
 export { FinanceSettings } from "./FinanceSettings";
+export { OwnerSettings } from "./Settings";

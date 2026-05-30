@@ -3,18 +3,29 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   Calendar, 
   User, 
   DollarSign, 
   Plus,
   Search,
-  MoreHorizontal,
+  MoreVertical,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  Eye,
+  LogIn,
+  LogOut,
 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
 
 export function BookingsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -41,6 +52,20 @@ export function BookingsPage() {
       console.error('Failed to fetch bookings:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAction = async (id: string, action: string) => {
+    try {
+      if (action === 'confirm' || action === 'cancel' || action === 'checkin' || action === 'checkout' || action === 'noshow') {
+        await api.post(`hotel/bookings/${id}/${action}`);
+      } else {
+        await api.patch(`hotel/bookings/${id}/status`, { status: action });
+      }
+      toast.success(`Booking ${action} successful`);
+      fetchBookings();
+    } catch (err: any) {
+      toast.error(`Failed to ${action}: ${err.message}`);
     }
   };
 
@@ -137,9 +162,8 @@ export function BookingsPage() {
                           <div className="font-medium text-[#0F1B2D]">{booking.guestName}</div>
                           <div className="text-xs text-muted-foreground">{booking.guestEmail}</div>
                         </td>
-                        <td className="py-3 px-4 text-sm">
-                          <div>{formatDate(booking.checkIn)}</div>
-                          <div className="text-xs text-muted-foreground">→ {formatDate(booking.checkOut)}</div>
+                        <td className="py-3 px-4 text-sm whitespace-nowrap">
+                          {formatDate(booking.checkIn)} – {formatDate(booking.checkOut)}
                         </td>
                         <td className="py-3 px-4 font-medium text-[#0F1B2D]">{booking.roomNumber}</td>
                         <td className="py-3 px-4 font-semibold text-[#0F1B2D]">${booking.totalAmount || '0'}</td>
@@ -147,9 +171,30 @@ export function BookingsPage() {
                           <StatusBadge status={booking.status} />
                         </td>
                         <td className="py-3 px-4">
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
+                          <DropdownMenu>
+                              <DropdownMenuTrigger className='h-8 w-8 p-0 hover:bg-transparent'>
+                                <MoreVertical className="w-4 h-4" />
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => {}}>
+                                <Eye className="w-3.5 h-3.5 mr-2" /> View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleAction(booking.id, 'confirm')}>
+                                <CheckCircle className="w-3.5 h-3.5 mr-2 text-green-600" /> Confirm
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleAction(booking.id, 'checkin')}>
+                                <User className="w-3.5 h-3.5 mr-2 text-blue-600" /> Check In
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleAction(booking.id, 'checkout')}>
+                                <Clock className="w-3.5 h-3.5 mr-2 text-orange-600" /> Check Out
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleAction(booking.id, 'noshow')} className="text-gray-600">
+                                <XCircle className="w-3.5 h-3.5 mr-2" /> No Show
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleAction(booking.id, 'cancel')} className="text-red-600">
+                                <XCircle className="w-3.5 h-3.5 mr-2" /> Cancel
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </td>
                       </tr>
                     ))}

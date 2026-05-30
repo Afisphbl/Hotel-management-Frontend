@@ -38,12 +38,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Outlet, Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { useNotificationStore } from "@/store/notificationStore";
+import { format } from "date-fns";
 
 interface NavItem {
   title: string;
@@ -172,6 +175,11 @@ const HOTEL_OWNER_NAV: NavItem[] = [
     href: "/hotel/owner/reports",
     icon: BarChart3,
   },
+  {
+    title: "Settings",
+    href: "/hotel/owner/settings",
+    icon: Settings,
+  },
 ];
 
 const HOTEL_ADMIN_NAV: NavItem[] = [
@@ -206,6 +214,21 @@ export function AppShell() {
 
   const adminRoles = ["HOTEL_MANAGER", "HOTEL_ADMIN", "SUPER_ADMIN"];
 
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    fetchNotifications,
+    fetchUnreadCount,
+    markRead,
+    markAllRead,
+  } = useNotificationStore();
+
+  React.useEffect(() => {
+    fetchNotifications();
+    fetchUnreadCount();
+  }, []);
+
   const navItems =
     user?.role === "HOTEL_OWNER"
       ? HOTEL_OWNER_NAV
@@ -230,20 +253,14 @@ export function AppShell() {
     });
   }, [user, navItems]);
 
-  const notificationHref =
-    user?.role === "HOTEL_OWNER"
-      ? "/hotel/owner/dashboard"
-      : adminRoles.includes(user?.role ?? "")
-        ? "/hotel/admin/dashboard"
-        : user?.scope === "platform"
-          ? "/platform/audit-logs"
-          : "/hotel/dashboard";
   const settingsHref =
     user?.scope === "platform"
       ? "/platform/settings"
-      : adminRoles.includes(user?.role ?? "")
-        ? "/hotel/admin/settings"
-        : "/hotel/settings";
+      : user?.role === "HOTEL_OWNER"
+        ? "/hotel/owner/settings"
+        : adminRoles.includes(user?.role ?? "")
+          ? "/hotel/admin/settings"
+          : "/hotel/settings";
 
   const handleLogout = () => {
     logout();
@@ -484,15 +501,90 @@ export function AppShell() {
               </div>
 
               <div className='flex items-center gap-1 md:gap-4'>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  className='h-8 w-8 text-gray-400 hover:text-[#0F1B2D]'
-                  onClick={() => navigate({ to: notificationHref })}
-                  aria-label='Open notifications'
+                <DropdownMenu
+                  onOpenChange={(open: boolean) => {
+                    if (open) {
+                      fetchNotifications();
+                      fetchUnreadCount();
+                    }
+                  }}
                 >
-                  <Bell className='w-4 h-4' />
-                </Button>
+                  <DropdownMenuTrigger>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      className='h-8 w-8 text-gray-400 hover:text-[#0F1B2D] relative'
+                      aria-label='Open notifications'
+                    >
+                      <Bell className='w-4 h-4' />
+                      {unreadCount > 0 && (
+                        <span className='absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full'>
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align='end'
+                    sideOffset={8}
+                    className='w-80'
+                  >
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <div className='overflow-y-auto max-h-72'>
+                        {loading ? (
+                          <div className='p-4 text-center text-sm text-gray-500'>
+                            Loading...
+                          </div>
+                        ) : notifications.length === 0 ? (
+                          <div className='p-4 text-center text-sm text-gray-500'>
+                            No notifications
+                          </div>
+                        ) : (
+                          notifications.map((n) => (
+                            <DropdownMenuItem
+                              key={n.id}
+                              className={cn(
+                                "flex flex-col items-start gap-0.5 py-2 cursor-pointer",
+                                !n.readAt && "bg-blue-50/50",
+                              )}
+                              onClick={() => {
+                                if (!n.readAt) markRead(n.id);
+                              }}
+                            >
+                              <div className='flex items-center justify-between w-full'>
+                                <span className='text-sm font-medium'>
+                                  {n.title}
+                                </span>
+                                <span className='text-[10px] text-gray-400'>
+                                  {format(
+                                    new Date(n.createdAt),
+                                    "MMM d, HH:mm",
+                                  )}
+                                </span>
+                              </div>
+                              <p className='text-xs text-gray-500 line-clamp-2'>
+                                {n.body}
+                              </p>
+                            </DropdownMenuItem>
+                          ))
+                        )}
+                      </div>
+                      {notifications.length > 0 && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={markAllRead}
+                            className='justify-center text-xs text-blue-600 font-medium cursor-pointer'
+                          >
+                            Mark all as read
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button
                   variant='ghost'
                   size='icon'

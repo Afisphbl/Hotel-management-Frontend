@@ -50,6 +50,7 @@ import {
   Reports as HotelOwnerReports,
   Hotels as HotelOwnerHotels,
   FinanceSettings as HotelOwnerFinanceSettings,
+  OwnerSettings as HotelOwnerSettings,
 } from "@/pages/hotel-owner";
 // Hotel Admin Pages
 import {
@@ -395,6 +396,13 @@ const hotelOwnerFinanceSettingsRoute = createRoute({
   component: HotelOwnerFinanceSettings,
 });
 
+const hotelOwnerSettingsRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "owner/settings",
+  loader: hotelOwnerLoader,
+  component: HotelOwnerSettings,
+});
+
 // Hotel Admin Routes
 const hotelAdminDashboardRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
@@ -548,6 +556,7 @@ export const routeTree = rootRoute.addChildren([
       hotelOwnerReportsRoute,
       hotelOwnerHotelsRoute,
       hotelOwnerFinanceSettingsRoute,
+      hotelOwnerSettingsRoute,
       // Hotel Admin Routes
       hotelAdminDashboardRoute,
       hotelAdminPropertyRoute,

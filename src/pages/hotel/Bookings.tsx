@@ -4,12 +4,11 @@ import { useHotelBookings } from '@/hooks/useHotelData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Search, Filter, Plus, MoreHorizontal, FileText, CheckCircle2, XCircle, LogIn, LogOut } from 'lucide-react';
+import { Search, Filter, Plus, MoreVertical, FileText, CheckCircle2, XCircle, LogIn, LogOut } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { MoneyDisplay } from '@/components/shared/MoneyDisplay';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -100,9 +99,9 @@ export function HotelBookings() {
                     <TableCell>
                       <span className="text-xs font-bold bg-[#0F1B2D]/5 px-1.5 py-0.5 rounded">{booking.room}</span>
                     </TableCell>
-                    <TableCell className="text-xs">
-                      {format(new Date(booking.checkIn), 'MMM d')} - {format(new Date(booking.checkOut), 'MMM d, yyyy')}
-                    </TableCell>
+<TableCell className="text-xs whitespace-nowrap">
+  {formatDate(booking.checkIn)} – {formatDate(booking.checkOut)}
+</TableCell>
                     <TableCell className="text-sm">{booking.nights}</TableCell>
                     <TableCell>
                       <MoneyDisplay amount={booking.total} />
@@ -113,25 +112,27 @@ export function HotelBookings() {
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger className={cn("h-8 w-8", buttonVariants({ variant: "ghost", size: "icon" }))}>
-                          <MoreHorizontal className="w-4 h-4" />
+                          <MoreVertical className="w-4 h-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem className="gap-2">
                             <FileText className="w-4 h-4" /> View Folio
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          {booking.status === 'confirmed' && (
-                            <DropdownMenuItem className="gap-2 text-green-600">
-                              <LogIn className="w-4 h-4" /> Check In
-                            </DropdownMenuItem>
-                          )}
-                          {booking.status === 'checked_in' && (
-                            <DropdownMenuItem className="gap-2 text-blue-600">
-                              <LogOut className="w-4 h-4" /> Check Out
-                            </DropdownMenuItem>
-                          )}
+                          <DropdownMenuItem className="gap-2 text-green-600">
+                            <CheckCircle2 className="w-4 h-4" /> Confirm
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2 text-green-600">
+                            <LogIn className="w-4 h-4" /> Check In
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2 text-blue-600">
+                            <LogOut className="w-4 h-4" /> Check Out
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2 text-gray-600">
+                            <XCircle className="w-4 h-4" /> No Show
+                          </DropdownMenuItem>
                           <DropdownMenuItem className="gap-2 text-amber-600">
-                            <XCircle className="w-4 h-4" /> Cancel Booking
+                            <XCircle className="w-4 h-4" /> Cancel
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
