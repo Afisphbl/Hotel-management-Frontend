@@ -1,5 +1,17 @@
 
 import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+
+export function useHotel(id: string) {
+  return useQuery({
+    queryKey: ['hotel', id],
+    queryFn: async () => {
+      const data = await api.get(`hotel/owner/hotels/${id}`);
+      return data.data || data;
+    },
+    enabled: !!id,
+  });
+}
 
 export function useHotelKPIs() {
   return useQuery({

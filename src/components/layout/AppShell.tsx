@@ -25,6 +25,11 @@ import {
   DollarSign,
   Tag,
   X,
+  Building2,
+  ReceiptText,
+  Sparkles,
+  Shield,
+  Activity,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -169,6 +174,23 @@ const HOTEL_OWNER_NAV: NavItem[] = [
   },
 ];
 
+const HOTEL_ADMIN_NAV: NavItem[] = [
+  { title: "Dashboard", href: "/hotel/admin/dashboard", icon: LayoutDashboard },
+  { title: "Property", href: "/hotel/admin/property", icon: Building2 },
+  { title: "Rooms", href: "/hotel/admin/rooms", icon: Bed },
+  { title: "Bookings", href: "/hotel/admin/bookings", icon: Calendar },
+  { title: "Guests", href: "/hotel/admin/guests", icon: Users },
+  { title: "Staff", href: "/hotel/admin/staff", icon: Shield },
+  { title: "Pricing", href: "/hotel/admin/pricing", icon: Tag },
+  { title: "Finance", href: "/hotel/admin/finance", icon: DollarSign },
+  { title: "Invoices", href: "/hotel/admin/invoices", icon: ReceiptText },
+  { title: "Payments", href: "/hotel/admin/payments", icon: CreditCard },
+  { title: "Housekeeping", href: "/hotel/admin/housekeeping", icon: Sparkles },
+  { title: "Maintenance", href: "/hotel/admin/maintenance", icon: Wrench },
+  { title: "Reports", href: "/hotel/admin/reports", icon: BarChart3 },
+  { title: "Settings", href: "/hotel/admin/settings", icon: Settings },
+];
+
 export function AppShell() {
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -182,14 +204,18 @@ export function AppShell() {
 
   const isImpersonating = !!originalToken;
 
+  const adminRoles = ["HOTEL_MANAGER", "HOTEL_ADMIN", "SUPER_ADMIN"];
+
   const navItems =
     user?.role === "HOTEL_OWNER"
       ? HOTEL_OWNER_NAV
       : user?.scope === "platform"
         ? PLATFORM_NAV
-        : HOTEL_NAV.filter(
-            (item) => !item.permission || hasPermission(item.permission),
-          );
+        : adminRoles.includes(user?.role ?? "")
+          ? HOTEL_ADMIN_NAV
+          : HOTEL_NAV.filter(
+              (item) => !item.permission || hasPermission(item.permission),
+            );
 
   // Debug logging
   React.useEffect(() => {
@@ -207,11 +233,17 @@ export function AppShell() {
   const notificationHref =
     user?.role === "HOTEL_OWNER"
       ? "/hotel/owner/dashboard"
-      : user?.scope === "platform"
-        ? "/platform/audit-logs"
-        : "/hotel/dashboard";
+      : adminRoles.includes(user?.role ?? "")
+        ? "/hotel/admin/dashboard"
+        : user?.scope === "platform"
+          ? "/platform/audit-logs"
+          : "/hotel/dashboard";
   const settingsHref =
-    user?.scope === "platform" ? "/platform/settings" : "/hotel/settings";
+    user?.scope === "platform"
+      ? "/platform/settings"
+      : adminRoles.includes(user?.role ?? "")
+        ? "/hotel/admin/settings"
+        : "/hotel/settings";
 
   const handleLogout = () => {
     logout();

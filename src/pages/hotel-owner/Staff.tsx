@@ -34,6 +34,7 @@ export function StaffPage() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [inviteForm, setInviteForm] = useState({ email: '', firstName: '', lastName: '', roleId: '', notes: '' });
+  const [inviteResult, setInviteResult] = useState<{ email: string; tempPassword?: string } | null>(null);
 
   const [roleChangeTarget, setRoleChangeTarget] = useState<{ id: string; currentRoleId: string } | null>(null);
   const [selectedRoleId, setSelectedRoleId] = useState('');
@@ -94,8 +95,9 @@ export function StaffPage() {
     }
     setIsSaving(true);
     try {
-      await api.post('hotel/owner/staff/invite', inviteForm);
-      toast.success('Staff invited successfully');
+      const res = await api.post('hotel/owner/staff/invite', inviteForm);
+      const r = res?.data ?? res;
+      setInviteResult({ email: inviteForm.email, tempPassword: r?.tempPassword });
       setIsInviteOpen(false);
       resetInviteForm();
       fetchAll();
@@ -479,6 +481,55 @@ export function StaffPage() {
             <Button variant="destructive" onClick={handleRemove} className="bg-red-600 hover:bg-red-700">
               Revoke Access
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!inviteResult} onOpenChange={(open) => { if (!open) setInviteResult(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Staff Invited Successfully</DialogTitle>
+            <DialogDescription>
+              Share the credentials below with the new staff member.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="rounded-lg bg-slate-50 p-4 space-y-3">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</p>
+                <p className="text-sm font-semibold text-[#0F1B2D] mt-0.5">{inviteResult?.email}</p>
+              </div>
+              {inviteResult?.tempPassword && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Temporary Password</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <code className="flex-1 bg-white border rounded px-3 py-1.5 text-sm font-mono text-[#0F1B2D] select-all">
+                      {inviteResult.tempPassword}
+                    </code>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0"
+                      onClick={() => {
+                        navigator.clipboard.writeText(inviteResult.tempPassword!);
+                        toast.success('Password copied');
+                      }}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                  <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> Make sure to share this securely. The staff member can change it after first login.
+                  </p>
+                </div>
+              )}
+              {!inviteResult?.tempPassword && (
+                <p className="text-sm text-muted-foreground">This user already existed. They can log in with their existing password.</p>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => setInviteResult(null)} className="bg-[#0F1B2D]">Done</Button>
           </div>
         </DialogContent>
       </Dialog>

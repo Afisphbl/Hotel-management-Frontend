@@ -2,6 +2,7 @@ export type UserRole =
   | "SUPER_ADMIN"
   | "HOTEL_OWNER"
   | "HOTEL_MANAGER"
+  | "HOTEL_ADMIN"
   | "REVENUE_MANAGER"
   | "FRONT_DESK"
   | "ACCOUNTANT"
