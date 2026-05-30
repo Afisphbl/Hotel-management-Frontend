@@ -82,11 +82,16 @@ const loginRoute = createRoute({
   loader: () => {
     const { user } = useAuthStore.getState();
     if (user) {
+      const adminRoles = ["HOTEL_MANAGER", "HOTEL_ADMIN", "SUPER_ADMIN"];
       throw redirect({
         to:
           user.scope === "platform"
             ? "/platform/dashboard"
-            : "/hotel/dashboard",
+            : user.role === "HOTEL_OWNER"
+              ? "/hotel/owner/dashboard"
+              : adminRoles.includes(user.role)
+                ? "/hotel/admin/dashboard"
+                : "/hotel/dashboard",
       });
     }
   },

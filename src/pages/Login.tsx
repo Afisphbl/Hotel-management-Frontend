@@ -57,13 +57,16 @@ export function LoginPage() {
       }
 
       const user = useAuthStore.getState().user;
+      const adminRoles = ["HOTEL_MANAGER", "HOTEL_ADMIN", "SUPER_ADMIN"];
       navigate({
         to:
           user?.scope === "platform"
             ? "/platform/dashboard"
             : user?.role === "HOTEL_OWNER"
               ? "/hotel/owner/dashboard"
-              : "/hotel/dashboard",
+              : adminRoles.includes(user?.role ?? "")
+                ? "/hotel/admin/dashboard"
+                : "/hotel/dashboard",
       });
     } catch (err: any) {
       setError(
