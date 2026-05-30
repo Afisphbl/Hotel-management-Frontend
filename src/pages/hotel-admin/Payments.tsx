@@ -41,7 +41,7 @@ export function AdminPayments() {
       if (filterStatus !== 'ALL') params.append('status', filterStatus);
       params.append('page', String(page));
       params.append('limit', String(PAGE_SIZE));
-      const res = await api.get(`hotel/payments?${params.toString()}`);
+      const res = await api.get(`finance/payments?${params.toString()}`);
       setPayments(res.data || res.items || []);
       if (res.meta) { setTotal(res.meta.total); setTotalPages(res.meta.totalPages); }
     } catch (err: any) {

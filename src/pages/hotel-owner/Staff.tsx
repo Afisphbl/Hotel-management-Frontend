@@ -16,10 +16,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store/authStore';
 
 const PAGE_SIZE = 10;
 
 export function StaffPage() {
+  const { user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [staffList, setStaffList] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -146,6 +148,14 @@ export function StaffPage() {
 
   const handleRemove = async () => {
     if (!removeTarget) return;
+
+    // Protection check
+    const isTargetAdminOrOwner = removeTarget.roleName && (removeTarget.roleName.toUpperCase().includes('OWNER') || removeTarget.roleName.toUpperCase().includes('ADMIN'));
+    if (user?.role === 'HOTEL_ADMIN' && isTargetAdminOrOwner) {
+      toast.error('Admins cannot remove other admins or owners');
+      return;
+    }
+
     try {
       await api.delete(`hotel/owner/staff/${removeTarget.id}`);
       toast.success('Staff access revoked');
@@ -155,6 +165,12 @@ export function StaffPage() {
     } catch (e: any) {
       toast.error('Failed to remove: ' + e.message);
     }
+  };
+
+  const canManageRole = (item: any) => {
+    if (user?.role !== 'HOTEL_ADMIN') return true;
+    const isTargetAdminOrOwner = item.roleName && (item.roleName.toUpperCase().includes('OWNER') || item.roleName.toUpperCase().includes('ADMIN'));
+    return !isTargetAdminOrOwner;
   };
 
   const statusLabel = (s: string) => {
@@ -333,15 +349,21 @@ export function StaffPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => openRoleChange(item)} title="Change role">
-                            <Shield className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => toggleStatus(item)} title={item.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}>
-                            {item.status === 'ACTIVE' ? <XCircle className="w-4 h-4 text-orange-500" /> : <CheckCircle className="w-4 h-4 text-green-500" />}
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => confirmRemove(item)} title="Revoke access">
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </Button>
+                          {canManageRole(item) && (
+                            <Button variant="ghost" size="sm" onClick={() => openRoleChange(item)} title="Change role">
+                              <Shield className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {canManageRole(item) && (
+                            <Button variant="ghost" size="sm" onClick={() => toggleStatus(item)} title={item.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}>
+                              {item.status === 'ACTIVE' ? <XCircle className="w-4 h-4 text-orange-500" /> : <CheckCircle className="w-4 h-4 text-green-500" />}
+                            </Button>
+                          )}
+                          {canManageRole(item) && (
+                            <Button variant="ghost" size="sm" onClick={() => confirmRemove(item)} title="Revoke access">
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DollarSign, TrendingUp, TrendingDown, ReceiptText, CreditCard, Banknote, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, ReceiptText, CreditCard, Banknote, ArrowUpRight, ArrowDownRight, BarChart3 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Line } from 'recharts';
 
 export function AdminFinance() {
   const { token } = useAuthStore();
@@ -42,7 +42,7 @@ export function AdminFinance() {
           { title: 'Today Revenue', value: formatCurrency(d?.todayRevenue ?? 0), icon: DollarSign, color: 'text-green-600', trend: 'up' },
           { title: 'Monthly Revenue', value: formatCurrency(d?.monthlyRevenue ?? 0), icon: TrendingUp, color: 'text-blue-600', trend: 'up' },
           { title: 'Yearly Revenue', value: formatCurrency(d?.yearlyRevenue ?? 0), icon: Banknote, color: 'text-purple-600', trend: 'up' },
-          { title: 'Monthly Profit Est.', value: formatCurrency(d?.monthlyProfit ?? 0), icon: TrendingDown, color: 'text-amber-600', trend: 'up' },
+          { title: 'Monthly Net Profit', value: formatCurrency(d?.monthlyProfit ?? 0), icon: TrendingDown, color: d?.monthlyProfit >= 0 ? 'text-green-600' : 'text-red-600', trend: d?.monthlyProfit >= 0 ? 'up' : 'down' },
         ].map(s => (
           <Card key={s.title} className="shadow-sm border-none bg-white">
             <CardContent className="p-6">
@@ -119,6 +119,36 @@ export function AdminFinance() {
                     <Tooltip formatter={(v: number) => [formatCurrency(v), 'Revenue']} />
                     <Area type="monotone" dataKey="revenue" stroke="#C9973A" fill="#C9973A" fillOpacity={0.2} strokeWidth={2} />
                   </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <Card className="shadow-sm border-none bg-white">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-[#C9973A]" /> Occupancy vs Revenue Performance
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              {isLoading ? <Skeleton className="h-full w-full" /> : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={d?.revenueTrend.map((r: any, i: number) => ({
+                    ...r,
+                    occupancy: d?.occupancyTrend[i]?.occupancy ?? 0
+                  }))}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <XAxis dataKey="date" fontSize={11} stroke="#999" tickFormatter={(v) => v.slice(5)} />
+                    <YAxis yAxisId="left" fontSize={11} stroke="#999" />
+                    <YAxis yAxisId="right" orientation="right" fontSize={11} stroke="#999" unit="%" />
+                    <Tooltip formatter={(v: any, name: string) => name === 'occupancy' ? [`${v}%`, 'Occupancy'] : [formatCurrency(v), 'Revenue']} />
+                    <Bar yAxisId="left" dataKey="revenue" fill="#0F1B2D" radius={[4, 4, 0, 0]} barSize={20} />
+                    <Line yAxisId="right" type="monotone" dataKey="occupancy" stroke="#C9973A" strokeWidth={3} dot={{ r: 4, fill: '#C9973A' }} />
+                  </ComposedChart>
                 </ResponsiveContainer>
               )}
             </div>

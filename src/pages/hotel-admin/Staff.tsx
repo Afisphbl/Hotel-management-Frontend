@@ -16,10 +16,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store/authStore';
 
 const PAGE_SIZE = 10;
 
 export function AdminStaff() {
+  const { user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [staffList, setStaffList] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,6 +75,14 @@ export function AdminStaff() {
       toast.error('Please fill in name, email, and role');
       return;
     }
+    
+    // Check if trying to invite a hotel owner role
+    const selectedRole = roles.find(r => r.id === inviteForm.roleId);
+    if (selectedRole && selectedRole.name.toUpperCase().includes('OWNER')) {
+      toast.error('Admin cannot invite hotel owners');
+      return;
+    }
+    
     setIsSaving(true);
     try {
       const res = await api.post('hotel/owner/staff/invite', inviteForm);
@@ -104,6 +114,18 @@ export function AdminStaff() {
   };
 
   const toggleStatus = async (item: any) => {
+    // Prevent admin from deactivating hotel owners or other admins
+    const isTargetAdminOrOwner = item.roleName && (item.roleName.toUpperCase().includes('OWNER') || item.roleName.toUpperCase().includes('ADMIN'));
+    if (user?.role === 'HOTEL_ADMIN' && isTargetAdminOrOwner) {
+      toast.error('Admins cannot deactivate other admins or owners');
+      return;
+    }
+
+    if (item.status === 'ACTIVE' && item.roleName && item.roleName.toUpperCase().includes('OWNER')) {
+      toast.error('Cannot deactivate hotel owners');
+      return;
+    }
+    
     try {
       const newStatus = item.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
       await api.patch(`hotel/owner/staff/${item.id}/status`, { status: newStatus });
@@ -116,6 +138,14 @@ export function AdminStaff() {
 
   const handleRemove = async () => {
     if (!removeTarget) return;
+
+    // Protection check
+    const isTargetAdminOrOwner = removeTarget.roleName && (removeTarget.roleName.toUpperCase().includes('OWNER') || removeTarget.roleName.toUpperCase().includes('ADMIN'));
+    if (user?.role === 'HOTEL_ADMIN' && isTargetAdminOrOwner) {
+      toast.error('Admins cannot remove other admins or owners');
+      return;
+    }
+
     try {
       await api.delete(`hotel/owner/staff/${removeTarget.id}`);
       toast.success('Staff access revoked');
@@ -125,6 +155,12 @@ export function AdminStaff() {
     } catch (e: any) {
       toast.error('Failed to remove: ' + e.message);
     }
+  };
+
+  const canManageRole = (item: any) => {
+    if (user?.role !== 'HOTEL_ADMIN') return true;
+    const isTargetAdminOrOwner = item.roleName && (item.roleName.toUpperCase().includes('OWNER') || item.roleName.toUpperCase().includes('ADMIN'));
+    return !isTargetAdminOrOwner;
   };
 
   const filteredList = staffList.filter(m =>
@@ -261,15 +297,25 @@ export function AdminStaff() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => { setRoleChangeTarget({ id: item.id, currentRoleId: item.roleId }); setSelectedRoleId(item.roleId || ''); }} title="Change role">
-                            <Shield className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => toggleStatus(item)} title={item.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}>
-                            {item.status === 'ACTIVE' ? <XCircle className="w-4 h-4 text-orange-500" /> : <CheckCircle className="w-4 h-4 text-green-500" />}
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => { setRemoveTarget(item); setIsRemoveOpen(true); }} title="Revoke access">
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </Button>
+                          {canManageRole(item) && (
+                            <Button variant="ghost" size="sm" onClick={() => { setRoleChangeTarget({ id: item.id, currentRoleId: item.roleId }); setSelectedRoleId(item.roleId || ''); }} title="Change role">
+                              <Shield className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {item.roleName && item.roleName.toUpperCase().includes('OWNER') ? null : (
+                            canManageRole(item) && (
+                              <Button variant="ghost" size="sm" onClick={() => toggleStatus(item)} title={item.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}>
+                                {item.status === 'ACTIVE' ? <XCircle className="w-4 h-4 text-orange-500" /> : <CheckCircle className="w-4 h-4 text-green-500" />}
+                              </Button>
+                            )
+                          )}
+                          {item.roleName && item.roleName.toUpperCase().includes('OWNER') ? null : (
+                            canManageRole(item) && (
+                              <Button variant="ghost" size="sm" onClick={() => { setRemoveTarget(item); setIsRemoveOpen(true); }} title="Revoke access">
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </Button>
+                            )
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -279,6 +325,7 @@ export function AdminStaff() {
                   )}
                 </TableBody>
               </Table>
+
 
               {totalPages > 1 && (
                 <div className="flex items-center justify-between px-6 py-4 border-t">
@@ -322,7 +369,7 @@ export function AdminStaff() {
                 <select className="flex w-full h-10 px-3 py-2 border border-input bg-background rounded-md text-sm"
                   value={inviteForm.roleId} onChange={e => setInviteForm({ ...inviteForm, roleId: e.target.value })}>
                   <option value="">Select a role...</option>
-                  {roles.map(r => <option key={r.id} value={r.id}>{r.name.replace(/_/g, ' ')}</option>)}
+                  {roles.filter(r => !r.name.toUpperCase().includes('OWNER')).map(r => <option key={r.id} value={r.id}>{r.name.replace(/_/g, ' ')}</option>)}
                 </select></div>
               <div className="space-y-1.5"><Label>Notes (optional)</Label>
                 <textarea className="flex w-full min-h-[80px] px-3 py-2 border border-input bg-background rounded-md text-sm"
@@ -349,7 +396,7 @@ export function AdminStaff() {
               <select className="flex w-full h-10 px-3 py-2 border border-input bg-background rounded-md text-sm"
                 value={selectedRoleId} onChange={e => setSelectedRoleId(e.target.value)}>
                 <option value="">Select a role...</option>
-                {roles.map(r => <option key={r.id} value={r.id}>{r.name.replace(/_/g, ' ')}</option>)}
+                {roles.filter(r => !r.name.toUpperCase().includes('OWNER')).map(r => <option key={r.id} value={r.id}>{r.name.replace(/_/g, ' ')}</option>)}
               </select></div>
           </div>
           <div className="flex justify-end gap-3 mt-2">
