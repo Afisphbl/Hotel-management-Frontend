@@ -96,14 +96,19 @@ export function AdminPricing() {
           <div className="space-y-2">
             {overrides.map(o => (
               <div key={o.id} className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3 text-sm">
-                <div>
+                <div className="flex-1">
                   <span className="font-medium text-[#0F1B2D]">Room {o.roomNumber || o.roomId}</span>
                   <span className="ml-2 text-muted-foreground">→ {formatCurrency(o.price)}/night</span>
                   {o.reason && <span className="ml-2 text-xs text-muted-foreground italic">({o.reason})</span>}
                 </div>
-                <button onClick={() => del(`hotel/pricing/overrides/${o.id}`)} className="text-red-500 hover:text-red-700">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => open('override', o)} className="text-gray-400 hover:text-[#C9973A]">
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => del(`hotel/pricing/overrides/${o.id}`)} className="text-red-500 hover:text-red-700">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -207,22 +212,22 @@ export function AdminPricing() {
 
       {modal === 'override' && (
         <Modal title={editing ? 'Edit Override' : 'New Price Override'} onClose={close}>
-          <OverrideDialog editing={editing} roomTypes={roomTypes} onDone={done} onCancel={close} />
+          <OverrideDialog initial={editing} roomTypes={roomTypes} onDone={done} onCancel={close} />
         </Modal>
       )}
       {modal === 'promotion' && (
         <Modal title={editing ? 'Edit Promotion' : 'New Promotion'} onClose={close}>
-          <PromotionDialog editing={editing} roomTypes={roomTypes} onDone={done} onCancel={close} />
+          <PromotionDialog initial={editing} roomTypes={roomTypes} onDone={done} onCancel={close} />
         </Modal>
       )}
       {modal === 'seasonal' && (
         <Modal title={editing ? 'Edit Seasonal Rate' : 'New Seasonal Rate'} onClose={close}>
-          <SeasonalRateDialog editing={editing} roomTypes={roomTypes} onDone={done} onCancel={close} />
+          <SeasonalRateDialog initial={editing} roomTypes={roomTypes} onDone={done} onCancel={close} />
         </Modal>
       )}
       {modal === 'rateplan' && (
         <Modal title={editing ? 'Edit Rate Plan' : 'New Rate Plan'} onClose={close}>
-          <RatePlanDialog editing={editing} roomTypes={roomTypes} onDone={done} onCancel={close} />
+          <RatePlanDialog initial={editing} roomTypes={roomTypes} onDone={done} onCancel={close} />
         </Modal>
       )}
     </div>

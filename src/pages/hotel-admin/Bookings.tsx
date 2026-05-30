@@ -956,6 +956,12 @@ function CreateBookingModal({
   const [checkOut, setCheckOut] = useState<Date | undefined>();
   const [bookedDates, setBookedDates] = useState<Date[]>([]);
   const [notes, setNotes] = useState("");
+  const [pricePreview, setPricePreview] = useState<{
+    total: number;
+    nights: number;
+    rooms: { roomId: string; roomNumber: string; roomType?: { id: string; name: string } | null; total: number; nights: { date: string; price: number }[] }[];
+  } | null>(null);
+  const [loadingPrice, setLoadingPrice] = useState(false);
 
   const today = startOfDay(new Date());
 
@@ -1085,7 +1091,7 @@ function CreateBookingModal({
     setNewGuest({ firstName: "", lastName: "", email: "", phone: "" });
   };
 
-  const goToStep = (target: number) => {
+  const goToStep = async (target: number) => {
     if (target === 2 && !canProceedStep1) {
       toast.error("Please select or enter a guest first");
       return;
@@ -1093,6 +1099,21 @@ function CreateBookingModal({
     if (target === 3 && (!canProceedStep1 || !canProceedStep2)) {
       toast.error("Please complete all required fields");
       return;
+    }
+    if (target === 3) {
+      try {
+        setLoadingPrice(true);
+        const res = await api.post("hotel/bookings/calculate-price", {
+          roomIds: selectedRoomIds,
+          checkIn: format(checkIn!, "yyyy-MM-dd"),
+          checkOut: format(checkOut!, "yyyy-MM-dd"),
+        });
+        setPricePreview(res.data || res);
+      } catch {
+        setPricePreview(null);
+      } finally {
+        setLoadingPrice(false);
+      }
     }
     setStep(target);
   };
@@ -1411,6 +1432,17 @@ function CreateBookingModal({
                         r.basePrice ??
                         r.roomType?.basePrice ??
                         0;
+                      console.log('[BookingForm] Room pricing:', {
+                        roomNumber: r.roomNumber,
+                        roomTypeId: r.roomTypeId,
+                        checkIn: checkIn ? format(checkIn, 'yyyy-MM-dd') : null,
+                        effectivePrice: r.effectivePrice,
+                        basePrice: r.basePrice,
+                        roomTypeBasePrice: r.roomType?.basePrice,
+                        pricingType: r.pricingType,
+                        pricingReason: r.pricingReason,
+                        displayedPrice: price,
+                      });
                       return (
                         <button
                           key={r.id}
@@ -1473,7 +1505,7 @@ function CreateBookingModal({
                 <Button
                   className='flex-1 bg-[#0F1B2D] hover:bg-[#1a2a3a]'
                   disabled={!canProceedStep2}
-                  onClick={() => setStep(3)}
+                  onClick={() => goToStep(3)}
                 >
                   Review
                 </Button>
@@ -1531,9 +1563,44 @@ function CreateBookingModal({
                 {selectedRoomIds.length > 0 && (
                   <div>
                     <p className='text-xs font-medium text-muted-foreground uppercase mb-1'>
-                      Selected Rooms
+                      Price Breakdown
                     </p>
-                    <div className='space-y-1'>
+                    {loadingPrice ? (
+                      <div className='space-y-1'>
+                        <Skeleton className='h-10 w-full' />
+                        <Skeleton className='h-10 w-full' />
+                      </div>
+                    ) : pricePreview ? (
+                      <div className='space-y-1'>
+                        {pricePreview.rooms.map((r) => (
+                          <div
+                            key={r.roomId}
+                            className='flex items-center justify-between text-sm px-3 py-2 bg-gray-50 rounded-lg'
+                          >
+                            <span>
+                              Room {r.roomNumber}{" "}
+                              <span className='text-muted-foreground'>
+                                ({r.roomType?.name || "Standard"})
+                              </span>
+                              {" "}
+                              <span className='text-muted-foreground'>
+                                ({pricePreview.nights} night{pricePreview.nights !== 1 ? "s" : ""})
+                              </span>
+                            </span>
+                            <span className='font-medium'>
+                              {formatCurrency(r.total)}
+                            </span>
+                          </div>
+                        ))}
+                        <div className='flex items-center justify-between text-sm font-semibold px-3 py-2 mt-1 border-t'>
+                          <span>Total (rates & promotions applied)</span>
+                          <span className='text-[#C9973A]'>
+                            {formatCurrency(pricePreview.total)}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className='space-y-1'>
                       {rooms
                         .filter((r) => selectedRoomIds.includes(r.id))
                         .map((r) => {
@@ -1542,6 +1609,17 @@ function CreateBookingModal({
                             r.basePrice ??
                             r.roomType?.basePrice ??
                             0;
+                          console.log('[BookingForm] Review room pricing:', {
+                            roomNumber: r.roomNumber,
+                            effectivePrice: r.effectivePrice,
+                            basePrice: r.basePrice,
+                            roomTypeBasePrice: r.roomType?.basePrice,
+                            pricingType: r.pricingType,
+                            pricingReason: r.pricingReason,
+                            displayedPrice: price,
+                            totalNights,
+                            estimatedTotal: price * totalNights,
+                          });
                           return (
                             <div
                               key={r.id}
@@ -1562,28 +1640,29 @@ function CreateBookingModal({
                             </div>
                           );
                         })}
-                    </div>
-                    <div className='flex items-center justify-between text-sm font-semibold px-3 py-2 mt-1 border-t'>
-                      <span>Estimated Total</span>
-                      <span className='text-[#C9973A]'>
-                        {formatCurrency(
-                          rooms
-                            .filter((r) => selectedRoomIds.includes(r.id))
-                            .reduce(
-                              (sum, r) =>
-                                sum +
-                                Number(
-                                  r.effectivePrice ??
-                                    r.basePrice ??
-                                    r.roomType?.basePrice ??
-                                    0,
-                                ) *
-                                  totalNights,
-                              0,
-                            ),
-                        )}
-                      </span>
-                    </div>
+                        <div className='flex items-center justify-between text-sm font-semibold px-3 py-2 mt-1 border-t'>
+                          <span>Estimated Total</span>
+                          <span className='text-[#C9973A]'>
+                            {formatCurrency(
+                              rooms
+                                .filter((r) => selectedRoomIds.includes(r.id))
+                                .reduce(
+                                  (sum, r) =>
+                                    sum +
+                                    Number(
+                                      r.effectivePrice ??
+                                        r.basePrice ??
+                                        r.roomType?.basePrice ??
+                                        0,
+                                    ) *
+                                      totalNights,
+                                  0,
+                                ),
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

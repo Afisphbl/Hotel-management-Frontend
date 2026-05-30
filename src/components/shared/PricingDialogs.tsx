@@ -28,8 +28,13 @@ function RoomTypeSelect({ value, onChange, roomTypes }: { value: string; onChang
 }
 
 // ─── Override Dialog ──────────────────────────────────────────────────────────
-export function OverrideDialog({ roomTypes, onDone, onClose }: Props) {
-  const [form, setForm] = useState({ roomTypeId: '', date: '', price: '', reason: '' });
+export function OverrideDialog({ roomTypes, onDone, onClose, initial }: Props & { initial?: any }) {
+  const [form, setForm] = useState({
+    roomTypeId: initial?.roomTypeId ?? '',
+    date: initial?.date ?? '',
+    price: String(initial?.price ?? ''),
+    reason: initial?.reason ?? '',
+  });
   const [saving, setSaving] = useState(false);
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
@@ -40,11 +45,17 @@ export function OverrideDialog({ roomTypes, onDone, onClose }: Props) {
     }
     setSaving(true);
     try {
-      await api.post('hotel/pricing/overrides', { ...form, price: Number(form.price) });
-      toast.success('Price override created');
+      const payload = { ...form, price: Number(form.price) };
+      if (initial?.id) {
+        await api.patch(`hotel/pricing/overrides/${initial.id}`, payload);
+        toast.success('Price override updated');
+      } else {
+        await api.post('hotel/pricing/overrides', payload);
+        toast.success('Price override created');
+      }
       onDone();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to create override');
+      toast.error(err.message || 'Failed to save override');
     } finally { setSaving(false); }
   };
 
