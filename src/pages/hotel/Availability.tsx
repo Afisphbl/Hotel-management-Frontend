@@ -78,9 +78,7 @@ export function HotelAvailability() {
                     <div className="text-[9px] font-medium text-muted-foreground leading-none mt-0.5">Standard King</div>
                   </td>
                   {row.dates.map((status, j) => {
-                    // Mock mixed statuses
-                    const s = Math.random();
-                    const currentStatus = s > 0.8 ? 'hold' : s > 0.7 ? 'blocked' : s > 0.3 ? 'confirmed' : 'available';
+                    const currentStatus = status || 'available';
                     
                     return (
                       <td key={j} className="p-1 border-b border-r h-12 relative group">
@@ -88,7 +86,9 @@ export function HotelAvailability() {
                           "w-full h-full rounded-sm transition-all cursor-pointer",
                           currentStatus === 'available' ? 'bg-green-50' : 
                           currentStatus === 'confirmed' ? 'bg-blue-600/90' :
-                          currentStatus === 'hold' ? 'bg-amber-400/90' : 'bg-slate-400/60'
+                          currentStatus === 'hold' ? 'bg-amber-400/90' :
+                          currentStatus === 'blocked' ? 'bg-slate-400/60' :
+                          'bg-red-400/80'
                         )}>
                           {currentStatus !== 'available' && (
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">

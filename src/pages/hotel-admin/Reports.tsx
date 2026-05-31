@@ -43,7 +43,8 @@ export function AdminReports() {
   const fetchReportData = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch('/api/v1/hotel/reports', {
+      const daysParam = dateRange === 'custom' ? '' : `?days=${dateRange}`;
+      const res = await fetch(`/api/v1/hotel/reports${daysParam}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const json = await res.json();
@@ -53,6 +54,24 @@ export function AdminReports() {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      const daysParam = dateRange === 'custom' ? '' : `?days=${dateRange}`;
+      const res = await fetch(`/api/v1/hotel/reports${daysParam}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      if (!json.data) return;
+      const blob = new Blob([JSON.stringify(json.data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `hotel-report-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { }
+  };
+
   return (
     <div className="space-y-8 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -60,7 +79,7 @@ export function AdminReports() {
           <h1 className="text-2xl sm:text-3xl font-serif text-[#0F1B2D]">Reports & Analytics</h1>
           <p className="text-sm text-muted-foreground">Comprehensive insights into hotel operations</p>
         </div>
-        <Button className="bg-[#0F1B2D] hover:bg-[#1a2a3a]">
+        <Button onClick={handleExport} className="bg-[#0F1B2D] hover:bg-[#1a2a3a]">
           <Download className="w-4 h-4 mr-2" /> Export Report
         </Button>
       </div>

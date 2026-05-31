@@ -58,6 +58,9 @@ type DashboardData = {
   occupancyTrend: Array<{ date: string; occupancy: number; revenue?: number }>;
   revenueTrend: Array<{ date: string; revenue: number }>;
   bookingTrend: Array<{ date: string; confirmed: number; checkedIn: number }>;
+  heatmap?: Array<{ room: string; dates: string[] }>;
+  revenue30d?: Array<{ date: string | number; revenue: number }>;
+  bookingSource?: Array<{ name: string; value: number; color: string }>;
 };
 
 const BOOKING_STATUS_CLASS: Record<string, string> = {
@@ -68,40 +71,43 @@ const BOOKING_STATUS_CLASS: Record<string, string> = {
   CHECKED_OUT: 'bg-slate-100 text-slate-700',
 };
 
-function generateHeatmap() {
-  return Array.from({ length: 15 }).map((_, i) => ({
-    room: `Room ${101 + i}`,
-    dates: Array.from({ length: 14 }).map(() => Math.random() > 0.3 ? 'available' : 'booked'),
-  }));
+function relativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }
 
-function generateRevenue30d() {
-  return Array.from({ length: 30 }).map((_, i) => ({
-    date: i + 1,
-    revenue: Math.floor(Math.random() * 5000) + 2000,
-  }));
+function buildActivityItems(d: DashboardData | null): Array<{ time: string; title: string; desc: string; type: 'arrival' | 'booking' | 'maintenance' | 'departure' }> {
+  const items: Array<{ time: string; title: string; desc: string; type: 'arrival' | 'booking' | 'maintenance' | 'departure' }> = [];
+  if (!d) return items;
+
+  for (const b of d.recentBookings ?? []) {
+    if (b.status === 'CHECKED_IN' || b.status === 'checked_in') {
+      items.push({ time: relativeTime(b.createdAt), title: `Check-in: Room ${b.roomNumber}`, desc: `${b.guestName} has checked in.`, type: 'arrival' });
+    } else {
+      items.push({ time: relativeTime(b.createdAt), title: 'New Booking', desc: `Booking received for ${b.guestName} — Room ${b.roomNumber} (${b.nights}n).`, type: 'booking' });
+    }
+  }
+
+  for (const p of d.recentPayments ?? []) {
+    items.push({ time: relativeTime(p.createdAt), title: 'Payment Received', desc: `${p.method} payment of $${Number(p.amount).toFixed(2)} processed.`, type: 'booking' });
+  }
+
+  return items.sort((a, b) => {
+    const aMins = parseInt(a.time) || 0;
+    const bMins = parseInt(b.time) || 0;
+    return aMins - bMins;
+  }).slice(0, 8);
 }
-
-const BOOKINGS_BY_SOURCE = [
-  { name: 'Direct', value: 45, color: '#C9973A' },
-  { name: 'OTA (Booking.com)', value: 30, color: '#0F1B2D' },
-  { name: 'OTA (Expedia)', value: 15, color: '#1a2a3a' },
-  { name: 'Other', value: 10, color: '#94a3b8' },
-];
-
-const ACTIVITY_ITEMS = [
-  { time: '2m ago', title: 'Check-in: Room 204', desc: 'Mr. John Doe has successfully checked in.', type: 'arrival' as const },
-  { time: '15m ago', title: 'New Booking', desc: 'Direct booking received for Suite 501', type: 'booking' as const },
-  { time: '45m ago', title: 'Maintenance', desc: 'Ticket #2405 resolved for Room 102', type: 'maintenance' as const },
-  { time: '1h ago', title: 'Checkout: Room 305', desc: 'Guest Mrs. Jane Smith has checked out.', type: 'departure' as const },
-];
 
 export function AdminDashboard() {
   const { token } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
-  const [heatmap] = useState(generateHeatmap);
-  const [revenue30d] = useState(generateRevenue30d);
 
   useEffect(() => {
     const load = async () => {
@@ -249,7 +255,10 @@ export function AdminDashboard() {
             </div>
             <div className="flex flex-wrap gap-2 text-[10px] items-center">
               <div className="flex items-center gap-1"><div className="w-2 h-2 bg-green-500 rounded-sm"></div> Avail</div>
-              <div className="flex items-center gap-1"><div className="w-2 h-2 bg-blue-500 rounded-sm"></div> Occ</div>
+              <div className="flex items-center gap-1"><div className="w-2 h-2 bg-blue-600 rounded-sm"></div> Booked</div>
+              <div className="flex items-center gap-1"><div className="w-2 h-2 bg-amber-400 rounded-sm"></div> Hold</div>
+              <div className="flex items-center gap-1"><div className="w-2 h-2 bg-slate-400 rounded-sm"></div> Block</div>
+              <div className="flex items-center gap-1"><div className="w-2 h-2 bg-red-400 rounded-sm"></div> OOO</div>
             </div>
           </CardHeader>
           <CardContent className="overflow-x-auto">
@@ -257,22 +266,30 @@ export function AdminDashboard() {
               <div className="flex border-b border-muted pb-2">
                 <div className="w-20 text-[10px] font-bold uppercase text-muted-foreground">Room</div>
                 <div className="flex-1 flex justify-between px-2">
-                  {Array.from({ length: 14 }).map((_, i) => (
-                    <div key={i} className="w-6 text-center text-[10px] font-bold text-muted-foreground">{18 + i}</div>
-                  ))}
+                  {Array.from({ length: 14 }).map((_, i) => {
+                    const day = new Date();
+                    day.setDate(day.getDate() + i);
+                    return (
+                      <div key={i} className="w-6 text-center text-[10px] font-bold text-muted-foreground">{day.getDate()}</div>
+                    );
+                  })}
                 </div>
               </div>
               <div className="max-h-[300px] overflow-y-auto space-y-1 custom-scrollbar pr-2">
-                {heatmap.map((row, i) => (
+                {(d?.heatmap ?? []).map((row, i) => (
                   <div key={i} className="flex items-center">
-                    <div className="w-20 text-xs font-medium text-[#0F1B2D]">{row.room}</div>
+                    <div className="w-20 text-xs font-medium text-[#0F1B2D]">Room {row.room}</div>
                     <div className="flex-1 flex justify-between px-2">
-                      {row.dates.map((status, j) => (
+                      {row.dates.map((status: string, j: number) => (
                         <div
                           key={j}
                           className={cn(
                             "w-6 h-6 rounded-sm border border-white/20 transition-transform hover:scale-110 cursor-pointer shadow-sm",
-                            status === 'available' ? 'bg-green-500/80' : 'bg-blue-600/80 shadow-inner'
+                            status === 'available' ? 'bg-green-500/80' :
+                            status === 'confirmed' ? 'bg-blue-600/80 shadow-inner' :
+                            status === 'hold' ? 'bg-amber-400/80' :
+                            status === 'blocked' ? 'bg-slate-400/60' :
+                            'bg-red-400/80'
                           )}
                         />
                       ))}
@@ -291,7 +308,7 @@ export function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {ACTIVITY_ITEMS.map((item, i) => (
+              {buildActivityItems(d).map((item, i) => (
                 <ActivityItem key={i} time={item.time} title={item.title} desc={item.desc} type={item.type} />
               ))}
               <Button variant="ghost" className="w-full text-xs text-[#C9973A] hover:bg-[#C9973A]/5">
@@ -310,9 +327,9 @@ export function AdminDashboard() {
             <CardDescription>Daily revenue performance</CardDescription>
           </CardHeader>
           <CardContent className="h-[250px]">
-            {revenue30d.length > 0 ? (
+            {(d?.revenue30d ?? []).length > 0 ? (
               <ResponsiveContainer width="100%" height="100%" minHeight={250}>
-                <BarChart data={revenue30d}>
+                <BarChart data={d?.revenue30d ?? []}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                   <XAxis dataKey="date" hide />
                   <YAxis hide />
@@ -338,7 +355,7 @@ export function AdminDashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={BOOKINGS_BY_SOURCE}
+                    data={d?.bookingSource ?? []}
                     cx="40%"
                     cy="50%"
                     innerRadius={60}
@@ -346,7 +363,7 @@ export function AdminDashboard() {
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {BOOKINGS_BY_SOURCE.map((entry, index) => (
+                    {(d?.bookingSource ?? []).map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>

@@ -54,6 +54,7 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   HOUSEKEEPING_SUPERVISOR: ["housekeeping:*", "room:read", "reports:read"],
   HOUSEKEEPING_STAFF: ["housekeeping:own_tasks"],
   MAINTENANCE_STAFF: ["maintenance:own_tickets"],
+  HOTEL_ADMIN: [],
 };
 
 export const useAuthStore = create<AuthState>()(
