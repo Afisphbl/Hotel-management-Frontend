@@ -23,6 +23,8 @@ export function AdminHousekeeping() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
+  const [summary, setSummary] = useState({ dirty: 0, cleaning: 0, inspecting: 0, clean: 0, total: 0, pendingActive: 0, completed: 0 });
+
   const [roomList, setRoomList] = useState<any[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -51,6 +53,7 @@ export function AdminHousekeeping() {
   useEffect(() => {
     fetchStaff();
     fetchRooms();
+    fetchSummary();
   }, []);
 
   const fetchTasks = async () => {
@@ -91,6 +94,24 @@ export function AdminHousekeeping() {
     }
   };
 
+  const fetchSummary = async () => {
+    try {
+      const res = await api.get('hotel/housekeeping?limit=1000');
+      const allTasks = res.data || res.items || [];
+      setSummary({
+        dirty: allTasks.filter((t: any) => t.status === 'PENDING').length,
+        cleaning: allTasks.filter((t: any) => t.status === 'IN_PROGRESS' || t.status === 'ASSIGNED').length,
+        inspecting: allTasks.filter((t: any) => t.status === 'VERIFIED').length,
+        clean: allTasks.filter((t: any) => t.status === 'COMPLETED').length,
+        total: allTasks.length,
+        pendingActive: allTasks.filter((t: any) => t.status === 'PENDING' || t.status === 'IN_PROGRESS' || t.status === 'ASSIGNED').length,
+        completed: allTasks.filter((t: any) => t.status === 'COMPLETED').length,
+      });
+    } catch (err: any) {
+      console.error('Failed to load summary:', err.message);
+    }
+  };
+
   const handleCreate = async () => {
     if (!createForm.roomId || !createForm.description) {
       toast.error('Room and description are required');
@@ -103,6 +124,7 @@ export function AdminHousekeeping() {
       setShowCreate(false);
       setCreateForm({ roomId: '', description: '', priority: 'NORMAL', assignedTo: '' });
       fetchTasks();
+      fetchSummary();
     } catch (err: any) {
       toast.error('Failed to create task: ' + err.message);
     } finally {
@@ -140,6 +162,7 @@ export function AdminHousekeeping() {
       setAssignTarget(null);
       setSelectedStaffId('');
       fetchTasks();
+      fetchSummary();
     } catch (err: any) {
       toast.error('Failed to assign staff: ' + err.message);
     } finally {
@@ -155,6 +178,7 @@ export function AdminHousekeeping() {
       setCompleteTarget(null);
       setCompleteNotes('');
       fetchTasks();
+      fetchSummary();
     } catch (err: any) {
       toast.error('Failed to complete task: ' + err.message);
     } finally {
@@ -170,6 +194,7 @@ export function AdminHousekeeping() {
       await api.delete(`hotel/housekeeping/${id}`);
       toast.success('Task deleted successfully');
       fetchTasks();
+      fetchSummary();
     } catch (err: any) {
       toast.error('Failed to delete task: ' + err.message);
     }
@@ -216,10 +241,10 @@ export function AdminHousekeeping() {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'Dirty', count: pendingTasks.length, color: 'text-red-500', icon: RotateCw },
-          { label: 'Cleaning', count: inProgressTasks.length, color: 'text-blue-500', icon: Brush },
-          { label: 'Inspecting', count: verifiedTasks.length, color: 'text-amber-500', icon: Search },
-          { label: 'Clean', count: completedTasks.length, color: 'text-green-500', icon: CheckCircle },
+          { label: 'Dirty', count: summary.dirty, color: 'text-red-500', icon: RotateCw },
+          { label: 'Cleaning', count: summary.cleaning, color: 'text-blue-500', icon: Brush },
+          { label: 'Inspecting', count: summary.inspecting, color: 'text-amber-500', icon: Search },
+          { label: 'Clean', count: summary.clean, color: 'text-green-500', icon: CheckCircle },
         ].map((stat, i) => (
           <div key={i} className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between border-b-2 border-transparent hover:border-[#C9973A] transition-all group">
             <div>
@@ -237,7 +262,7 @@ export function AdminHousekeeping() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase">Total Tasks</p>
-                <h3 className="text-2xl font-bold text-[#0F1B2D] mt-1">{tasks.length}</h3>
+                <h3 className="text-2xl font-bold text-[#0F1B2D] mt-1">{summary.total}</h3>
               </div>
               <Sparkles className="w-12 h-12 text-blue-600 opacity-20" />
             </div>
@@ -248,7 +273,7 @@ export function AdminHousekeeping() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase">Pending / Active</p>
-                <h3 className="text-2xl font-bold text-yellow-600 mt-1">{pendingCount}</h3>
+                <h3 className="text-2xl font-bold text-yellow-600 mt-1">{summary.pendingActive}</h3>
               </div>
               <Clock className="w-12 h-12 text-yellow-600 opacity-20" />
             </div>
@@ -259,7 +284,7 @@ export function AdminHousekeeping() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase">Completed</p>
-                <h3 className="text-2xl font-bold text-green-600 mt-1">{completedCount}</h3>
+                <h3 className="text-2xl font-bold text-green-600 mt-1">{summary.completed}</h3>
               </div>
               <CheckCircle className="w-12 h-12 text-green-600 opacity-20" />
             </div>
