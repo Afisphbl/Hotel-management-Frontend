@@ -240,19 +240,6 @@ export function AppShell() {
               (item) => !item.permission || hasPermission(item.permission),
             );
 
-  // Debug logging
-  React.useEffect(() => {
-    console.log("🔍 AppShell Navigation Debug:", {
-      user_email: user?.email,
-      user_scope: user?.scope,
-      user_role: user?.role,
-      user_hotel_id: user?.hotel_id,
-      navItemsCount: navItems.length,
-      navItems: navItems.map((n) => n.title),
-      timestamp: new Date().toISOString(),
-    });
-  }, [user, navItems]);
-
   const settingsHref =
     user?.scope === "platform"
       ? "/platform/settings"

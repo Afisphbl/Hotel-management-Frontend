@@ -179,9 +179,10 @@ export function AdminBookings() {
 
   const handleAction = async (id: string, action: string) => {
     try {
-      const body = action === 'confirm' 
-        ? { idempotencyKey: `confirm-${id}-${Date.now()}` }
-        : {};
+      const body =
+        action === "confirm"
+          ? { idempotencyKey: `confirm-${id}-${Date.now()}` }
+          : {};
       await api.post(`hotel/bookings/${id}/${action}`, body);
       toast.success(`Booking ${action} successful`);
       fetchBookings();
@@ -196,9 +197,10 @@ export function AdminBookings() {
       setBulkProcessing(true);
       const results = await Promise.allSettled(
         Array.from(selectedIds).map((id) => {
-          const body = bulkAction === 'confirm' 
-            ? { idempotencyKey: `bulk-confirm-${id}-${Date.now()}` }
-            : {};
+          const body =
+            bulkAction === "confirm"
+              ? { idempotencyKey: `bulk-confirm-${id}-${Date.now()}` }
+              : {};
           return api.post(`hotel/bookings/${id}/${bulkAction}`, body);
         }),
       );
@@ -594,26 +596,46 @@ export function AdminBookings() {
                               <MoreVertical className='w-4 h-4' />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align='end'>
-                              <DropdownMenuItem onClick={() => setSelectedBooking(b)}>
-                                <Eye className='w-3.5 h-3.5 mr-2' /> View Details
+                              <DropdownMenuItem
+                                onClick={() => setSelectedBooking(b)}
+                              >
+                                <Eye className='w-3.5 h-3.5 mr-2' /> View
+                                Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setEditingBooking(b)}>
+                              <DropdownMenuItem
+                                onClick={() => setEditingBooking(b)}
+                              >
                                 <Pencil className='w-3.5 h-3.5 mr-2' /> Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleAction(b.id, "confirm")}>
-                                <CheckCircle className='w-3.5 h-3.5 mr-2 text-green-600' /> Confirm
+                              <DropdownMenuItem
+                                onClick={() => handleAction(b.id, "confirm")}
+                              >
+                                <CheckCircle className='w-3.5 h-3.5 mr-2 text-green-600' />{" "}
+                                Confirm
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleAction(b.id, "checkin")}>
-                                <User className='w-3.5 h-3.5 mr-2 text-blue-600' /> Check In
+                              <DropdownMenuItem
+                                onClick={() => handleAction(b.id, "checkin")}
+                              >
+                                <User className='w-3.5 h-3.5 mr-2 text-blue-600' />{" "}
+                                Check In
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleAction(b.id, "checkout")}>
-                                <Clock className='w-3.5 h-3.5 mr-2 text-orange-600' /> Check Out
+                              <DropdownMenuItem
+                                onClick={() => handleAction(b.id, "checkout")}
+                              >
+                                <Clock className='w-3.5 h-3.5 mr-2 text-orange-600' />{" "}
+                                Check Out
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleAction(b.id, "noshow")}>
-                                <XCircle className='w-3.5 h-3.5 mr-2 text-gray-600' /> No Show
+                              <DropdownMenuItem
+                                onClick={() => handleAction(b.id, "noshow")}
+                              >
+                                <XCircle className='w-3.5 h-3.5 mr-2 text-gray-600' />{" "}
+                                No Show
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleAction(b.id, "cancel")}>
-                                <XCircle className='w-3.5 h-3.5 mr-2 text-red-600' /> Cancel
+                              <DropdownMenuItem
+                                onClick={() => handleAction(b.id, "cancel")}
+                              >
+                                <XCircle className='w-3.5 h-3.5 mr-2 text-red-600' />{" "}
+                                Cancel
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -715,7 +737,10 @@ export function AdminBookings() {
         <EditBookingModal
           booking={editingBooking}
           onClose={() => setEditingBooking(null)}
-          onSaved={() => { setEditingBooking(null); fetchBookings(); }}
+          onSaved={() => {
+            setEditingBooking(null);
+            fetchBookings();
+          }}
         />
       )}
 
@@ -972,7 +997,13 @@ function CreateBookingModal({
   const [pricePreview, setPricePreview] = useState<{
     total: number;
     nights: number;
-    rooms: { roomId: string; roomNumber: string; roomType?: { id: string; name: string } | null; total: number; nights: { date: string; price: number }[] }[];
+    rooms: {
+      roomId: string;
+      roomNumber: string;
+      roomType?: { id: string; name: string } | null;
+      total: number;
+      nights: { date: string; price: number }[];
+    }[];
   } | null>(null);
   const [loadingPrice, setLoadingPrice] = useState(false);
 
@@ -1445,17 +1476,6 @@ function CreateBookingModal({
                         r.basePrice ??
                         r.roomType?.basePrice ??
                         0;
-                      console.log('[BookingForm] Room pricing:', {
-                        roomNumber: r.roomNumber,
-                        roomTypeId: r.roomTypeId,
-                        checkIn: checkIn ? format(checkIn, 'yyyy-MM-dd') : null,
-                        effectivePrice: r.effectivePrice,
-                        basePrice: r.basePrice,
-                        roomTypeBasePrice: r.roomType?.basePrice,
-                        pricingType: r.pricingType,
-                        pricingReason: r.pricingReason,
-                        displayedPrice: price,
-                      });
                       return (
                         <button
                           key={r.id}
@@ -1594,10 +1614,10 @@ function CreateBookingModal({
                               Room {r.roomNumber}{" "}
                               <span className='text-muted-foreground'>
                                 ({r.roomType?.name || "Standard"})
-                              </span>
-                              {" "}
+                              </span>{" "}
                               <span className='text-muted-foreground'>
-                                ({pricePreview.nights} night{pricePreview.nights !== 1 ? "s" : ""})
+                                ({pricePreview.nights} night
+                                {pricePreview.nights !== 1 ? "s" : ""})
                               </span>
                             </span>
                             <span className='font-medium'>
@@ -1614,45 +1634,34 @@ function CreateBookingModal({
                       </div>
                     ) : (
                       <div className='space-y-1'>
-                      {rooms
-                        .filter((r) => selectedRoomIds.includes(r.id))
-                        .map((r) => {
-                          const price =
-                            r.effectivePrice ??
-                            r.basePrice ??
-                            r.roomType?.basePrice ??
-                            0;
-                          console.log('[BookingForm] Review room pricing:', {
-                            roomNumber: r.roomNumber,
-                            effectivePrice: r.effectivePrice,
-                            basePrice: r.basePrice,
-                            roomTypeBasePrice: r.roomType?.basePrice,
-                            pricingType: r.pricingType,
-                            pricingReason: r.pricingReason,
-                            displayedPrice: price,
-                            totalNights,
-                            estimatedTotal: price * totalNights,
-                          });
-                          return (
-                            <div
-                              key={r.id}
-                              className='flex items-center justify-between text-sm px-3 py-2 bg-gray-50 rounded-lg'
-                            >
-                              <span>
-                                Room {r.roomNumber}{" "}
-                                <span className='text-muted-foreground'>
-                                  ({r.roomType?.name || "Standard"})
+                        {rooms
+                          .filter((r) => selectedRoomIds.includes(r.id))
+                          .map((r) => {
+                            const price =
+                              r.effectivePrice ??
+                              r.basePrice ??
+                              r.roomType?.basePrice ??
+                              0;
+                            return (
+                              <div
+                                key={r.id}
+                                className='flex items-center justify-between text-sm px-3 py-2 bg-gray-50 rounded-lg'
+                              >
+                                <span>
+                                  Room {r.roomNumber}{" "}
+                                  <span className='text-muted-foreground'>
+                                    ({r.roomType?.name || "Standard"})
+                                  </span>
                                 </span>
-                              </span>
-                              <span className='font-medium'>
-                                {formatCurrency(Number(price))}
-                                <span className='text-xs text-muted-foreground font-normal'>
-                                  /night
+                                <span className='font-medium'>
+                                  {formatCurrency(Number(price))}
+                                  <span className='text-xs text-muted-foreground font-normal'>
+                                    /night
+                                  </span>
                                 </span>
-                              </span>
-                            </div>
-                          );
-                        })}
+                              </div>
+                            );
+                          })}
                         <div className='flex items-center justify-between text-sm font-semibold px-3 py-2 mt-1 border-t'>
                           <span>Estimated Total</span>
                           <span className='text-[#C9973A]'>
@@ -1828,9 +1837,16 @@ function EditBookingModal({
         <div className='flex items-center justify-between p-5 border-b'>
           <div>
             <h2 className='font-semibold text-[#0F1B2D]'>Edit Booking</h2>
-            <p className='text-xs text-muted-foreground font-mono'>{booking.id?.slice(0, 8)}</p>
+            <p className='text-xs text-muted-foreground font-mono'>
+              {booking.id?.slice(0, 8)}
+            </p>
           </div>
-          <button onClick={onClose} className='text-gray-400 hover:text-gray-600 text-xl leading-none'>&times;</button>
+          <button
+            onClick={onClose}
+            className='text-gray-400 hover:text-gray-600 text-xl leading-none'
+          >
+            &times;
+          </button>
         </div>
 
         <div className='p-5 space-y-5'>
@@ -1843,7 +1859,9 @@ function EditBookingModal({
               <p className='font-medium text-sm'>
                 {booking.guest?.firstName || ""} {booking.guest?.lastName || ""}
               </p>
-              <p className='text-xs text-muted-foreground'>{booking.guest?.email || "—"}</p>
+              <p className='text-xs text-muted-foreground'>
+                {booking.guest?.email || "—"}
+              </p>
             </div>
           </div>
 
@@ -1921,18 +1939,26 @@ function EditBookingModal({
             {!checkIn || !checkOut ? (
               <div className='text-center py-8 text-muted-foreground border rounded-lg'>
                 <Bed className='w-8 h-8 mx-auto mb-2 opacity-40' />
-                <p className='text-sm'>Select dates first to see available rooms</p>
+                <p className='text-sm'>
+                  Select dates first to see available rooms
+                </p>
               </div>
             ) : loadingRooms ? (
               <div className='space-y-2'>
-                {Array(3).fill(0).map((_, i) => (
-                  <Skeleton key={i} className='h-12 w-full' />
-                ))}
+                {Array(3)
+                  .fill(0)
+                  .map((_, i) => (
+                    <Skeleton key={i} className='h-12 w-full' />
+                  ))}
               </div>
             ) : rooms.length > 0 ? (
               <div className='space-y-1 max-h-52 overflow-y-auto border rounded-lg'>
                 {rooms.map((r: any) => {
-                  const price = r.effectivePrice ?? r.basePrice ?? r.roomType?.basePrice ?? 0;
+                  const price =
+                    r.effectivePrice ??
+                    r.basePrice ??
+                    r.roomType?.basePrice ??
+                    0;
                   return (
                     <button
                       key={r.id}
@@ -1950,13 +1976,16 @@ function EditBookingModal({
                         <div>
                           <p className='font-medium'>Room {r.roomNumber}</p>
                           <p className='text-xs text-muted-foreground'>
-                            {r.roomType?.name || "Standard"} · Floor {r.floor || "—"}
+                            {r.roomType?.name || "Standard"} · Floor{" "}
+                            {r.floor || "—"}
                           </p>
                         </div>
                       </div>
                       <span className='font-medium text-sm'>
                         {formatCurrency(Number(price))}{" "}
-                        <span className='text-xs text-muted-foreground font-normal'>/night</span>
+                        <span className='text-xs text-muted-foreground font-normal'>
+                          /night
+                        </span>
                       </span>
                     </button>
                   );
@@ -1965,7 +1994,9 @@ function EditBookingModal({
             ) : (
               <div className='text-center py-8 text-muted-foreground border rounded-lg'>
                 <Bed className='w-8 h-8 mx-auto mb-2 opacity-40' />
-                <p className='text-sm'>No available rooms for the selected dates</p>
+                <p className='text-sm'>
+                  No available rooms for the selected dates
+                </p>
               </div>
             )}
           </div>
@@ -1974,10 +2005,14 @@ function EditBookingModal({
           <div className='space-y-1.5'>
             <Label>Source</Label>
             <Select value={source} onValueChange={setSource}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {SOURCE_OPTIONS.filter(o => o.value !== "ALL").map(o => (
-                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                {SOURCE_OPTIONS.filter((o) => o.value !== "ALL").map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1997,7 +2032,9 @@ function EditBookingModal({
 
           {/* Actions */}
           <div className='flex gap-3 pt-2'>
-            <Button variant='outline' className='flex-1' onClick={onClose}>Cancel</Button>
+            <Button variant='outline' className='flex-1' onClick={onClose}>
+              Cancel
+            </Button>
             <Button
               className='flex-1 bg-[#0F1B2D] hover:bg-[#1a2a3a]'
               disabled={saving || selectedRoomIds.length === 0}
