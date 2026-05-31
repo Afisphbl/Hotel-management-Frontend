@@ -35,8 +35,6 @@ import { HotelFrontDesk } from "@/pages/hotel/FrontDesk";
 import { HotelGuests } from "@/pages/hotel/Guests";
 import { HotelPricing } from "@/pages/hotel/Pricing";
 import { HotelFinance } from "@/pages/hotel/Finance";
-import { HotelHousekeeping } from "@/pages/hotel/Housekeeping";
-import { HotelMaintenance } from "@/pages/hotel/Maintenance";
 import { HotelStaff } from "@/pages/hotel/Staff";
 import { HotelReports } from "@/pages/hotel/Reports";
 import { HotelSettings as PropertySettings } from "@/pages/hotel/Settings";
@@ -301,13 +299,13 @@ const hotelFinanceRoute = createRoute({
 const hotelHousekeepingRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
   path: "housekeeping",
-  component: HotelHousekeeping,
+  component: HotelAdminHousekeeping,
 });
 
 const hotelMaintenanceRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
   path: "maintenance",
-  component: HotelMaintenance,
+  component: HotelAdminMaintenance,
 });
 
 const hotelStaffRoute = createRoute({
@@ -403,6 +401,13 @@ const hotelOwnerSettingsRoute = createRoute({
   component: HotelOwnerSettings,
 });
 
+const hotelOwnerMaintenanceRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "owner/maintenance",
+  loader: hotelOwnerLoader,
+  component: HotelAdminMaintenance,
+});
+
 // Hotel Admin Routes
 const hotelAdminDashboardRoute = createRoute({
   getParentRoute: () => hotelLayoutRoute,
@@ -472,6 +477,13 @@ const hotelAdminPaymentsRoute = createRoute({
   path: "admin/payments",
   loader: hotelAdminLoader,
   component: HotelAdminPayments,
+});
+
+const hotelOwnerHousekeepingRoute = createRoute({
+  getParentRoute: () => hotelLayoutRoute,
+  path: "owner/housekeeping",
+  loader: hotelOwnerLoader,
+  component: HotelAdminHousekeeping,
 });
 
 const hotelAdminHousekeepingRoute = createRoute({
@@ -557,6 +569,7 @@ export const routeTree = rootRoute.addChildren([
       hotelOwnerHotelsRoute,
       hotelOwnerFinanceSettingsRoute,
       hotelOwnerSettingsRoute,
+      hotelOwnerMaintenanceRoute,
       // Hotel Admin Routes
       hotelAdminDashboardRoute,
       hotelAdminPropertyRoute,

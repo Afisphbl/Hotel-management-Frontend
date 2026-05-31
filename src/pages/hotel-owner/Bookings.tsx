@@ -172,8 +172,9 @@ export function BookingsPage() {
                         </td>
                         <td className="py-3 px-4">
                           <DropdownMenu>
-                              <DropdownMenuTrigger className='h-8 w-8 p-0 hover:bg-transparent'>
-                                <MoreVertical className="w-4 h-4" />
+                            <DropdownMenuTrigger className='h-8 w-8 p-0 hover:bg-transparent'>
+                              <MoreVertical className="w-4 h-4" />
+                            </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => {}}>
                                 <Eye className="w-3.5 h-3.5 mr-2" /> View Details
