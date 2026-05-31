@@ -10,11 +10,12 @@ export function formatCurrency(
   currency = "ETB",
   decimals = 2,
 ) {
+  const value = Number(amount) || 0;
   return new Intl.NumberFormat("en-ET", {
     style: "currency",
     currency,
     minimumFractionDigits: decimals,
-  }).format(amount)
+  }).format(value)
 }
 
 export function formatDate(dateString: string | Date | undefined | null) {

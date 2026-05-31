@@ -76,6 +76,7 @@ export function AdminPayments() {
   const [isLoading, setIsLoading] = useState(true);
   const [payments, setPayments] = useState<any[]>([]);
   const [summaryData, setSummaryData] = useState<any[]>([]);
+  const [totalRefundedAmount, setTotalRefundedAmount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [page, setPage] = useState(1);
@@ -119,9 +120,16 @@ export function AdminPayments() {
 
   const fetchSummary = async () => {
     try {
-      const res = await api.get("finance/payments?page=1&limit=1000");
-      const data = res.data || res.items || [];
-      setSummaryData(data);
+      const [paymentsRes, refundsRes] = await Promise.all([
+        api.get("finance/payments?page=1&limit=1000"),
+        api.get("finance/refunds?page=1&limit=1000").catch(() => ({ data: [], items: [] })),
+      ]);
+      const paymentsData = paymentsRes.data || paymentsRes.items || [];
+      const refundsData = refundsRes.data || refundsRes.items || [];
+      setSummaryData(paymentsData);
+      setTotalRefundedAmount(
+        refundsData.reduce((sum: number, r: any) => sum + (Number(r.amount) || 0), 0),
+      );
     } catch {
       console.warn("[Payments] summary fetch failed");
     }
@@ -236,9 +244,11 @@ export function AdminPayments() {
     }
   };
 
-  const totalRevenue = summaryData
-    .filter((p) => p.status === "completed")
-    .reduce((sum, p) => sum + (p.amount || 0), 0);
+  const grossCollected = summaryData
+    .filter((p) => p.status !== "pending" && p.status !== "failed")
+    .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+  const totalRevenue = (grossCollected || 0) - (totalRefundedAmount || 0);
 
   const filtered = payments.filter(
     (p) =>
@@ -320,13 +330,7 @@ export function AdminPayments() {
                   Refunded
                 </p>
                 <h3 className='text-2xl font-bold text-purple-600 mt-1'>
-                  {
-                    summaryData.filter(
-                      (p) =>
-                        p.status === "refunded" ||
-                        p.status === "partially_refunded",
-                    ).length
-                  }
+                  {formatCurrency(totalRefundedAmount)}
                 </h3>
               </div>
               <RotateCcw className='w-12 h-12 text-purple-600 opacity-20' />
