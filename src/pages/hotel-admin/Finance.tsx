@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DollarSign, TrendingUp, TrendingDown, ReceiptText, CreditCard, Banknote, ArrowUpRight, ArrowDownRight, BarChart3 } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, ReceiptText, CreditCard, Banknote, ArrowUpRight, ArrowDownRight, BarChart3, Wrench } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
@@ -41,7 +41,7 @@ export function AdminFinance() {
         {[
           { title: 'Today Revenue', value: formatCurrency(d?.todayRevenue ?? 0), icon: DollarSign, color: 'text-green-600', trend: 'up' },
           { title: 'Monthly Revenue', value: formatCurrency(d?.monthlyRevenue ?? 0), icon: TrendingUp, color: 'text-blue-600', trend: 'up' },
-          { title: 'Yearly Revenue', value: formatCurrency(d?.yearlyRevenue ?? 0), icon: Banknote, color: 'text-purple-600', trend: 'up' },
+          { title: 'Monthly Expenses', value: formatCurrency(d?.monthlyExpenses ?? 0), icon: Banknote, color: 'text-red-600', trend: 'down' },
           { title: 'Monthly Net Profit', value: formatCurrency(d?.monthlyProfit ?? 0), icon: TrendingDown, color: d?.monthlyProfit >= 0 ? 'text-green-600' : 'text-red-600', trend: d?.monthlyProfit >= 0 ? 'up' : 'down' },
         ].map(s => (
           <Card key={s.title} className="shadow-sm border-none bg-white">
@@ -152,6 +152,73 @@ export function AdminFinance() {
                 </ResponsiveContainer>
               )}
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="shadow-sm border-none bg-white">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingDown className="w-4 h-4 text-red-500" /> Expense Trend
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-52">
+              {isLoading ? <Skeleton className="h-full w-full" /> : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={d?.expenseTrend ?? []}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <XAxis dataKey="date" fontSize={11} stroke="#999" tickFormatter={(v) => v.slice(5)} />
+                    <YAxis fontSize={11} stroke="#999" />
+                    <Tooltip formatter={(v: number) => [formatCurrency(v), 'Expenses']} />
+                    <Area type="monotone" dataKey="expenses" stroke="#ef4444" fill="#ef4444" fillOpacity={0.15} strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-none bg-white">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Wrench className="w-4 h-4 text-[#C9973A]" /> Expenses by Category
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? <Skeleton className="h-32 w-full" /> : (
+              <div className="space-y-3">
+                {(d?.expenseByAccount ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No expenses recorded this month</p>
+                ) : (
+                  d!.expenseByAccount.map((e: any) => (
+                    <div key={e.accountId} className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-2.5">
+                      <span className="text-sm font-medium text-[#0F1B2D]">
+                        {e.accountId === 'MAINTENANCE_EXPENSE' ? 'Maintenance' : e.accountId}
+                      </span>
+                      <span className="text-sm font-semibold text-red-600">{formatCurrency(e.total)}</span>
+                    </div>
+                  ))
+                )}
+                {(d?.recentExpenses ?? []).length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Recent Expenses</p>
+                    <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
+                    {d!.recentExpenses.map((e: any) => (
+                      <div key={e.id} className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-2 text-sm mb-1">
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate font-medium text-[#0F1B2D]">{e.description || e.accountId}</p>
+                          <p className="text-xs text-muted-foreground">{new Date(e.entryDate).toLocaleDateString()}</p>
+                        </div>
+                        <span className="font-semibold text-red-600 ml-2">{formatCurrency(e.amount)}</span>
+                      </div>
+                    ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

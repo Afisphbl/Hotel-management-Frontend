@@ -26,7 +26,7 @@ import {
   Edit2,
   Trash,
 } from "lucide-react";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, formatDate, formatCurrency } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore";
@@ -42,6 +42,7 @@ export function AdminMaintenance() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [stats, setStats] = useState({ total: 0, open: 0, inProgress: 0, completed: 0 });
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createForm, setCreateForm] = useState({
@@ -78,6 +79,7 @@ export function AdminMaintenance() {
   useEffect(() => {
     fetchStaff();
     fetchRooms();
+    fetchStats();
   }, []);
 
   const fetchTickets = async () => {
@@ -118,6 +120,13 @@ export function AdminMaintenance() {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const res = await api.get('hotel/maintenance/stats');
+      if (res.data) setStats(res.data);
+    } catch { }
+  };
+
   const handleAction = async (id: string, action: string, data?: any) => {
     try {
       await api.post(`hotel/maintenance/${id}/${action}`, data || {});
@@ -128,6 +137,7 @@ export function AdminMaintenance() {
       setAssignTarget(null);
       setSelectedStaffId("");
       fetchTickets();
+      fetchStats();
     } catch (err: any) {
       toast.error(`Failed to ${action}: ${err.message}`);
     }
@@ -153,6 +163,7 @@ export function AdminMaintenance() {
         description: "",
       });
       fetchTickets();
+      fetchStats();
     } catch (err: any) {
       toast.error("Failed to create ticket: " + err.message);
     } finally {
@@ -171,6 +182,7 @@ export function AdminMaintenance() {
       toast.success("Ticket updated");
       setEditTarget(null);
       fetchTickets();
+      fetchStats();
     } catch (err: any) {
       toast.error("Failed to update ticket: " + err.message);
     } finally {
@@ -192,6 +204,7 @@ export function AdminMaintenance() {
       setAssignTarget(null);
       setSelectedStaffId("");
       fetchTickets();
+      fetchStats();
     } catch (err: any) {
       toast.error("Failed to assign staff: " + err.message);
     } finally {
@@ -211,20 +224,15 @@ export function AdminMaintenance() {
       await api.delete(`hotel/maintenance/${id}`);
       toast.success("Ticket deleted successfully");
       fetchTickets();
+      fetchStats();
     } catch (err: any) {
       toast.error("Failed to delete ticket: " + err.message);
     }
   };
 
-  const openCount = tickets.filter(
-    (t) => t.status === "reported" || t.status === "assigned",
-  ).length;
-  const completedCount = tickets.filter(
-    (t) => t.status === "resolved" || t.status === "closed",
-  ).length;
-  const inProgressCount = tickets.filter(
-    (t) => t.status === "in_progress",
-  ).length;
+  const openCount = stats.open;
+  const completedCount = stats.completed;
+  const inProgressCount = stats.inProgress;
 
   const filtered = tickets.filter(
     (t) =>
@@ -258,7 +266,7 @@ export function AdminMaintenance() {
         {[
           {
             label: "Total Tickets",
-            value: tickets.length,
+            value: stats.total,
             icon: Wrench,
             color: "text-blue-600",
           },
@@ -366,6 +374,7 @@ export function AdminMaintenance() {
                     <TableHead>Reported By</TableHead>
                     <TableHead>Priority</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Cost</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className='text-right'>Actions</TableHead>
                   </TableRow>
@@ -417,6 +426,9 @@ export function AdminMaintenance() {
                             .replace(/_/g, " ")
                             .toUpperCase()}
                         </Badge>
+                      </TableCell>
+                      <TableCell className='text-sm'>
+                        {t.cost != null ? formatCurrency(t.cost) : "—"}
                       </TableCell>
                       <TableCell className='text-sm text-muted-foreground'>
                         {t.createdAt ? formatDate(t.createdAt) : "—"}
