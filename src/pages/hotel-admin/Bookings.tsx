@@ -1042,7 +1042,10 @@ function CreateBookingModal({
           `hotel/rooms/booked-dates?startDate=${start}&endDate=${end}`,
         );
         const dates: string[] = res.data || res || [];
-        setBookedDates(dates.map((d) => startOfDay(new Date(d))));
+        setBookedDates(dates.map((d) => {
+          const [y, m, day] = d.split('-').map(Number);
+          return startOfDay(new Date(y, m - 1, day));
+        }));
       } catch {
         // non-critical, just don't disable anything
       }
@@ -1758,7 +1761,10 @@ function EditBookingModal({
           `hotel/rooms/booked-dates?startDate=${start}&endDate=${end}`,
         );
         const dates: string[] = res.data || res || [];
-        setBookedDates(dates.map((d) => startOfDay(new Date(d))));
+        setBookedDates(dates.map((d) => {
+          const [y, m, day] = d.split('-').map(Number);
+          return startOfDay(new Date(y, m - 1, day));
+        }));
       } catch {
         // non-critical
       }
