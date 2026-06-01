@@ -66,6 +66,7 @@ interface Room {
   effectivePrice?: number | null;
   pricingReason?: string | null;
   pricingType?: 'override' | 'promotion' | 'seasonal' | 'rate_plan' | null;
+  images?: string[];
   roomType?: {
     id: string;
     name: string;
@@ -124,6 +125,8 @@ export function RoomsPage() {
   const [editBasePrice, setEditBasePrice] = useState("");
   const [editBaseCapacity, setEditBaseCapacity] = useState("");
   const [editRoomTypeId, setEditRoomTypeId] = useState("");
+  const [editImages, setEditImages] = useState<string[]>([]);
+  const [editImageUploading, setEditImageUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Create room modal state
@@ -133,6 +136,8 @@ export function RoomsPage() {
   const [newRoomPrice, setNewRoomPrice] = useState("");
   const [newRoomCapacity, setNewRoomCapacity] = useState("");
   const [newRoomTypeId, setNewRoomTypeId] = useState("");
+  const [newRoomImages, setNewRoomImages] = useState<string[]>([]);
+  const [newRoomImageUploading, setNewRoomImageUploading] = useState(false);
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -197,6 +202,43 @@ export function RoomsPage() {
     setPage(p);
   };
 
+  const uploadImage = async (file: File): Promise<string> => {
+    const result = await api.upload("hotel/cloudinary/upload", file);
+    return (result as any).data?.url || result.url;
+  };
+
+  const handleEditImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Only image files allowed"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    setEditImageUploading(true);
+    try {
+      const url = await uploadImage(file);
+      setEditImages((prev) => [...prev, url]);
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setEditImageUploading(false);
+    }
+  };
+
+  const handleNewRoomImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Only image files allowed"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    setNewRoomImageUploading(true);
+    try {
+      const url = await uploadImage(file);
+      setNewRoomImages((prev) => [...prev, url]);
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setNewRoomImageUploading(false);
+    }
+  };
+
   const openEditModal = (room: Room, tab: "status" | "details") => {
     setEditingRoom(room);
     setEditTab(tab);
@@ -208,6 +250,7 @@ export function RoomsPage() {
       setEditBasePrice(room.basePrice ? String(room.basePrice) : "");
       setEditBaseCapacity(room.baseCapacity ? String(room.baseCapacity) : "");
       setEditRoomTypeId(room.roomTypeId || "");
+      setEditImages(room.images || []);
     }
   };
 
@@ -266,6 +309,9 @@ export function RoomsPage() {
         payload.baseCapacity = parseInt(editBaseCapacity, 10);
       else payload.baseCapacity = null;
 
+      if (editImages.length > 0) payload.images = editImages;
+      else payload.images = null;
+
       await api.patch(`hotel/rooms/${editingRoom.id}`, payload);
       setPage(1);
       await fetchRooms();
@@ -291,6 +337,8 @@ export function RoomsPage() {
       if (newRoomPrice) payload.basePrice = parseFloat(newRoomPrice);
       if (newRoomCapacity) payload.baseCapacity = parseInt(newRoomCapacity, 10);
 
+      if (newRoomImages.length > 0) payload.images = newRoomImages;
+
       await api.post("hotel/rooms", payload);
       setShowCreateModal(false);
       setNewRoomNumber("");
@@ -298,6 +346,7 @@ export function RoomsPage() {
       setNewRoomPrice("");
       setNewRoomCapacity("");
       setNewRoomTypeId("");
+      setNewRoomImages([]);
       setPage(1);
       await Promise.all([fetchRooms(), fetchSummary()]);
       toast.success(`Room ${newRoomNumber.trim()} created`);
@@ -565,6 +614,17 @@ export function RoomsPage() {
                   </div>
                   <RoomStatusBadge status={room.status} />
                 </div>
+
+                {room.images && room.images.length > 0 && (
+                  <div className='mb-3 rounded-lg overflow-hidden h-32 bg-slate-100'>
+                    <img
+                      src={room.images[0]}
+                      alt={`Room ${room.roomNumber}`}
+                      className='w-full h-full object-cover'
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </div>
+                )}
 
                 <div className='space-y-2 mb-4 text-sm'>
                   <div className='flex justify-between'>
@@ -853,6 +913,31 @@ export function RoomsPage() {
                   />
                 </div>
 
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    Photos
+                  </label>
+                  <div className='flex flex-wrap gap-2 mb-2'>
+                    {editImages.map((url, i) => (
+                      <div key={i} className='relative w-16 h-16 rounded-lg overflow-hidden border group'>
+                        <img src={url} alt='' className='w-full h-full object-cover' />
+                        <button
+                          onClick={() => setEditImages(editImages.filter((_, j) => j !== i))}
+                          className='absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition'
+                        >&times;</button>
+                      </div>
+                    ))}
+                    <label className='w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-[#C9973A] transition-colors'>
+                      {editImageUploading ? (
+                        <span className='text-[10px] text-muted-foreground'>...</span>
+                      ) : (
+                        <span className='text-lg text-gray-400'>+</span>
+                      )}
+                      <input type='file' accept='image/*' className='hidden' onChange={handleEditImageUpload} disabled={editImageUploading} />
+                    </label>
+                  </div>
+                </div>
+
                 <div className='flex gap-3 pt-2'>
                   <Button
                     variant='outline'
@@ -942,6 +1027,31 @@ export function RoomsPage() {
                 onChange={(e) => setNewRoomCapacity(e.target.value)}
                 placeholder='e.g. 2'
               />
+            </div>
+
+            <div>
+              <label className='block text-sm font-medium text-gray-700 mb-1'>
+                Photos
+              </label>
+              <div className='flex flex-wrap gap-2 mb-2'>
+                {newRoomImages.map((url, i) => (
+                  <div key={i} className='relative w-16 h-16 rounded-lg overflow-hidden border group'>
+                    <img src={url} alt='' className='w-full h-full object-cover' />
+                    <button
+                      onClick={() => setNewRoomImages(newRoomImages.filter((_, j) => j !== i))}
+                      className='absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition'
+                    >&times;</button>
+                  </div>
+                ))}
+                <label className='w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-[#C9973A] transition-colors'>
+                  {newRoomImageUploading ? (
+                    <span className='text-[10px] text-muted-foreground'>...</span>
+                  ) : (
+                    <span className='text-lg text-gray-400'>+</span>
+                  )}
+                  <input type='file' accept='image/*' className='hidden' onChange={handleNewRoomImageUpload} disabled={newRoomImageUploading} />
+                </label>
+              </div>
             </div>
 
             <div className='flex gap-3 pt-2'>

@@ -683,6 +683,8 @@ export function HotelsPage() {
                         <Button onClick={uploadLogo} disabled={!logoFile || isSaving} className="bg-[#0F1B2D]">Upload</Button>
                       </div>
                     </div>
+
+
                   </TabsContent>
 
                   {/* Performance */}

@@ -58,9 +58,47 @@ async function apiRequest<T = any>(
   return response.json() as Promise<T>;
 }
 
+async function apiUpload<T = any>(endpoint: string, file: File): Promise<T> {
+  const url = `${BASE_URL}/${endpoint.replace(/^\//, "")}`;
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const requestHeaders = new Headers();
+  try {
+    const authStorageStr = localStorage.getItem("auth-storage");
+    if (authStorageStr) {
+      const authState = JSON.parse(authStorageStr);
+      const token = authState?.state?.token;
+      if (token && token !== "mock_jwt_token") {
+        requestHeaders.set("Authorization", `Bearer ${token}`);
+      }
+    }
+  } catch (error) {
+    console.error("Failed to parse auth token from localStorage", error);
+  }
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: requestHeaders,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    const message =
+      errorBody?.message || `HTTP error! Status: ${response.status}`;
+    throw new Error(message);
+  }
+
+  return response.json() as Promise<T>;
+}
+
 export const api = {
   get: <T = any>(endpoint: string, options?: RequestOptions) =>
     apiRequest<T>(endpoint, { ...options, method: "GET" }),
+
+  upload: <T = any>(endpoint: string, file: File) =>
+    apiUpload<T>(endpoint, file),
 
   post: <T = any>(endpoint: string, body?: any, options?: RequestOptions) =>
     apiRequest<T>(endpoint, { ...options, method: "POST", bodyData: body }),

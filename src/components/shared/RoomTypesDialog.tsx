@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Trash2, Plus, Pencil, X } from 'lucide-react';
+import { Trash2, Plus, Pencil, X, Upload } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -13,6 +13,7 @@ interface RoomType {
   baseCapacity: number;
   maxExtraBeds: number;
   basePrice: number;
+  image?: string;
 }
 
 export function RoomTypesDialog({ onClose, onUpdate }: { onClose: () => void; onUpdate: () => void }) {
@@ -20,6 +21,7 @@ export function RoomTypesDialog({ onClose, onUpdate }: { onClose: () => void; on
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Partial<RoomType> | null>(null);
   const [saving, setSaving] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
 
   const fetchRoomTypes = async () => {
     setLoading(true);
@@ -74,6 +76,23 @@ export function RoomTypesDialog({ onClose, onUpdate }: { onClose: () => void; on
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('Only image files allowed'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return; }
+    setImageUploading(true);
+    try {
+      const result = await api.upload('hotel/cloudinary/upload', file);
+      const url = (result as any).data?.url || result.url;
+      setEditing(prev => prev ? { ...prev, image: url } : null);
+    } catch (err: any) {
+      toast.error(err.message || 'Upload failed');
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {!editing ? (
@@ -93,9 +112,14 @@ export function RoomTypesDialog({ onClose, onUpdate }: { onClose: () => void; on
             ) : (
               roomTypes.map(rt => (
                 <div key={rt.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50">
-                  <div>
-                    <p className="font-medium text-sm">{rt.name}</p>
-                    <p className="text-xs text-muted-foreground">{rt.baseCapacity} Guests · ${rt.basePrice}/night</p>
+                  <div className="flex items-center gap-3">
+                    {rt.image && (
+                      <img src={rt.image} alt={rt.name} className="w-10 h-10 rounded object-cover" />
+                    )}
+                    <div>
+                      <p className="font-medium text-sm">{rt.name}</p>
+                      <p className="text-xs text-muted-foreground">{rt.baseCapacity} Guests · ${rt.basePrice}/night</p>
+                    </div>
                   </div>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="sm" onClick={() => setEditing(rt)}>
@@ -141,6 +165,22 @@ export function RoomTypesDialog({ onClose, onUpdate }: { onClose: () => void; on
             <div className="space-y-1">
               <Label className="text-xs">Base Price ($)</Label>
               <Input type="number" value={editing.basePrice} onChange={e => setEditing({ ...editing, basePrice: parseFloat(e.target.value) })} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Image</Label>
+              <div className="flex items-center gap-3">
+                {editing.image && (
+                  <img src={editing.image} alt="" className="w-14 h-14 rounded-lg object-cover border" />
+                )}
+                <label className="flex items-center gap-2 px-3 py-2 border rounded-md cursor-pointer hover:bg-gray-50 text-sm">
+                  <Upload className="w-4 h-4" />
+                  {imageUploading ? 'Uploading...' : editing.image ? 'Change' : 'Upload'}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={imageUploading} />
+                </label>
+                {editing.image && (
+                  <button onClick={() => setEditing({ ...editing, image: '' })} className="text-xs text-red-500 hover:underline">Remove</button>
+                )}
+              </div>
             </div>
           </div>
 

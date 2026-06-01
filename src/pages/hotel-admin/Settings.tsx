@@ -14,6 +14,8 @@ import {
   FileText,
   User,
   Building2,
+  Image,
+  UploadCloud,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
@@ -48,6 +50,12 @@ export function AdminSettings() {
     allowOnline: true,
   });
   const [newPaymentMethod, setNewPaymentMethod] = useState("");
+
+  // Branding
+  const [branding, setBranding] = useState<Record<string, any>>({});
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [homeImageUploading, setHomeImageUploading] = useState(false);
+  const [faviconUploading, setFaviconUploading] = useState(false);
 
   // Profile / password
   const [profileName, setProfileName] = useState(user?.name ?? "");
@@ -97,6 +105,7 @@ export function AdminSettings() {
             allowOnline: true,
           },
         );
+        setBranding(h.branding ?? {});
       }
     } catch (e: any) {
       toast.error("Failed to load settings: " + e.message);
@@ -116,6 +125,58 @@ export function AdminSettings() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const uploadLogo = async () => {
+    if (!logoFile || !hotelId) return;
+    const reader = new FileReader();
+    reader.readAsDataURL(logoFile);
+    reader.onload = async () => {
+      setIsSaving(true);
+      try {
+        await api.post(`hotel/owner/hotels/${hotelId}/branding`, { branding: { logoBase64: reader.result } });
+        toast.success("Logo uploaded");
+        setLogoFile(null);
+      } catch (e: any) {
+        toast.error("Upload failed: " + e.message);
+      } finally {
+        setIsSaving(false);
+      }
+    };
+  };
+
+  const uploadBrandingImage = async (file: File, field: 'homePageImage' | 'favicon') => {
+    if (!hotelId) return;
+    try {
+      const result = await api.upload('hotel/cloudinary/upload', file);
+      const url = (result as any).data?.url || (result as any).url;
+      const updated = { ...branding, [field]: url };
+      await api.patch(`hotel/owner/hotels/${hotelId}`, { branding: updated });
+      setBranding(updated);
+      toast.success(`${field === 'homePageImage' ? 'Homepage image' : 'Favicon'} updated`);
+    } catch (err: any) {
+      toast.error(err.message || 'Upload failed');
+    }
+  };
+
+  const handleHomeImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('Only image files allowed'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return; }
+    setHomeImageUploading(true);
+    await uploadBrandingImage(file, 'homePageImage');
+    setHomeImageUploading(false);
+  };
+
+  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('Only image files allowed'); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error('Favicon must be under 2MB'); return; }
+    setFaviconUploading(true);
+    await uploadBrandingImage(file, 'favicon');
+    setFaviconUploading(false);
   };
 
   const handleChangePassword = async () => {
@@ -202,6 +263,12 @@ export function AdminSettings() {
             className='data-[state=active]:bg-[#0F1B2D] data-[state=active]:text-white'
           >
             <FileText className='w-4 h-4 mr-2' /> Policies
+          </TabsTrigger>
+          <TabsTrigger
+            value='branding'
+            className='data-[state=active]:bg-[#0F1B2D] data-[state=active]:text-white'
+          >
+            <Image className='w-4 h-4 mr-2' /> Branding
           </TabsTrigger>
           <TabsTrigger
             value='profile'
@@ -502,6 +569,68 @@ export function AdminSettings() {
                 >
                   <Save className='w-4 h-4 mr-2' /> Save Booking Policies
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── Branding ── */}
+        <TabsContent value='branding' className='mt-6 space-y-6'>
+          <Card className='border-none bg-white shadow-sm'>
+            <CardHeader>
+              <CardTitle className='text-lg'>Property Logo</CardTitle>
+            </CardHeader>
+            <CardContent className='flex flex-col items-center gap-4'>
+              <div className='w-32 h-32 rounded-lg bg-white border-2 border-dashed flex items-center justify-center overflow-hidden'>
+                {branding?.logoUrl ? <img src={branding.logoUrl} className='max-w-full max-h-full object-contain' /> : <UploadCloud className='w-8 h-8 text-slate-300' />}
+              </div>
+              <p className='text-xs text-muted-foreground'>PNG, JPG or SVG up to 2MB</p>
+              <div className='flex gap-2'>
+                <Input type='file' className='w-64' onChange={e => setLogoFile(e.target.files?.[0] || null)} />
+                <Button onClick={uploadLogo} disabled={!logoFile || isSaving} className='bg-[#0F1B2D]'>Upload</Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className='border-none bg-white shadow-sm'>
+            <CardHeader>
+              <CardTitle className='text-lg'>Homepage Background</CardTitle>
+            </CardHeader>
+            <CardContent className='flex flex-col items-center gap-4'>
+              <div className='w-full h-40 rounded-lg bg-white border-2 border-dashed flex items-center justify-center overflow-hidden'>
+                {branding?.homePageImage ? (
+                  <img src={branding.homePageImage} className='w-full h-full object-cover' />
+                ) : (
+                  <div className='text-center text-slate-400'>
+                    <UploadCloud className='w-8 h-8 mx-auto mb-1' />
+                    <p className='text-xs'>No homepage image set</p>
+                  </div>
+                )}
+              </div>
+              <p className='text-xs text-muted-foreground'>Hero image for the booking website, up to 5MB</p>
+              <div className='flex gap-2'>
+                <Input type='file' accept='image/*' className='w-64' onChange={handleHomeImageUpload} disabled={homeImageUploading} />
+                <Button disabled={homeImageUploading} className='bg-[#0F1B2D]'>{homeImageUploading ? '...' : 'Upload'}</Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className='border-none bg-white shadow-sm'>
+            <CardHeader>
+              <CardTitle className='text-lg'>Favicon</CardTitle>
+            </CardHeader>
+            <CardContent className='flex flex-col items-center gap-4'>
+              <div className='w-16 h-16 rounded-lg bg-white border-2 border-dashed flex items-center justify-center overflow-hidden'>
+                {branding?.favicon ? (
+                  <img src={branding.favicon} className='w-full h-full object-cover' />
+                ) : (
+                  <UploadCloud className='w-6 h-6 text-slate-300' />
+                )}
+              </div>
+              <p className='text-xs text-muted-foreground'>Browser tab icon, up to 2MB (recommended 32x32 or 64x64)</p>
+              <div className='flex gap-2'>
+                <Input type='file' accept='image/*' className='w-64' onChange={handleFaviconUpload} disabled={faviconUploading} />
+                <Button disabled={faviconUploading} className='bg-[#0F1B2D]'>{faviconUploading ? '...' : 'Upload'}</Button>
               </div>
             </CardContent>
           </Card>
