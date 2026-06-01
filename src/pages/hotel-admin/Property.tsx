@@ -22,6 +22,7 @@ export function PropertyPage() {
 
   const [form, setForm] = useState({
     name: '',
+    description: '',
     location: '',
     region: '',
     timezone: 'UTC',
@@ -54,6 +55,7 @@ export function PropertyPage() {
         setHotel(h);
         setForm({
           name: h.name || '',
+          description: h.description || '',
           location: h.location || '',
           region: h.region || '',
           timezone: h.timezone || 'UTC',
@@ -197,6 +199,15 @@ export function PropertyPage() {
                     <option value="APARTMENT">Apartment</option>
                   </select>
                 </div>
+              </div>
+              <div className="space-y-1.5 mt-4">
+                <Label>Description</Label>
+                <textarea
+                  className="flex w-full min-h-[120px] px-3 py-2 border border-input bg-background rounded-md text-sm resize-y"
+                  value={form.description}
+                  onChange={e => setForm({ ...form, description: e.target.value })}
+                  placeholder="Describe your property..."
+                />
               </div>
               <div className="pt-4">
                 <Button onClick={saveInfo} disabled={isSaving} className="bg-[#0F1B2D] hover:bg-[#1a2a3a]">
