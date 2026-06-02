@@ -41,6 +41,15 @@ export function PropertyPage() {
     paymentMethods: [] as string[],
   });
 
+  const [aboutForm, setAboutForm] = useState({
+    heading1: '',
+    body1: '',
+    heading2: '',
+    body2: '',
+    image1: '',
+    image2: '',
+  });
+
   useEffect(() => {
     fetchHotel();
   }, []);
@@ -71,6 +80,15 @@ export function PropertyPage() {
           cancellationPolicy: h.cancellationPolicy || {},
           bookingPolicies: h.settings?.bookingPolicies || {},
           paymentMethods: h.paymentMethods || [],
+          aboutContent: h.settings?.aboutContent || null,
+        });
+        setAboutForm({
+          heading1: h.settings?.aboutContent?.heading1 || '',
+          body1: h.settings?.aboutContent?.body1 || '',
+          heading2: h.settings?.aboutContent?.heading2 || '',
+          body2: h.settings?.aboutContent?.body2 || '',
+          image1: h.settings?.aboutContent?.image1 || '',
+          image2: h.settings?.aboutContent?.image2 || '',
         });
       }
     } catch (e: any) {
@@ -101,6 +119,21 @@ export function PropertyPage() {
       toast.success('Settings updated');
     } catch (e: any) {
       toast.error('Failed to save settings: ' + e.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const saveAbout = async () => {
+    if (!hotel?.id) return;
+    setIsSaving(true);
+    try {
+      await api.patch(`hotel/owner/hotels/${hotel.id}/settings`, {
+        aboutContent: aboutForm,
+      });
+      toast.success('About page updated');
+    } catch (e: any) {
+      toast.error('Failed to save: ' + e.message);
     } finally {
       setIsSaving(false);
     }
@@ -142,6 +175,9 @@ export function PropertyPage() {
         <TabsList className="bg-white border border-[#E5E7EB]">
           <TabsTrigger value="info" className="data-[state=active]:bg-[#0F1B2D] data-[state=active]:text-white">
             <Building2 className="w-4 h-4 mr-2" /> Info
+          </TabsTrigger>
+          <TabsTrigger value="about" className="data-[state=active]:bg-[#0F1B2D] data-[state=active]:text-white">
+            <FileText className="w-4 h-4 mr-2" /> About
           </TabsTrigger>
           <TabsTrigger value="regional" className="data-[state=active]:bg-[#0F1B2D] data-[state=active]:text-white">
             <Globe className="w-4 h-4 mr-2" /> Regional
@@ -212,6 +248,71 @@ export function PropertyPage() {
               <div className="pt-4">
                 <Button onClick={saveInfo} disabled={isSaving} className="bg-[#0F1B2D] hover:bg-[#1a2a3a]">
                   <Save className="w-4 h-4 mr-2" /> Save Changes
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="about" className="mt-6">
+          <Card className="border-none bg-white shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg">About Page Content</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-1.5">
+                <Label>Section 1 Heading</Label>
+                <Input
+                  value={aboutForm.heading1}
+                  onChange={e => setAboutForm({ ...aboutForm, heading1: e.target.value })}
+                  placeholder="Welcome to LuxeHotel"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Section 1 Body</Label>
+                <textarea
+                  className="flex w-full min-h-[180px] px-3 py-2 border border-input bg-background rounded-md text-sm resize-y font-mono"
+                  value={aboutForm.body1}
+                  onChange={e => setAboutForm({ ...aboutForm, body1: e.target.value })}
+                  placeholder="Paragraphs separated by blank lines..."
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Section 2 Heading</Label>
+                <Input
+                  value={aboutForm.heading2}
+                  onChange={e => setAboutForm({ ...aboutForm, heading2: e.target.value })}
+                  placeholder="Excellence in hospitality"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Section 2 Body</Label>
+                <textarea
+                  className="flex w-full min-h-[180px] px-3 py-2 border border-input bg-background rounded-md text-sm resize-y font-mono"
+                  value={aboutForm.body2}
+                  onChange={e => setAboutForm({ ...aboutForm, body2: e.target.value })}
+                  placeholder="Paragraphs separated by blank lines..."
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Image 1 URL (right of section 1)</Label>
+                <Input
+                  value={aboutForm.image1}
+                  onChange={e => setAboutForm({ ...aboutForm, image1: e.target.value })}
+                  placeholder="https://images.unsplash.com/..."
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Image 2 URL (left of section 2)</Label>
+                <Input
+                  value={aboutForm.image2}
+                  onChange={e => setAboutForm({ ...aboutForm, image2: e.target.value })}
+                  placeholder="https://images.unsplash.com/..."
+                />
+              </div>
+              <div className="pt-4">
+                <Button onClick={saveAbout} disabled={isSaving} className="bg-[#0F1B2D] hover:bg-[#1a2a3a]">
+                  <Save className="w-4 h-4 mr-2" /> Save About Page
                 </Button>
               </div>
             </CardContent>
