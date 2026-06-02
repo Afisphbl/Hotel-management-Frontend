@@ -63,12 +63,14 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       originalToken: null,
-      login: async (email, password, hotelId) => {
+      hotelSubdomain: null,
+      login: async (email, password, hotelId, domain) => {
         try {
           const response = await api.post("auth/login", {
             email,
             password,
             ...(hotelId ? { hotelId } : {}),
+            ...(domain ? { domain } : {}),
           });
 
           if (response && response.access_token) {
@@ -82,6 +84,8 @@ export const useAuthStore = create<AuthState>()(
                 .split(/[._-]/)
                 .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
                 .join(" ");
+
+              const hotelSubdomain = response.hotel_subdomain || null;
 
               const apiUser: AuthUser = {
                 sub: payload.sub || "user_123",
@@ -101,8 +105,12 @@ export const useAuthStore = create<AuthState>()(
                 user: apiUser,
                 token: response.access_token,
                 originalToken: null,
+                hotelSubdomain,
               });
-              return response.dashboard_route;
+              return {
+                dashboardRoute: response.dashboard_route,
+                hotelSubdomain,
+              };
             }
           }
           throw new Error("Authentication response empty.");
@@ -114,7 +122,15 @@ export const useAuthStore = create<AuthState>()(
           );
         }
       },
-      logout: () => set({ user: null, token: null, originalToken: null }),
+      logout: () => {
+        set({ user: null, token: null, originalToken: null, hotelSubdomain: null });
+        const appDomain = (import.meta as any).env?.VITE_APP_DOMAIN;
+        if (appDomain) {
+          window.location.href = `${window.location.protocol}//${appDomain}/login`;
+        } else {
+          window.location.href = "/login";
+        }
+      },
       impersonate: async (hotelId: string) => {
         try {
           const currentToken = get().token;
@@ -191,6 +207,7 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         user: state.user,
         token: state.token,
+        hotelSubdomain: state.hotelSubdomain,
       }),
     },
   ),

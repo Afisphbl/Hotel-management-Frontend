@@ -13,31 +13,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Hotel,
-  ShieldCheck,
-  UserCog,
   Mail,
   Lock,
-  Key,
   AlertCircle,
   Loader2,
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
+import { getSubdomain } from "@/lib/subdomain";
 
 export function LoginPage() {
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
 
+  // Detect subdomain from browser URL on mount
+  const [detectedSubdomain] = React.useState(() => getSubdomain());
+
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [domain, setDomain] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
-
-  const handleQuickFill = (emailVal: string, passwordVal: string) => {
-    setError(null);
-    setEmail(emailVal);
-    setPassword(passwordVal);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,8 +44,26 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      const dashboardRoute = await login(email, password, domain || undefined);
-      if (typeof dashboardRoute === "string" && dashboardRoute.length > 0) {
+      const result = await login(email, password, undefined, detectedSubdomain || undefined);
+      if (!result) return;
+
+      const { dashboardRoute, hotelSubdomain } = result;
+
+      // If user has a hotel subdomain, redirect to subdomain-based URL
+      if (hotelSubdomain) {
+        const appDomain = (import.meta as any).env?.VITE_APP_DOMAIN;
+        const protocol = window.location.protocol;
+        // If already on a subdomain URL, keep current host
+        const hostParts = window.location.hostname.split(".");
+        const alreadyOnSubdomain = hostParts.length >= 3 || (hostParts.length >= 2 && hostParts[0] !== "localhost" && hostParts[0] !== "127" && hostParts[0] !== "127.0.0.1");
+        if (!alreadyOnSubdomain && appDomain) {
+          const subdomainUrl = `${protocol}//${hotelSubdomain}.${appDomain}${dashboardRoute || "/hotel/dashboard"}`;
+          window.location.href = subdomainUrl;
+          return;
+        }
+      }
+
+      if (dashboardRoute && dashboardRoute.length > 0) {
         navigate({ to: dashboardRoute });
         return;
       }
@@ -78,24 +90,6 @@ export function LoginPage() {
     }
   };
 
-  const SEEDED_PRESETS = [
-    {
-      category: "Platform Control Board",
-      items: [
-        {
-          name: "System Admin",
-          email: "admin@platform.com",
-          pass: "Admin123!",
-        },
-        {
-          name: "Hotel Owner (Multi-Hotel)",
-          email: "admin@hotels.com",
-          pass: "Admin123!",
-        },
-      ],
-    },
-  ];
-
   return (
     <div className='min-h-screen bg-[#F8F7F4] flex flex-col lg:flex-row items-center justify-center p-4 gap-8 max-w-6xl mx-auto'>
       {/* Brand Context Card */}
@@ -108,38 +102,8 @@ export function LoginPage() {
             LuxeHotel Portals
           </h1>
           <p className='text-xs text-gray-500 mt-1.5 leading-relaxed'>
-            Enter your email and password to access your portal. Super Admins
-            and Hotel Owners may optionally provide a domain for specific tenant
-            access.
+            Enter your email and password to access your portal.
           </p>
-        </div>
-
-        {/* Categorized Quick Fills */}
-        <div className='pt-2 space-y-4'>
-          {SEEDED_PRESETS.map((group, idx) => (
-            <div
-              key={idx}
-              className='space-y-1.5 text-left border-l-2 border-[#C9973A] pl-3 py-0.5'
-            >
-              <h2 className='text-[10px] font-bold uppercase tracking-wider text-[#0F1B2D] opacity-60'>
-                {group.category}
-              </h2>
-              <div className='flex flex-wrap gap-1.5'>
-                {group.items.map((item, itemIdx) => (
-                  <Button
-                    key={itemIdx}
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    className='text-[10px] border-[#0F1B2D]/10 bg-white text-[#0F1B2D] hover:bg-[#0F1B2D] hover:text-white transition-all py-1 px-2.5 h-auto rounded-[3px] font-semibold'
-                    onClick={() => handleQuickFill(item.email, item.pass)}
-                  >
-                    {item.name}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -207,31 +171,7 @@ export function LoginPage() {
               </div>
             </div>
 
-            {/* Domain Field (Optional / Tenant scope) */}
-            <div className='space-y-1.5 pt-1'>
-              <div className='flex justify-between items-center'>
-                <Label
-                  htmlFor='domain'
-                  className='text-xs font-bold text-[#0F1B2D] uppercase tracking-wider'
-                >
-                  Domain (Optional)
-                </Label>
-                <span className='text-[10px] text-gray-400 font-medium italic'>
-                  Super Admin / Owners only
-                </span>
-              </div>
-              <div className='relative'>
-                <Key className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4' />
-                <Input
-                  id='domain'
-                  type='text'
-                  placeholder='optional-domain'
-                  className='pl-10 h-11 border-gray-200 rounded-md focus-visible:ring-[#C9973A]'
-                  value={domain}
-                  onChange={(e) => setDomain(e.target.value)}
-                />
-              </div>
-            </div>
+
           </CardContent>
 
           <CardFooter className='bg-[#0F1B2D] p-6 flex flex-col items-stretch gap-3'>

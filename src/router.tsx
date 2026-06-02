@@ -73,10 +73,33 @@ const rootRoute = createRootRoute({
   component: () => <Outlet />,
 });
 
+// Root Redirect
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/",
+  loader: () => {
+    const { user } = useAuthStore.getState();
+    if (user) {
+      const adminRoles = ["HOTEL_MANAGER", "HOTEL_ADMIN", "SUPER_ADMIN"];
+      throw redirect({
+        to:
+          user.scope === "platform"
+            ? "/platform/dashboard"
+            : user.role === "HOTEL_OWNER"
+              ? "/hotel/owner/dashboard"
+              : adminRoles.includes(user.role)
+                ? "/hotel/admin/dashboard"
+                : "/hotel/dashboard",
+      });
+    }
+    throw redirect({ to: "/login" });
+  },
+});
+
 // Login Route
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/",
+  path: "/login",
   component: LoginPage,
   loader: () => {
     const { user } = useAuthStore.getState();
@@ -521,6 +544,7 @@ const unauthorizedRoute = createRoute({
 });
 
 export const routeTree = rootRoute.addChildren([
+  indexRoute,
   loginRoute,
   unauthorizedRoute,
   authLayoutRoute.addChildren([

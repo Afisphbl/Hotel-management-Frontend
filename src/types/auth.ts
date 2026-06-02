@@ -26,11 +26,13 @@ export interface AuthState {
   user: AuthUser | null;
   token: string | null;
   originalToken: string | null;
+  hotelSubdomain: string | null;
   login: (
     email: string,
     password: string,
     hotelId?: string,
-  ) => Promise<string | void>;
+    domain?: string,
+  ) => Promise<{ dashboardRoute: string; hotelSubdomain: string | null } | void>;
   logout: () => void;
   impersonate: (hotelId: string) => Promise<void>;
   stopImpersonating: () => void;
