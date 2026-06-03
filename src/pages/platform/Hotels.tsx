@@ -9,13 +9,13 @@ import {
 } from "@/hooks/usePlatformData";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { HotelsHeader } from "./hotels-components/HotelsHeader";
-import { HotelTable } from "./hotels-components/HotelTable";
-import { HotelsPagination } from "./hotels-components/HotelsPagination";
-import { EditHotelDialog } from "./hotels-components/EditHotelDialog";
-import { DuplicateHotelDialog, type DuplicateHotelState } from "./hotels-components/DuplicateHotelDialog";
-import { DeleteHotelDialog } from "./hotels-components/DeleteHotelDialog";
-import { type Hotel, type PlanFilterValue, type SortValue, getTextValue, normalizePlan } from "./hotels-components/utils";
+import { HotelsHeader } from "@/components/platform/hotels-components/HotelsHeader";
+import { HotelTable } from "@/components/platform/hotels-components/HotelTable";
+import { HotelsPagination } from "@/components/platform/hotels-components/HotelsPagination";
+import { EditHotelDialog } from "@/components/platform/hotels-components/EditHotelDialog";
+import { DuplicateHotelDialog, type DuplicateHotelState } from "@/components/platform/hotels-components/DuplicateHotelDialog";
+import { DeleteHotelDialog } from "@/components/platform/hotels-components/DeleteHotelDialog";
+import { type Hotel, type PlanFilterValue, type SortValue, getTextValue, normalizePlan } from "@/components/platform/hotels-components/utils";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -101,8 +101,8 @@ export function PlatformHotels() {
         rooms: duplicatingHotel.totalRooms || duplicatingHotel.rooms,
         plan,
         features: duplicatingHotel.enabledFeatures,
-        primaryColor: duplicatingHotel.branding?.primaryColor,
-        accentColor: duplicatingHotel.branding?.accentColor,
+        primaryColor: (duplicatingHotel.branding as any)?.primaryColor,
+        accentColor: (duplicatingHotel.branding as any)?.accentColor,
       });
       toast.success("Hotel duplicated successfully");
       setDuplicatingHotel(null);

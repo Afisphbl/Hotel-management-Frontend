@@ -9,12 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Database, CreditCard } from "lucide-react";
 import { toast } from "sonner";
-import { PlanCard } from "@/components/subscriptions/PlanCard";
-import { PlanFilters } from "@/components/subscriptions/PlanFilters";
-import { TopPropertiesTable } from "@/components/subscriptions/TopPropertiesTable";
-import { AddTierDialog, type NewTier } from "@/components/subscriptions/AddTierDialog";
-import { EditPlanDialog, type EditingPlan } from "@/components/subscriptions/EditPlanDialog";
-import { DeletePlanDialog } from "@/components/subscriptions/DeletePlanDialog";
+import { PlanCard } from "@/components/platform/subscriptions/PlanCard";
+import { PlanFilters } from "@/components/platform/subscriptions/PlanFilters";
+import { TopPropertiesTable } from "@/components/platform/subscriptions/TopPropertiesTable";
+import { AddTierDialog, type NewTier } from "@/components/platform/subscriptions/AddTierDialog";
+import { EditPlanDialog, type EditingPlan } from "@/components/platform/subscriptions/EditPlanDialog";
+import { DeletePlanDialog } from "@/components/platform/subscriptions/DeletePlanDialog";
 
 const DEFAULT_TIER: NewTier = { plan: "BASIC", price: 0, features: "" };
 

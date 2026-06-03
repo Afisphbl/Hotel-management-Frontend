@@ -5,12 +5,12 @@ import {
   usePlatformAuditLogs,
 } from "@/hooks/usePlatformData";
 import { Hotel, CreditCard, DollarSign, Calendar, Users } from "lucide-react";
-import { DashboardError } from "./dashboard-components/DashboardError";
-import { DashboardHeader } from "./dashboard-components/DashboardHeader";
-import { KPICard } from "./dashboard-components/KPICard";
-import { RevenueChart } from "./dashboard-components/RevenueChart";
-import { TierDistributionChart } from "./dashboard-components/TierDistributionChart";
-import { AuditLogsTable } from "./dashboard-components/AuditLogsTable";
+import { DashboardError } from "@/components/platform/dashboard-components/DashboardError";
+import { DashboardHeader } from "@/components/platform/dashboard-components/DashboardHeader";
+import { KPICard } from "@/components/platform/dashboard-components/KPICard";
+import { RevenueChart } from "@/components/platform/dashboard-components/RevenueChart";
+import { TierDistributionChart } from "@/components/platform/dashboard-components/TierDistributionChart";
+import { AuditLogsTable } from "@/components/platform/dashboard-components/AuditLogsTable";
 
 export function PlatformDashboard() {
   const {

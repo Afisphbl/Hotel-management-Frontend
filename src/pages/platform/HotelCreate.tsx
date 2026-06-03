@@ -13,15 +13,15 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
-import { HotelInfoStep } from "./hotel-create-components/HotelInfoStep";
-import { OwnerAccountStep } from "./hotel-create-components/OwnerAccountStep";
-import { SubscriptionStep } from "./hotel-create-components/SubscriptionStep";
-import { FeatureFlagsStep } from "./hotel-create-components/FeatureFlagsStep";
-import { BrandingStep } from "./hotel-create-components/BrandingStep";
-import { ReviewStep } from "./hotel-create-components/ReviewStep";
-import { StepSidebar } from "./hotel-create-components/StepSidebar";
-import { StepNavigation } from "./hotel-create-components/StepNavigation";
-import type { FormData } from "./hotel-create-components/types";
+import { HotelInfoStep } from "@/components/platform/hotel-create-components/HotelInfoStep";
+import { OwnerAccountStep } from "@/components/platform/hotel-create-components/OwnerAccountStep";
+import { SubscriptionStep } from "@/components/platform/hotel-create-components/SubscriptionStep";
+import { FeatureFlagsStep } from "@/components/platform/hotel-create-components/FeatureFlagsStep";
+import { BrandingStep } from "@/components/platform/hotel-create-components/BrandingStep";
+import { ReviewStep } from "@/components/platform/hotel-create-components/ReviewStep";
+import { StepSidebar } from "@/components/platform/hotel-create-components/StepSidebar";
+import { StepNavigation } from "@/components/platform/hotel-create-components/StepNavigation";
+import type { FormData } from "@/components/platform/hotel-create-components/types";
 
 const STEPS = [
   { id: "info", title: "Hotel Information", icon: Building2 },
