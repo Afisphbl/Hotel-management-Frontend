@@ -117,7 +117,7 @@ export function HotelOwnerDashboard() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis dataKey="date" fontSize={11} stroke="#999" tickFormatter={(v) => v.slice(5)} />
                 <YAxis fontSize={11} stroke="#999" />
-                <Tooltip formatter={(v: number) => [formatCurrency(v), 'Revenue']} />
+                <Tooltip formatter={(v: any) => [formatCurrency(Number(v)), 'Revenue']} />
                 <Area type="monotone" dataKey="revenue" stroke="#C9973A" fill="#C9973A" fillOpacity={0.2} strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
@@ -162,7 +162,7 @@ export function HotelOwnerDashboard() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                   <XAxis dataKey="date" fontSize={11} stroke="#999" tickFormatter={(v) => v.slice(5)} />
                   <YAxis fontSize={11} stroke="#999" unit="%" />
-                  <Tooltip formatter={(v: number) => [`${v}%`, 'Occupancy']} />
+                  <Tooltip formatter={(v: any) => [`${v}%`, 'Occupancy']} />
                   <Area type="monotone" dataKey="occupancy" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.15} strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>

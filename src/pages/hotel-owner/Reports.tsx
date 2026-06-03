@@ -1,24 +1,23 @@
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useAuthStore } from '@/store/authStore';
-import { 
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-  PieChart, Pie, Cell
-} from 'recharts';
+import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
-import { 
-  Download, 
+import { toast } from 'sonner';
+import {
+  Download,
   TrendingUp,
-  Calendar,
   DollarSign,
   Users,
   Home
 } from 'lucide-react';
+import DateRangeSelector from '@/components/hotel-owner/report/DateRangeSelector';
+import KPICard from '@/components/hotel-owner/report/KPICard';
+import RevenueChart from '@/components/hotel-owner/report/RevenueChart';
+import OccupancyChart from '@/components/hotel-owner/report/OccupancyChart';
+import BookingSourceChart from '@/components/hotel-owner/report/BookingSourceChart';
+import GuestStatistics from '@/components/hotel-owner/report/GuestStatistics';
 
 export function ReportsPage() {
-  const { token } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [reportData, setReportData] = useState<any>(null);
   const [dateRange, setDateRange] = useState('30');
@@ -31,13 +30,11 @@ export function ReportsPage() {
     try {
       setIsLoading(true);
       const daysParam = dateRange === 'custom' ? '' : `?days=${dateRange}`;
-      const res = await fetch(`/api/v1/hotel/reports${daysParam}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      setReportData(json.data ?? null);
-    } catch (error) {
-      console.error('Failed to fetch report data:', error);
+      const res = await api.get(`hotel/reports${daysParam}`);
+      setReportData(res.data ?? null);
+    } catch (error: any) {
+      toast.error('Failed to load reports: ' + (error.message || 'Unknown error'));
+      setReportData(null);
     } finally {
       setIsLoading(false);
     }
@@ -46,19 +43,18 @@ export function ReportsPage() {
   const handleExport = async () => {
     try {
       const daysParam = dateRange === 'custom' ? '' : `?days=${dateRange}`;
-      const res = await fetch(`/api/v1/hotel/reports${daysParam}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      if (!json.data) return;
-      const blob = new Blob([JSON.stringify(json.data, null, 2)], { type: 'application/json' });
+      const res = await api.get(`hotel/reports${daysParam}`);
+      if (!res.data) return;
+      const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `hotel-report-${new Date().toISOString().split('T')[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch { }
+    } catch (error: any) {
+      toast.error('Export failed: ' + (error.message || 'Unknown error'));
+    }
   };
 
   return (
@@ -75,30 +71,7 @@ export function ReportsPage() {
       </div>
 
       {/* Date Range Selector */}
-      <Card className="shadow-sm border-none bg-white">
-        <CardContent className="p-6">
-          <div className="flex gap-3">
-            {[
-              { label: 'Last 30 Days', value: '30' },
-              { label: 'Last 90 Days', value: '90' },
-              { label: 'Last Year', value: '365' },
-              { label: 'Custom', value: 'custom' }
-            ].map(range => (
-              <button
-                key={range.value}
-                onClick={() => setDateRange(range.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                  dateRange === range.value
-                    ? 'bg-[#C9973A] text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {range.label}
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <DateRangeSelector dateRange={dateRange} setDateRange={setDateRange} />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -134,151 +107,15 @@ export function ReportsPage() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Revenue Chart */}
-        <Card className="shadow-sm border-none bg-white">
-          <CardHeader>
-            <CardTitle className="text-lg">Revenue Trend</CardTitle>
-            <CardDescription>Monthly revenue performance</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            {isLoading ? (
-              <Skeleton className="h-full w-full" />
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={reportData?.revenueByMonth || []}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="month" stroke="#999" />
-                  <YAxis stroke="#999" />
-                  <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }} />
-                  <Bar dataKey="revenue" fill="#C9973A" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Occupancy Trend */}
-        <Card className="shadow-sm border-none bg-white">
-          <CardHeader>
-            <CardTitle className="text-lg">Occupancy Trend</CardTitle>
-            <CardDescription>Room occupancy percentage over time</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            {isLoading ? (
-              <Skeleton className="h-full w-full" />
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={reportData?.occupancyTrend || []}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="date" stroke="#999" />
-                  <YAxis stroke="#999" />
-                  <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }} />
-                  <Line type="monotone" dataKey="occupancy" stroke="#C9973A" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+        <RevenueChart isLoading={isLoading} data={reportData?.revenueByMonth} />
+        <OccupancyChart isLoading={isLoading} data={reportData?.occupancyTrend} />
       </div>
 
       {/* Booking Source and Guest Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Booking Source */}
-        <Card className="shadow-sm border-none bg-white">
-          <CardHeader>
-            <CardTitle className="text-lg">Booking Sources</CardTitle>
-            <CardDescription>Distribution by channel</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            {isLoading ? (
-              <Skeleton className="h-full w-full" />
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={reportData?.bookingSource || []}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {reportData?.bookingSource?.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip cursor={{ fill: 'transparent' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Guest Statistics */}
-        <Card className="lg:col-span-2 shadow-sm border-none bg-white">
-          <CardHeader>
-            <CardTitle className="text-lg">Guest Statistics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-lg bg-blue-50 border border-blue-100">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Guests</p>
-                  <h4 className="text-2xl font-bold text-[#0F1B2D] mt-1">
-                    {reportData?.guestStatistics.totalGuests || '0'}
-                  </h4>
-                </div>
-                <Users className="w-12 h-12 text-blue-600 opacity-20" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                  <p className="text-sm font-medium text-muted-foreground">Returning Guests</p>
-                  <h4 className="text-2xl font-bold text-green-600 mt-1">
-                    {reportData?.guestStatistics.returningGuests || '0'}
-                  </h4>
-                </div>
-                <div className="p-4 rounded-lg bg-purple-50 border border-purple-100">
-                  <p className="text-sm font-medium text-muted-foreground">New Guests</p>
-                  <h4 className="text-2xl font-bold text-purple-600 mt-1">
-                    {reportData?.guestStatistics.newGuests || '0'}
-                  </h4>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-lg bg-amber-50 border border-amber-100">
-                <p className="text-sm font-medium text-muted-foreground">Average Stay Duration</p>
-                <h4 className="text-2xl font-bold text-amber-600 mt-1">
-                  {reportData?.guestStatistics.averageStay || '0'} nights
-                </h4>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <BookingSourceChart isLoading={isLoading} data={reportData?.bookingSource} />
+        <GuestStatistics reportData={reportData} isLoading={isLoading} />
       </div>
     </div>
-  );
-}
-
-function KPICard({ title, value, icon: Icon, color, loading }: any) {
-  return (
-    <Card className="border-none shadow-sm bg-white">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase">{title}</p>
-            {loading ? (
-              <Skeleton className="h-8 w-24 mt-2" />
-            ) : (
-              <h3 className="text-2xl font-bold text-[#0F1B2D] mt-1">{value}</h3>
-            )}
-          </div>
-          <div className={`w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center ${color}`}>
-            <Icon className="w-6 h-6" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
