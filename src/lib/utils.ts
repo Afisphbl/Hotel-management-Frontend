@@ -52,3 +52,10 @@ export function formatDateTime(dateString: string | Date | undefined | null) {
     hour12: true,
   }).format(date);
 }
+
+export const getGuestName = (g: any) => {
+  if (g.firstName || g.lastName) {
+    return `${g.firstName || ''} ${g.lastName || ''}`.trim();
+  }
+  return g.fullName || g.name || 'N/A';
+};

@@ -1,22 +1,18 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import {
-  Users, Plus, Search, Mail, Edit, Trash2, CheckCircle, Clock,
-  AlertCircle, Loader2, ChevronLeft, ChevronRight, Shield,
-  ShieldCheck, UserPlus, XCircle,
-} from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
+import {
+  StaffHeader,
+  StaffSummaryCards,
+  StaffRoleDistribution,
+  StaffSearchFilter,
+  StaffTable,
+  StaffInviteSheet,
+  StaffChangeRoleDialog,
+  StaffRemoveDialog,
+  StaffInviteSuccessDialog,
+} from '@/components/hotel-admin/staff';
 
 const PAGE_SIZE = 10;
 
@@ -75,14 +71,13 @@ export function AdminStaff() {
       toast.error('Please fill in name, email, and role');
       return;
     }
-    
-    // Check if trying to invite a hotel owner role
+
     const selectedRole = roles.find(r => r.id === inviteForm.roleId);
     if (selectedRole && selectedRole.name.toUpperCase().includes('OWNER')) {
       toast.error('Admin cannot invite hotel owners');
       return;
     }
-    
+
     setIsSaving(true);
     try {
       const res = await api.post('hotel/owner/staff/invite', inviteForm);
@@ -114,7 +109,6 @@ export function AdminStaff() {
   };
 
   const toggleStatus = async (item: any) => {
-    // Prevent admin from deactivating hotel owners or other admins
     const isTargetAdminOrOwner = item.roleName && (item.roleName.toUpperCase().includes('OWNER') || item.roleName.toUpperCase().includes('ADMIN'));
     if (user?.role === 'HOTEL_ADMIN' && isTargetAdminOrOwner) {
       toast.error('Admins cannot deactivate other admins or owners');
@@ -125,7 +119,7 @@ export function AdminStaff() {
       toast.error('Cannot deactivate hotel owners');
       return;
     }
-    
+
     try {
       const newStatus = item.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
       await api.patch(`hotel/owner/staff/${item.id}/status`, { status: newStatus });
@@ -139,7 +133,6 @@ export function AdminStaff() {
   const handleRemove = async () => {
     if (!removeTarget) return;
 
-    // Protection check
     const isTargetAdminOrOwner = removeTarget.roleName && (removeTarget.roleName.toUpperCase().includes('OWNER') || removeTarget.roleName.toUpperCase().includes('ADMIN'));
     if (user?.role === 'HOTEL_ADMIN' && isTargetAdminOrOwner) {
       toast.error('Admins cannot remove other admins or owners');
@@ -163,303 +156,76 @@ export function AdminStaff() {
     return !isTargetAdminOrOwner;
   };
 
-  const filteredList = staffList.filter(m =>
-    `${m.firstName} ${m.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    m.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const statusLabel = (s: string) => ({ ACTIVE: 'Active', INACTIVE: 'Inactive', PENDING: 'Pending' }[s] || s);
-
-  const filterTabs = [
-    { value: 'ALL', label: 'All' },
-    { value: 'ACTIVE', label: 'Active' },
-    { value: 'PENDING', label: 'Pending' },
-    { value: 'INACTIVE', label: 'Inactive' },
-  ];
+  const isOwner = (item: any) =>
+    !!(item.roleName && item.roleName.toUpperCase().includes('OWNER'));
 
   return (
     <div className="space-y-8 pb-10">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-serif text-[#0F1B2D]">Staff Management</h1>
-          <p className="text-sm text-muted-foreground">Manage hotel staff, roles, and access permissions</p>
-        </div>
-        <Button onClick={() => { setInviteForm({ email: '', firstName: '', lastName: '', roleId: '', notes: '' }); setIsInviteOpen(true); }}
-          className="bg-[#0F1B2D] hover:bg-[#1a2a3a]">
-          <UserPlus className="w-4 h-4 mr-2" /> Invite Staff
-        </Button>
-      </div>
+      <StaffHeader onInvite={() => { setInviteForm({ email: '', firstName: '', lastName: '', roleId: '', notes: '' }); setIsInviteOpen(true); }} />
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Staff', value: summary?.total ?? total, icon: Users, color: 'text-blue-600' },
-          { label: 'Active', value: summary?.active ?? 0, icon: ShieldCheck, color: 'text-green-600' },
-          { label: 'Pending', value: summary?.pending ?? 0, icon: Clock, color: 'text-orange-600' },
-          { label: 'Inactive', value: summary?.inactive ?? 0, icon: XCircle, color: 'text-red-600' },
-        ].map(s => (
-          <Card key={s.label} className="shadow-sm border-none bg-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase">{s.label}</p>
-                  <h3 className={`text-2xl font-bold ${s.color} mt-1`}>{s.value}</h3>
-                </div>
-                <s.icon className={`w-12 h-12 ${s.color} opacity-20`} />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <StaffSummaryCards
+        total={summary?.total ?? total}
+        active={summary?.active ?? 0}
+        pending={summary?.pending ?? 0}
+        inactive={summary?.inactive ?? 0}
+      />
 
-      {summary?.distribution?.length > 0 && (
-        <Card className="shadow-sm border-none bg-white">
-          <CardContent className="p-6">
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-[#C9973A]" /> Role Distribution
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {summary.distribution.map((d: any) => (
-                <Badge key={d.roleId} variant="outline" className="px-4 py-2 text-sm gap-2 border-slate-200">
-                  <span className="font-semibold text-[#0F1B2D]">{d.roleName}</span>
-                  <span className="bg-[#C9973A]/10 text-[#C9973A] px-2 py-0.5 rounded-full text-xs font-bold">{d.count}</span>
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <StaffRoleDistribution distribution={summary?.distribution} />
 
-      <Card className="shadow-sm border-none bg-white">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Search by name or email..." value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
-            </div>
-            <div className="flex gap-2 overflow-x-auto">
-              {filterTabs.map(tab => (
-                <button key={tab.value} onClick={() => setFilterStatus(tab.value)}
-                  className={cn("px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition",
-                    filterStatus === tab.value ? "bg-[#C9973A] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200")}>
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <StaffSearchFilter
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        filterStatus={filterStatus}
+        onFilterChange={setFilterStatus}
+      />
 
-      <Card className="shadow-sm border-none bg-white">
-        <CardHeader><CardTitle className="text-lg">Staff Directory</CardTitle></CardHeader>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-6 space-y-3">{Array(5).fill(0).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Granted</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredList.map(item => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-[#0F1B2D] text-[#C9973A] flex items-center justify-center text-sm font-bold">
-                            {item.firstName?.[0]}{item.lastName?.[0]}
-                          </div>
-                          <span>{item.firstName} {item.lastName}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm">{item.email}</TableCell>
-                      <TableCell>
-                        {item.roleName ? (
-                          <Badge variant="secondary" className="font-normal">{item.roleName.replace(/_/g, ' ')}</Badge>
-                        ) : <span className="text-muted-foreground text-sm">No role</span>}
-                      </TableCell>
-                      <TableCell>
-                        <span className={cn("px-3 py-1 rounded-full text-xs font-medium",
-                          item.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                            item.status === 'PENDING' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800')}>
-                          {statusLabel(item.status)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {item.grantedAt ? new Date(item.grantedAt).toLocaleDateString() : '-'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          {canManageRole(item) && (
-                            <Button variant="ghost" size="sm" onClick={() => { setRoleChangeTarget({ id: item.id, currentRoleId: item.roleId }); setSelectedRoleId(item.roleId || ''); }} title="Change role">
-                              <Shield className="w-4 h-4" />
-                            </Button>
-                          )}
-                          {item.roleName && item.roleName.toUpperCase().includes('OWNER') ? null : (
-                            canManageRole(item) && (
-                              <Button variant="ghost" size="sm" onClick={() => toggleStatus(item)} title={item.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}>
-                                {item.status === 'ACTIVE' ? <XCircle className="w-4 h-4 text-orange-500" /> : <CheckCircle className="w-4 h-4 text-green-500" />}
-                              </Button>
-                            )
-                          )}
-                          {item.roleName && item.roleName.toUpperCase().includes('OWNER') ? null : (
-                            canManageRole(item) && (
-                              <Button variant="ghost" size="sm" onClick={() => { setRemoveTarget(item); setIsRemoveOpen(true); }} title="Revoke access">
-                                <Trash2 className="w-4 h-4 text-red-500" />
-                              </Button>
-                            )
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {filteredList.length === 0 && (
-                    <TableRow><TableCell colSpan={6} className="h-32 text-center text-muted-foreground">No staff found</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
+      <StaffTable
+        isLoading={isLoading}
+        staffList={staffList}
+        searchTerm={searchTerm}
+        canManageRole={canManageRole}
+        isOwner={isOwner}
+        onRoleChange={(id, currentRoleId) => { setRoleChangeTarget({ id, currentRoleId }); setSelectedRoleId(currentRoleId || ''); }}
+        onToggleStatus={toggleStatus}
+        onRemove={(item) => { setRemoveTarget(item); setIsRemoveOpen(true); }}
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageSize={PAGE_SIZE}
+        onPageChange={setPage}
+      />
 
+      <StaffInviteSheet
+        open={isInviteOpen}
+        onOpenChange={setIsInviteOpen}
+        form={inviteForm}
+        onFormChange={setInviteForm}
+        roles={roles}
+        isSaving={isSaving}
+        onInvite={handleInvite}
+      />
 
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between px-6 py-4 border-t">
-                  <p className="text-sm text-muted-foreground">Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, total)} of {total}</p>
-                  <div className="flex items-center gap-1">
-                    <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                      <Button key={p} variant={p === page ? "default" : "outline"} size="sm"
-                        className={p === page ? "bg-[#0F1B2D]" : ""} onClick={() => setPage(p)}>{p}</Button>
-                    ))}
-                    <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+      <StaffChangeRoleDialog
+        open={!!roleChangeTarget}
+        onOpenChange={(open) => { if (!open) setRoleChangeTarget(null); }}
+        selectedRoleId={selectedRoleId}
+        onSelectedRoleChange={setSelectedRoleId}
+        roles={roles}
+        isSaving={isRoleSaving}
+        onSave={handleRoleChange}
+      />
 
-      <Sheet open={isInviteOpen} onOpenChange={(open) => { if (!open) { setInviteForm({ email: '', firstName: '', lastName: '', roleId: '', notes: '' }); setIsInviteOpen(false); } }}>
-        <SheetContent className="sm:max-w-[500px] p-0 flex flex-col h-full">
-          <SheetHeader className="border-b px-6 py-5 shrink-0">
-            <SheetTitle className="text-xl font-serif">Invite Staff Member</SheetTitle>
-            <SheetDescription>Grant a user access with a specific role.</SheetDescription>
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto px-6 py-6">
-            <div className="mx-auto max-w-md space-y-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5"><Label>First Name *</Label>
-                  <Input value={inviteForm.firstName} onChange={e => setInviteForm({ ...inviteForm, firstName: e.target.value })} /></div>
-                <div className="space-y-1.5"><Label>Last Name *</Label>
-                  <Input value={inviteForm.lastName} onChange={e => setInviteForm({ ...inviteForm, lastName: e.target.value })} /></div>
-              </div>
-              <div className="space-y-1.5"><Label>Email *</Label>
-                <Input type="email" value={inviteForm.email} onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })} /></div>
-              <div className="space-y-1.5"><Label>Role *</Label>
-                <select className="flex w-full h-10 px-3 py-2 border border-input bg-background rounded-md text-sm"
-                  value={inviteForm.roleId} onChange={e => setInviteForm({ ...inviteForm, roleId: e.target.value })}>
-                  <option value="">Select a role...</option>
-                  {roles.filter(r => !r.name.toUpperCase().includes('OWNER')).map(r => <option key={r.id} value={r.id}>{r.name.replace(/_/g, ' ')}</option>)}
-                </select></div>
-              <div className="space-y-1.5"><Label>Notes (optional)</Label>
-                <textarea className="flex w-full min-h-[80px] px-3 py-2 border border-input bg-background rounded-md text-sm"
-                  value={inviteForm.notes} onChange={e => setInviteForm({ ...inviteForm, notes: e.target.value })} /></div>
-            </div>
-          </div>
-          <div className="border-t px-6 py-4 shrink-0 flex justify-end gap-3">
-            <Button variant="outline" onClick={() => { setInviteForm({ email: '', firstName: '', lastName: '', roleId: '', notes: '' }); setIsInviteOpen(false); }}>Cancel</Button>
-            <Button onClick={handleInvite} disabled={isSaving} className="bg-[#0F1B2D]">
-              {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Inviting...</> : <><UserPlus className="w-4 h-4 mr-2" /> Send Invite</>}
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
+      <StaffRemoveDialog
+        open={isRemoveOpen}
+        onOpenChange={setIsRemoveOpen}
+        targetName={removeTarget ? `${removeTarget.firstName} ${removeTarget.lastName}` : ''}
+        onConfirm={handleRemove}
+      />
 
-      <Dialog open={!!roleChangeTarget} onOpenChange={(open) => { if (!open) setRoleChangeTarget(null); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Change Staff Role</DialogTitle>
-            <DialogDescription>Select a new role for this staff member.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5"><Label>New Role</Label>
-              <select className="flex w-full h-10 px-3 py-2 border border-input bg-background rounded-md text-sm"
-                value={selectedRoleId} onChange={e => setSelectedRoleId(e.target.value)}>
-                <option value="">Select a role...</option>
-                {roles.filter(r => !r.name.toUpperCase().includes('OWNER')).map(r => <option key={r.id} value={r.id}>{r.name.replace(/_/g, ' ')}</option>)}
-              </select></div>
-          </div>
-          <div className="flex justify-end gap-3 mt-2">
-            <Button variant="outline" onClick={() => setRoleChangeTarget(null)}>Cancel</Button>
-            <Button onClick={handleRoleChange} disabled={isRoleSaving || !selectedRoleId} className="bg-[#0F1B2D]">
-              {isRoleSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : 'Update Role'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isRemoveOpen} onOpenChange={setIsRemoveOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Revoke Staff Access</DialogTitle>
-            <DialogDescription>Are you sure you want to revoke access for {removeTarget?.firstName} {removeTarget?.lastName}?</DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end gap-3 mt-4">
-            <Button variant="outline" onClick={() => setIsRemoveOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleRemove} className="bg-red-600 hover:bg-red-700">Revoke Access</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!inviteResult} onOpenChange={(open) => { if (!open) setInviteResult(null); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Staff Invited Successfully</DialogTitle>
-            <DialogDescription>Share the credentials below with the new staff member.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="rounded-lg bg-slate-50 p-4 space-y-3">
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</p>
-                <p className="text-sm font-semibold text-[#0F1B2D] mt-0.5">{inviteResult?.email}</p>
-              </div>
-              {inviteResult?.tempPassword && (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Temporary Password</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <code className="flex-1 bg-white border rounded px-3 py-1.5 text-sm font-mono text-[#0F1B2D] select-all">
-                      {inviteResult.tempPassword}
-                    </code>
-                    <Button variant="outline" size="sm" className="shrink-0"
-                      onClick={() => { navigator.clipboard.writeText(inviteResult.tempPassword!); toast.success('Password copied'); }}>
-                      Copy
-                    </Button>
-                  </div>
-                  <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" /> Share this securely. The staff member can change it after first login.
-                  </p>
-                </div>
-              )}
-              {!inviteResult?.tempPassword && (
-                <p className="text-sm text-muted-foreground">This user already existed. They can log in with their existing password.</p>
-              )}
-            </div>
-          </div>
-          <div className="flex justify-end">
-            <Button onClick={() => setInviteResult(null)} className="bg-[#0F1B2D]">Done</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <StaffInviteSuccessDialog
+        result={inviteResult}
+        onClose={() => setInviteResult(null)}
+      />
     </div>
   );
 }
