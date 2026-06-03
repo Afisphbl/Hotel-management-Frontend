@@ -68,7 +68,7 @@ export function HotelDashboard() {
             </div>
           </CardHeader>
           <CardContent className="overflow-x-auto">
-            <div className="space-y-2 min-w-[400px]">
+            <div className="space-y-2 min-w-100">
               <div className="flex border-b border-muted pb-2">
                 <div className="w-20 text-[10px] font-bold uppercase text-muted-foreground">Room</div>
                 <div className="flex-1 flex justify-between px-2">
@@ -77,12 +77,12 @@ export function HotelDashboard() {
                   ))}
                 </div>
               </div>
-              <div className="max-h-[300px] overflow-y-auto space-y-1 custom-scrollbar pr-2">
-                {heatmap?.map((row, i) => (
+              <div className="max-h-75 overflow-y-auto space-y-1 custom-scrollbar pr-2">
+                {heatmap?.map((row: any, i: any) => (
                   <div key={i} className="flex items-center">
                     <div className="w-20 text-xs font-medium text-[#0F1B2D]">{row.room}</div>
                     <div className="flex-1 flex justify-between px-2">
-                      {row.dates.map((status, j) => (
+                      {row.dates.map((status: any, j: any) => (
                         <div 
                           key={j} 
                           className={cn(
@@ -146,7 +146,7 @@ export function HotelDashboard() {
             <CardTitle className="text-lg">Revenue 30d</CardTitle>
             <CardDescription>Daily revenue performance</CardDescription>
           </CardHeader>
-          <CardContent className="h-[250px]">
+          <CardContent className="h-62.5">
             {charts?.revenue30d && charts.revenue30d.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%" minHeight={250}>
                 <BarChart data={charts?.revenue30d}>
@@ -159,7 +159,7 @@ export function HotelDashboard() {
               </ResponsiveContainer>
             ) : (
               <div className="h-full w-full flex items-center justify-center">
-                <Skeleton className="h-[180px] w-full" />
+                <Skeleton className="h-45 w-full" />
               </div>
             )}
           </CardContent>
@@ -170,7 +170,7 @@ export function HotelDashboard() {
             <CardTitle className="text-lg">Bookings by Source</CardTitle>
             <CardDescription>Direct vs OTA distribution</CardDescription>
           </CardHeader>
-          <CardContent className="h-[250px] relative">
+          <CardContent className="h-62.5 relative">
             {charts?.bookingsBySource && charts.bookingsBySource.length > 0 ? (
               <div className="h-full w-full flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">

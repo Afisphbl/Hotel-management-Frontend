@@ -66,7 +66,7 @@ export function HotelRooms() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {rooms?.map((room) => (
+                {rooms?.map((room: any) => (
                 <Card key={room.id} className="overflow-hidden shadow-sm border-none bg-white group hover:ring-1 hover:ring-[#C9973A] transition-all">
                   <CardContent className="p-0 flex flex-col sm:flex-row">
                     <div className={cn(
@@ -170,7 +170,7 @@ function KanbanColumn({ title, count, color, children }: any) {
         </h3>
         <Badge variant="secondary" className="bg-white border">{count}</Badge>
       </div>
-      <div className="space-y-3 min-h-[500px] bg-slate-100/50 p-2 rounded-lg border border-dashed border-muted">
+      <div className="space-y-3 min-h-125 bg-slate-100/50 p-2 rounded-lg border border-dashed border-muted">
         {children}
       </div>
     </div>

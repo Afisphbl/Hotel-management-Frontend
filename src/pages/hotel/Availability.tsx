@@ -29,7 +29,7 @@ export function HotelAvailability() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon"><ChevronLeft className="w-4 h-4" /></Button>
-              <span className="font-bold text-sm min-w-[200px] text-center">
+              <span className="font-bold text-sm min-w-50 text-center">
                 {format(startDate, 'MMM d, yyyy')} - {format(addDays(startDate, 13), 'MMM d, yyyy')}
               </span>
               <Button variant="ghost" size="icon"><ChevronRight className="w-4 h-4" /></Button>
@@ -54,13 +54,13 @@ export function HotelAvailability() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-[#F8F7F4]">
-                <th className="sticky left-0 bg-[#F8F7F4] z-10 p-3 text-left text-[10px] font-bold text-muted-foreground uppercase border-r border-b min-w-[120px]">Room</th>
+                <th className="sticky left-0 bg-[#F8F7F4] z-10 p-3 text-left text-[10px] font-bold text-muted-foreground uppercase border-r border-b min-w-30">Room</th>
                 {Array.from({ length: 14 }).map((_, i) => {
                   const date = addDays(startDate, i);
                   const isWeekend = date.getDay() === 0 || date.getDay() === 6;
                   return (
                     <th key={i} className={cn(
-                      "p-3 text-center text-[10px] font-bold border-b min-w-[60px]",
+                      "p-3 text-center text-[10px] font-bold border-b min-w-15",
                       isWeekend ? "bg-slate-100/50 text-[#0F1B2D]" : "text-muted-foreground"
                     )}>
                       <div className="uppercase">{format(date, 'eee')}</div>
@@ -71,13 +71,13 @@ export function HotelAvailability() {
               </tr>
             </thead>
             <tbody>
-              {heatmap?.map((row, i) => (
+              {heatmap?.map((row: any, i: any) => (
                 <tr key={i} className="hover:bg-[#F8F7F4]/30">
                   <td className="sticky left-0 bg-white z-10 p-3 font-bold text-xs border-r border-b">
                     {row.room}
                     <div className="text-[9px] font-medium text-muted-foreground leading-none mt-0.5">Standard King</div>
                   </td>
-                  {row.dates.map((status, j) => {
+                  {row.dates.map((status: any, j: any) => {
                     const currentStatus = status || 'available';
                     
                     return (

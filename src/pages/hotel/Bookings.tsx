@@ -43,7 +43,7 @@ export function HotelBookings() {
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-4">
           <Select value={filter} onValueChange={(v) => setFilter(v || 'all')}>
-            <SelectTrigger className="w-full sm:w-[200px] bg-white border-none shadow-sm">
+            <SelectTrigger className="w-full sm:w-50 bg-white border-none shadow-sm">
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-muted-foreground" />
                 <SelectValue placeholder="Filter bookings" />
@@ -88,7 +88,7 @@ export function HotelBookings() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bookings?.map((booking) => (
+                {bookings?.map((booking: any) => (
                   <TableRow key={booking.id} className="hover:bg-[#F8F7F4]/50 transition-colors group">
                     <TableCell className="font-mono text-xs font-bold text-muted-foreground">
                       #{booking.id}

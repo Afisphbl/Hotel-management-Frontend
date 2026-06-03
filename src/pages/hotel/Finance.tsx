@@ -100,7 +100,7 @@ export function HotelFinance() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {finance?.transactions.map(tx => (
+              {finance?.transactions.map((tx: any) => (
                 <TableRow key={tx.id} className="hover:bg-slate-50/50 transition-colors">
                   <TableCell className="pl-6 py-4">
                     <div className="flex items-center gap-2">

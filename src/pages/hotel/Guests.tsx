@@ -110,7 +110,7 @@ export function HotelGuests() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {guests?.map(guest => (
+              {guests?.map((guest: any) => (
                 <TableRow key={guest.id} className="group hover:bg-slate-50/50 transition-colors">
                   <TableCell className="pl-6 py-4">
                     <div className="flex items-center gap-3">

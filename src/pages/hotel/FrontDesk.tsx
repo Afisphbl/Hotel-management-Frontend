@@ -34,9 +34,9 @@ export function HotelFrontDesk() {
   const { data: bookings } = useHotelBookings();
   const { data: rooms } = useHotelRooms();
 
-  const arrivals = bookings?.filter(b => b.status === 'confirmed') || [];
-  const departures = bookings?.filter(b => b.status === 'checked_in') || [];
-  const inHouse = bookings?.filter(b => b.status === 'checked_in') || [];
+  const arrivals = bookings?.filter((b: any) => b.status === 'confirmed') || [];
+  const departures = bookings?.filter((b: any) => b.status === 'checked_in') || [];
+  const inHouse = bookings?.filter((b: any) => b.status === 'checked_in') || [];
 
   return (
     <div className="space-y-6">
@@ -60,7 +60,7 @@ export function HotelFrontDesk() {
           { label: 'Expected Arrivals', value: arrivals.length, icon: LogIn, color: 'text-green-600', bg: 'bg-green-50' },
           { label: 'Expected Departures', value: departures.length, icon: LogOut, color: 'text-amber-600', bg: 'bg-amber-50' },
           { label: 'In-House Guests', value: inHouse.length, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Available Rooms', value: rooms?.filter(r => r.status === 'available').length || 0, icon: DoorOpen, color: 'text-slate-600', bg: 'bg-slate-50' },
+          { label: 'Available Rooms', value: rooms?.filter((r: any) => r.status === 'available').length || 0, icon: DoorOpen, color: 'text-slate-600', bg: 'bg-slate-50' },
         ].map((stat, i) => (
           <Card key={i} className="shadow-sm border-none bg-white p-4">
             <div className="flex justify-between items-start">
@@ -128,7 +128,7 @@ export function HotelFrontDesk() {
                 <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">{arrivals.length}</Badge>
               </div>
               <div className="grid grid-cols-1 gap-3">
-                {arrivals.map(booking => (
+                {arrivals.map((booking: any) => (
                   <div key={booking.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/30 hover:shadow-md transition-all group">
                     <div className="flex flex-col gap-4">
                       <div className="flex justify-between items-start">
@@ -186,7 +186,7 @@ export function HotelFrontDesk() {
                 <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">{departures.length}</Badge>
               </div>
               <div className="grid grid-cols-1 gap-3">
-                {departures.map(booking => (
+                {departures.map((booking: any) => (
                   <div key={booking.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/30 hover:shadow-md transition-all group">
                     <div className="flex flex-col gap-4">
                       <div className="flex justify-between items-start">
@@ -241,7 +241,7 @@ export function HotelFrontDesk() {
                 <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">{inHouse.length}</Badge>
               </div>
               <div className="grid grid-cols-1 gap-3">
-                {inHouse.map(booking => (
+                {inHouse.map((booking: any) => (
                   <div key={booking.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/30 hover:shadow-md transition-all group">
                     <div className="flex flex-col gap-4">
                       <div className="flex justify-between items-start">

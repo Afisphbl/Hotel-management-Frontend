@@ -111,7 +111,7 @@ export function HotelPricing() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {pricing?.currentRates.map(rate => (
+              {pricing?.currentRates.map((rate: any) => (
                 <TableRow key={rate.id} className="hover:bg-slate-50/50 transition-colors">
                   <TableCell className="pl-6 py-4">
                     <span className="font-bold text-[#0F1B2D]">{rate.type}</span>

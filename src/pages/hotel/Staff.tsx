@@ -60,7 +60,7 @@ export function HotelStaff() {
             <div className="flex justify-between items-start">
                <div className="space-y-1">
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Active on Shift</p>
-                  <p className="text-3xl font-serif text-[#0F1B2D]">{staff?.filter(s => s.status === 'On Shift').length || 0}</p>
+                  <p className="text-3xl font-serif text-[#0F1B2D]">{staff?.filter((s: any) => s.status === 'On Shift').length || 0}</p>
                   <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Across 3 departments</p>
                </div>
                <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
@@ -107,7 +107,7 @@ export function HotelStaff() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {staff?.map(member => (
+              {staff?.map((member: any) => (
                 <TableRow key={member.id} className="group hover:bg-slate-50/50 transition-colors">
                   <TableCell className="pl-6 py-4">
                     <div className="flex items-center gap-3">
