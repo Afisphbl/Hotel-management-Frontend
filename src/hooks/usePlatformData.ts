@@ -482,6 +482,13 @@ export function useTenantDomains(hotelId: string) {
         status: hotel.domainStatus || "active",
         sslStatus: hotel.sslStatus || "valid",
         sslExpires: hotel.sslExpires || null,
+        dnsRecords: hotel.dnsRecords || [],
+        urls: {
+          dashboard: hotel.urls?.dashboard || null,
+          staffLogin: hotel.urls?.staffLogin || null,
+          guestPortal: hotel.urls?.guestPortal || null,
+          bookingEngine: hotel.urls?.bookingEngine || null,
+        },
       };
     },
   });

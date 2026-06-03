@@ -38,10 +38,15 @@ export function ColorPickerField({
             className="absolute inset-0 opacity-0 w-0 h-0"
             value={value}
             onChange={(e) => onChange(e.target.value)}
+            title={`${label} color picker`}
+            aria-label={`${label} color picker`}
           />
         </div>
         {/* Hex text input — synced bidirectionally with the swatch */}
         <Input
+          aria-label={`${label} hex color value`}
+          placeholder="#FFFFFF"
+          title={`${label} hex color value`}
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />

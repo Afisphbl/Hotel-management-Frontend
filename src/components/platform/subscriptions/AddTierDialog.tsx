@@ -31,6 +31,7 @@ export function AddTierDialog({ open, onOpenChange, value, onChange, onSubmit, i
           <div className="space-y-2">
             <Label htmlFor="tier-plan">Plan</Label>
             <select
+              title="Plan"
               id="tier-plan"
               className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               value={value.plan}

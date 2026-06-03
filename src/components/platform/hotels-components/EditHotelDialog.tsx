@@ -49,7 +49,7 @@ export function EditHotelDialog({ hotel, open, onOpenChange, onChange, onSave, i
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="edit-plan">Subscription Plan</Label>
-              <Select value={hotel.plan} onValueChange={(v) => onChange({ ...hotel, plan: v })}>
+              <Select value={hotel.plan ?? ""} onValueChange={(v) => onChange({ ...hotel, plan: v })}>
                 <SelectTrigger id="edit-plan"><SelectValue placeholder="Select plan" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="BASIC">Basic</SelectItem>
@@ -60,7 +60,7 @@ export function EditHotelDialog({ hotel, open, onOpenChange, onChange, onSave, i
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-status">Availability</Label>
-              <Select value={hotel.status} onValueChange={(v) => onChange({ ...hotel, status: v })}>
+              <Select value={hotel.status ?? ""} onValueChange={(v) => onChange({ ...hotel, status: v })}>
                 <SelectTrigger id="edit-status"><SelectValue placeholder="Select status" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>

@@ -56,15 +56,18 @@ export function BrandingLogoUploader({
 
   return (
     <div className="space-y-2">
-      <Label>Tenant Logo</Label>
+      <Label htmlFor="logo-upload">Tenant Logo</Label>
 
       {/* Hidden native file input */}
       <input
+        id="logo-upload"
         type="file"
         ref={fileInputRef}
         className="hidden"
         accept="image/png,image/jpeg,image/webp"
         onChange={handleFileChange}
+        title="Upload tenant logo"
+        aria-label="Upload tenant logo"
       />
 
       {/* Dashed upload zone */}

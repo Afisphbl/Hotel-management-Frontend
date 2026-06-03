@@ -26,8 +26,8 @@ export type SortValue = (typeof SORT_OPTIONS)[number]["value"];
 export interface Hotel {
   id: string;
   name: string;
-  plan: string;
-  status: string;
+  plan: string | null;
+  status: string | null;
   ownerName?: string;
   ownerEmail?: string;
   owner?: string;

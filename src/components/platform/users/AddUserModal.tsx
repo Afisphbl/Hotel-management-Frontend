@@ -84,7 +84,9 @@ export function AddUserModal({
               <Label>Role</Label>
               <Select
                 value={newUser.role}
-                onValueChange={(v) => onUserChange({ ...newUser, role: v })}
+                onValueChange={(v) =>
+                  onUserChange({ ...newUser, role: v ?? "" })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />

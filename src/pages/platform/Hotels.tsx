@@ -49,7 +49,7 @@ export function PlatformHotels() {
   const handleEdit = (hotel: Hotel) => {
     setEditingHotel({
       ...hotel,
-      plan: normalizePlan(hotel.plan),
+      plan: hotel.plan ? normalizePlan(hotel.plan) : "BASIC",
       ownerName: getTextValue(hotel.ownerName, hotel.owner) === "—" ? "" : getTextValue(hotel.ownerName, hotel.owner),
       ownerEmail: getTextValue(hotel.ownerEmail, hotel.email) === "—" ? "" : getTextValue(hotel.ownerEmail, hotel.email),
     });
@@ -59,7 +59,7 @@ export function PlatformHotels() {
     if (!editingHotel) return;
     try {
       await updateMutation.mutateAsync({ id: editingHotel.id, data: editingHotel });
-      if (editingHotel.subscriptionId) {
+      if (editingHotel.subscriptionId && editingHotel.plan) {
         await api.patch(`platform/subscriptions/${editingHotel.subscriptionId}`, {
           plan: normalizePlan(editingHotel.plan),
         });
@@ -90,7 +90,7 @@ export function PlatformHotels() {
   const handleDuplicateSubmit = async () => {
     if (!duplicatingHotel) return;
     try {
-      let plan = duplicatingHotel.plan.toUpperCase();
+      let plan = duplicatingHotel.plan?.toUpperCase() || "BASIC";
       if (plan === "PRO") plan = "PROFESSIONAL";
       await createMutation.mutateAsync({
         name: duplicatingHotel.name.trim(),

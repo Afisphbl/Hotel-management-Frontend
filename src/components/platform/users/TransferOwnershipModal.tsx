@@ -45,6 +45,9 @@ export function TransferOwnershipModal({
   onConfirm,
   isPending,
 }: TransferOwnershipModalProps) {
+  const handleValueChange = (value: string | null) => {
+    onTransferTargetChange(value ?? "");
+  };
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -61,7 +64,7 @@ export function TransferOwnershipModal({
             <Label>Select New Owner</Label>
             <Select
               value={transferTargetId}
-              onValueChange={onTransferTargetChange}
+              onValueChange={handleValueChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select an active user..." />

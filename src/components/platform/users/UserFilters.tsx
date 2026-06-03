@@ -43,7 +43,10 @@ export function UserFilters({
 
       {/* Filters and Action on the right */}
       <div className="flex flex-wrap items-center gap-3">
-        <Select value={roleFilter} onValueChange={onRoleChange}>
+        <Select
+          value={roleFilter}
+          onValueChange={(value) => onRoleChange(value ?? "all-roles")}
+        >
           <SelectTrigger className="w-[140px] bg-white border-slate-200 shadow-sm text-xs font-medium h-9">
             <SelectValue placeholder="Role" />
           </SelectTrigger>
@@ -57,7 +60,10 @@ export function UserFilters({
           </SelectContent>
         </Select>
 
-        <Select value={statusFilter} onValueChange={onStatusChange}>
+        <Select
+          value={statusFilter}
+          onValueChange={(value) => onStatusChange(value ?? "all-status")}
+        >
           <SelectTrigger className="w-[140px] bg-white border-slate-200 shadow-sm text-xs font-medium h-9">
             <SelectValue placeholder="Status" />
           </SelectTrigger>

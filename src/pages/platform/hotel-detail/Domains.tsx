@@ -175,7 +175,7 @@ export function HotelDomains() {
                   Required DNS Records
                 </p>
                 <div className='space-y-2'>
-                  {domains.dnsRecords.map((record: any, i: number) => (
+                  {domains.dnsRecords?.map((record: any, i: number) => (
                     <div
                       key={i}
                       className='flex flex-col sm:flex-row sm:items-center justify-between text-[10px] sm:text-xs font-mono bg-white p-2 border rounded gap-2'
