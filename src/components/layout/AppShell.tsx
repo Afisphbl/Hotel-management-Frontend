@@ -230,6 +230,7 @@ export function AppShell() {
   const [unseenReviews, setUnseenReviews] = React.useState(0);
 
   const fetchUnseenReviews = async () => {
+    if (user?.role === "HOTEL_OWNER") return;
     try {
       const res = await api.get<{ count: number }>("hotel/reviews/unseen-count");
       setUnseenReviews(res.count);
