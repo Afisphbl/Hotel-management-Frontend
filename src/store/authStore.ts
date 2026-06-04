@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 import { AuthState, AuthUser, UserRole } from "@/types/auth";
 import { api } from "@/lib/api";
 
-function decodeJwt(token: string) {
+export function decodeJwt(token: string) {
   try {
     const base64Url = token.split(".")[1];
     const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
@@ -110,6 +110,7 @@ export const useAuthStore = create<AuthState>()(
               return {
                 dashboardRoute: response.dashboard_route,
                 hotelSubdomain,
+                access_token: response.access_token,
               };
             }
           }

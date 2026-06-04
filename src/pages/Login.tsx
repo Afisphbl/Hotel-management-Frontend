@@ -1,5 +1,5 @@
 import React from "react";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore, decodeJwt } from "@/store/authStore";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,10 +20,12 @@ import {
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { getSubdomain } from "@/lib/subdomain";
+import type { AuthUser, UserRole } from "@/types/auth";
 
 export function LoginPage() {
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
+  const [isRestoring, setIsRestoring] = React.useState(true);
 
   // Detect subdomain from browser URL on mount
   const [detectedSubdomain] = React.useState(() => getSubdomain());
@@ -32,6 +34,53 @@ export function LoginPage() {
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
+
+  // Restore auth session when redirected from main domain with token
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get("access_token");
+    if (urlToken) {
+      window.history.replaceState({}, "", window.location.pathname);
+      const payload = decodeJwt(urlToken);
+      if (payload) {
+        const rawName = payload.email
+          ? payload.email.split("@")[0]
+          : "User";
+        const formattedName = rawName
+          .split(/[._-]/)
+          .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ");
+        const user: AuthUser = {
+          sub: payload.sub || "user_123",
+          email: payload.email || "",
+          name: formattedName,
+          role: (payload.role || "HOTEL_OWNER") as UserRole,
+          scope: (payload.scope || "hotel") as "hotel" | "platform",
+          hotel_id: payload.hotel_id || undefined,
+          permissions: payload.permissions || [],
+        };
+        useAuthStore.setState({
+          user,
+          token: urlToken,
+          originalToken: null,
+          hotelSubdomain: detectedSubdomain,
+        });
+        const adminRoles = ["HOTEL_MANAGER", "HOTEL_ADMIN", "SUPER_ADMIN"];
+        navigate({
+          to:
+            user.scope === "platform"
+              ? "/platform/dashboard"
+              : user.role === "HOTEL_OWNER"
+                ? "/hotel/owner/dashboard"
+                : adminRoles.includes(user.role)
+                  ? "/hotel/admin/dashboard"
+                  : "/hotel/dashboard",
+        });
+        return;
+      }
+    }
+    setIsRestoring(false);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +96,7 @@ export function LoginPage() {
       const result = await login(email, password, undefined, detectedSubdomain || undefined);
       if (!result) return;
 
-      const { dashboardRoute, hotelSubdomain } = result;
+      const { dashboardRoute, hotelSubdomain, access_token } = result;
 
       // If user has a hotel subdomain, redirect to subdomain-based URL
       if (hotelSubdomain) {
@@ -57,7 +106,7 @@ export function LoginPage() {
         const hostParts = window.location.hostname.split(".");
         const alreadyOnSubdomain = hostParts.length >= 3 || (hostParts.length >= 2 && hostParts[0] !== "localhost" && hostParts[0] !== "127" && hostParts[0] !== "127.0.0.1");
         if (!alreadyOnSubdomain && appDomain) {
-          const subdomainUrl = `${protocol}//${hotelSubdomain}.${appDomain}${dashboardRoute || "/hotel/dashboard"}`;
+          const subdomainUrl = `${protocol}//${hotelSubdomain}.${appDomain}/login?access_token=${encodeURIComponent(access_token)}`;
           window.location.href = subdomainUrl;
           return;
         }
@@ -89,6 +138,17 @@ export function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (isRestoring) {
+    return (
+      <div className='min-h-screen bg-[#F8F7F4] flex items-center justify-center'>
+        <div className='flex flex-col items-center gap-3'>
+          <Loader2 className='w-8 h-8 animate-spin text-[#C9973A]' />
+          <span className='text-sm text-gray-500'>Restoring session...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='min-h-screen bg-[#F8F7F4] flex flex-col lg:flex-row items-center justify-center p-4 gap-8 max-w-6xl mx-auto'>

@@ -32,7 +32,7 @@ export interface AuthState {
     password: string,
     hotelId?: string,
     domain?: string,
-  ) => Promise<{ dashboardRoute: string; hotelSubdomain: string | null } | void>;
+  ) => Promise<{ dashboardRoute: string; hotelSubdomain: string | null; access_token: string } | void>;
   logout: () => void;
   impersonate: (hotelId: string) => Promise<void>;
   stopImpersonating: () => void;
