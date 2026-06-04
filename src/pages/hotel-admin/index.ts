@@ -12,3 +12,4 @@ export { AdminHousekeeping as Housekeeping } from "./Housekeeping";
 export { AdminMaintenance as Maintenance } from "./Maintenance";
 export { AdminReports as Reports } from "./Reports";
 export { AdminSettings as Settings } from "./Settings";
+export { AdminReviews as Reviews } from "./Reviews";

@@ -21,7 +21,7 @@ interface HotelTableRowProps {
   onEdit: (hotel: Hotel) => void;
   onDuplicate: (hotel: Hotel) => void;
   onImpersonate: (hotel: Hotel) => void;
-  onStatusChange: (hotel: Hotel, status: string | null) => void;
+  onStatusChange: (hotel: Hotel, status: string) => void;
   onDelete: (hotel: Hotel) => void;
 }
 
@@ -76,7 +76,7 @@ export function HotelTableRow({
 
       <TableCell onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-start">
-          <Select value={hotel.status ?? ""} onValueChange={(v) => onStatusChange(hotel, v)}>
+          <Select value={hotel.status ?? ""} onValueChange={(v) => onStatusChange(hotel, v ?? "")}>
             <SelectTrigger className="h-8 w-32 bg-[#F8F7F4] border-slate-200 text-xs font-medium">
               <span>{STATUS_LABELS[hotel.status ?? ""] ?? hotel.status}</span>
             </SelectTrigger>

@@ -16,6 +16,7 @@ import {
   Maintenance as HotelAdminMaintenance,
   Reports as HotelAdminReports,
   Settings as HotelAdminSettings,
+  Reviews as HotelAdminReviews,
 } from "@/pages/hotel-admin";
 
 const adminRoles = ["HOTEL_MANAGER", "HOTEL_ADMIN", "SUPER_ADMIN"];
@@ -42,4 +43,5 @@ export const hotelAdminRoutes = [
   createRoute({ getParentRoute: () => hotelLayoutRoute, path: "admin/maintenance", loader: hotelAdminLoader, component: HotelAdminMaintenance }),
   createRoute({ getParentRoute: () => hotelLayoutRoute, path: "admin/reports", loader: hotelAdminLoader, component: HotelAdminReports }),
   createRoute({ getParentRoute: () => hotelLayoutRoute, path: "admin/settings", loader: hotelAdminLoader, component: HotelAdminSettings }),
+  createRoute({ getParentRoute: () => hotelLayoutRoute, path: "admin/reviews", loader: hotelAdminLoader, component: HotelAdminReviews }),
 ];

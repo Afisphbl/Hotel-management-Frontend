@@ -30,6 +30,7 @@ import {
   Sparkles,
   Shield,
   Activity,
+  Star,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -46,6 +47,7 @@ import { Outlet, Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { useNotificationStore } from "@/store/notificationStore";
+import { api } from "@/lib/api";
 import { format } from "date-fns";
 
 interface NavItem {
@@ -188,6 +190,7 @@ const HOTEL_ADMIN_NAV: NavItem[] = [
   { title: "Rooms", href: "/hotel/admin/rooms", icon: Bed },
   { title: "Bookings", href: "/hotel/admin/bookings", icon: Calendar },
   { title: "Guests", href: "/hotel/admin/guests", icon: Users },
+  { title: "Reviews", href: "/hotel/admin/reviews", icon: Star },
   { title: "Staff", href: "/hotel/admin/staff", icon: Shield },
   { title: "Pricing", href: "/hotel/admin/pricing", icon: Tag },
   { title: "Finance", href: "/hotel/admin/finance", icon: DollarSign },
@@ -224,10 +227,23 @@ export function AppShell() {
     markAllRead,
   } = useNotificationStore();
 
+  const [unseenReviews, setUnseenReviews] = React.useState(0);
+
+  const fetchUnseenReviews = async () => {
+    try {
+      const res = await api.get<{ count: number }>("hotel/reviews/unseen-count");
+      setUnseenReviews(res.count);
+    } catch {}
+  };
+
   React.useEffect(() => {
     fetchNotifications();
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000);
+    fetchUnseenReviews();
+    const interval = setInterval(() => {
+      fetchUnreadCount();
+      fetchUnseenReviews();
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -495,6 +511,7 @@ export function AppShell() {
                     if (open) {
                       fetchNotifications();
                       fetchUnreadCount();
+                      fetchUnseenReviews();
                     }
                   }}
                 >
@@ -506,9 +523,9 @@ export function AppShell() {
                       aria-label='Open notifications'
                     >
                       <Bell className='w-4 h-4' />
-                      {unreadCount > 0 && (
+                      {(unreadCount > 0 || unseenReviews > 0) && (
                         <span className='absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full'>
-                          {unreadCount > 9 ? "9+" : unreadCount}
+                          {unreadCount + unseenReviews > 9 ? "9+" : unreadCount + unseenReviews}
                         </span>
                       )}
                     </Button>
@@ -521,43 +538,64 @@ export function AppShell() {
                     <DropdownMenuGroup>
                       <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <div className='overflow-y-auto max-h-72'>
+                      <div className='overflow-y-auto overflow-x-hidden max-h-72'>
                         {loading ? (
                           <div className='p-4 text-center text-sm text-gray-500'>
                             Loading...
                           </div>
-                        ) : notifications.length === 0 ? (
+                        ) : notifications.length === 0 && unseenReviews === 0 ? (
                           <div className='p-4 text-center text-sm text-gray-500'>
                             No notifications
                           </div>
                         ) : (
-                          notifications.map((n) => (
-                            <DropdownMenuItem
-                              key={n.id}
-                              className={cn(
-                                "flex flex-col items-start gap-0.5 py-2 cursor-pointer",
-                                !n.readAt && "bg-blue-50/50",
-                              )}
-                              onClick={() => {
-                                if (!n.readAt) markRead(n.id);
-                              }}
-                            >
-                              <div className='flex items-center justify-between w-full'>
-                                <span className='text-sm font-medium'>
-                                  {n.title}
-                                </span>
-                                <span className='text-[10px] text-gray-400'>
-                                  {format(
-                                    new Date(n.createdAt),
-                                    "MMM d, HH:mm",
-                                  )}
-                                </span>
-                              </div>
-                              <p className='text-xs text-gray-500 line-clamp-2'>
-                                {n.body}
-                              </p>
-                            </DropdownMenuItem>
-                          ))
+                          <>
+                            {unseenReviews > 0 && (
+                              <DropdownMenuItem
+                                className='flex items-center gap-2 py-2 cursor-pointer bg-amber-50/50'
+                                onClick={() => navigate({ to: "/hotel/admin/reviews" })}
+                              >
+                                <div className='flex items-center justify-between w-full'>
+                                  <span className='text-sm font-medium text-amber-700'>
+                                    {unseenReviews} unseen review{unseenReviews > 1 ? 's' : ''}
+                                  </span>
+                                  <span className='text-xs text-blue-600 font-medium'>
+                                    View
+                                  </span>
+                                </div>
+                              </DropdownMenuItem>
+                            )}
+                            {notifications.length === 0 && unseenReviews > 0 && <DropdownMenuSeparator />}
+                            {notifications.map((n) => (
+                              <DropdownMenuItem
+                                key={n.id}
+                                className={cn(
+                                  "flex flex-col items-start gap-0.5 py-2 cursor-pointer",
+                                  !n.readAt && "bg-blue-50/50",
+                                )}
+                                onClick={() => {
+                                  if (!n.readAt) markRead(n.id);
+                                  if (n.type === "new_review") {
+                                    navigate({ to: "/hotel/admin/reviews" });
+                                  }
+                                }}
+                              >
+                                <div className='flex items-center justify-between w-full'>
+                                  <span className='text-sm font-medium'>
+                                    {n.title}
+                                  </span>
+                                  <span className='text-[10px] text-gray-400'>
+                                    {format(
+                                      new Date(n.createdAt),
+                                      "MMM d, HH:mm",
+                                    )}
+                                  </span>
+                                </div>
+                                <p className='text-xs text-gray-500 line-clamp-2'>
+                                  {n.body}
+                                </p>
+                              </DropdownMenuItem>
+                            ))}
+                          </>
                         )}
                       </div>
                       {notifications.length > 0 && (
