@@ -4,14 +4,18 @@ import {
   usePlatformRevenueChart,
   usePlatformHotelsByTier,
   usePlatformAuditLogs,
+  usePlatformChurn,
+  usePlatformHotelRegistrations,
+  usePlatformStorageUsage,
 } from "@/hooks/usePlatformData";
 import {
-  Hotel, CreditCard, DollarSign, Calendar, Users,
+  Hotel, CreditCard, DollarSign, Users, HardDrive,
   ReceiptText, AlertTriangle, CheckCircle2, ArrowUpRight,
+  TrendingDown, BarChart3, Activity, TrendingUp,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer,
+  ResponsiveContainer, AreaChart, Area,
 } from "recharts";
 import { DashboardError } from "@/components/platform/dashboard-components/DashboardError";
 import { DashboardHeader } from "@/components/platform/dashboard-components/DashboardHeader";
@@ -35,6 +39,9 @@ export function PlatformDashboard() {
   const { data: revData, isLoading: revLoading } = usePlatformRevenueChart();
   const { data: tierData, isLoading: tierLoading } = usePlatformHotelsByTier();
   const { data: logs, isLoading: logsLoading } = usePlatformAuditLogs();
+  const { data: churnData, isLoading: churnLoading } = usePlatformChurn();
+  const { data: regData, isLoading: regLoading } = usePlatformHotelRegistrations();
+  const { data: storageData, isLoading: storageLoading } = usePlatformStorageUsage();
 
   const { data: billingRaw, isLoading: billLoading } = useQuery({
     queryKey: ["platform-billing-summary"],
@@ -52,7 +59,7 @@ export function PlatformDashboard() {
       <DashboardHeader />
 
       {/* KPI Cards */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6'>
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
         <KPICard
           title='Total Hotels'
           value={kpis?.totalHotels}
@@ -75,14 +82,8 @@ export function PlatformDashboard() {
           loading={kpisLoading}
         />
         <KPICard
-          title='Total Bookings'
-          value={kpis?.totalBookings}
-          icon={Calendar}
-          loading={kpisLoading}
-        />
-        <KPICard
-          title='Active Users'
-          value={kpis?.activeUsers}
+          title='Hotel Owners'
+          value={kpis?.hotelOwners}
           icon={Users}
           loading={kpisLoading}
         />
@@ -154,6 +155,100 @@ export function PlatformDashboard() {
         <RevenueChart data={revData} isLoading={revLoading} />
         <BillingCollectionChart data={billing?.monthlyCollectionHistory} isLoading={billLoading} />
         <TierDistributionChart data={tierData} isLoading={tierLoading} />
+      </div>
+
+      {/* Platform Health Section */}
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+        {/* Churn Rate Card */}
+        <Card className='shadow-sm border-none bg-white'>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2'>
+              <TrendingDown className='w-4 h-4 text-red-500' />
+              Churn Rate (30d)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {churnLoading ? (
+              <Skeleton className='h-8 w-20' />
+            ) : (
+              <div>
+                <h3 className='text-2xl font-bold text-[#0F1B2D]'>{churnData?.churnRate ?? 0}%</h3>
+                <p className='text-xs text-muted-foreground mt-1'>
+                  {churnData?.cancelledLast30Days ?? 0} cancelled · {churnData?.totalActiveSubscriptions ?? 0} active
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Hotel Registrations Trend */}
+        <Card className='shadow-sm border-none bg-white lg:col-span-2'>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2'>
+              <BarChart3 className='w-4 h-4 text-[#C9973A]' />
+              New Hotel Registrations (12 months)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className='h-[180px]'>
+            {regLoading ? (
+              <Skeleton className='h-full w-full' />
+            ) : regData && regData.length > 0 ? (
+              <ResponsiveContainer width='100%' height='100%'>
+                <AreaChart data={regData}>
+                  <defs>
+                    <linearGradient id='colorReg' x1='0' y1='0' x2='0' y2='1'>
+                      <stop offset='5%' stopColor='#0F1B2D' stopOpacity={0.15} />
+                      <stop offset='95%' stopColor='#0F1B2D' stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='#f0f0f0' />
+                  <XAxis dataKey='month' axisLine={false} tickLine={false} tick={{ fontSize: 10 }} tickFormatter={(v: string) => v.slice(5)} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} allowDecimals={false} />
+                  <Tooltip />
+                  <Area type='monotone' dataKey='registrations' stroke='#0F1B2D' fill='url(#colorReg)' strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className='h-full flex items-center justify-center text-xs text-muted-foreground'>
+                No registration data yet
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Storage Usage */}
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+        <Card className='shadow-sm border-none bg-white'>
+          <CardContent className='p-6'>
+            <div className='flex items-center justify-between mb-2'>
+              <p className='text-xs font-medium text-muted-foreground uppercase tracking-wider'>Total Storage</p>
+              <HardDrive className='w-4 h-4 text-[#C9973A]' />
+            </div>
+            {storageLoading ? (
+              <Skeleton className='h-8 w-24' />
+            ) : (
+              <h3 className='text-2xl font-bold text-[#0F1B2D]'>
+                {storageData?.totalStorageMb ? (storageData.totalStorageMb / 1024).toFixed(1) : 0} GB
+              </h3>
+            )}
+          </CardContent>
+        </Card>
+        <Card className='shadow-sm border-none bg-white'>
+          <CardContent className='p-6'>
+            <div className='flex items-center justify-between mb-2'>
+              <p className='text-xs font-medium text-muted-foreground uppercase tracking-wider'>Avg Per Hotel</p>
+              <Activity className='w-4 h-4 text-[#C9973A]' />
+            </div>
+            {storageLoading ? (
+              <Skeleton className='h-8 w-24' />
+            ) : (
+              <h3 className='text-2xl font-bold text-[#0F1B2D]'>
+                {storageData?.averagePerHotel ? (storageData.averagePerHotel / 1024).toFixed(2) : 0} GB
+              </h3>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Audit Logs */}

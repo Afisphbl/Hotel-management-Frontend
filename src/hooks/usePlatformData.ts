@@ -708,3 +708,30 @@ export function usePlatformRevenueChart() {
     },
   });
 }
+
+export function usePlatformChurn() {
+  return useQuery({
+    queryKey: ["platform-churn"],
+    queryFn: async () => {
+      return api.get("platform/analytics/churn");
+    },
+  });
+}
+
+export function usePlatformHotelRegistrations() {
+  return useQuery({
+    queryKey: ["platform-hotel-registrations"],
+    queryFn: async () => {
+      return api.get("platform/analytics/hotel-registrations");
+    },
+  });
+}
+
+export function usePlatformStorageUsage() {
+  return useQuery({
+    queryKey: ["platform-storage-usage"],
+    queryFn: async () => {
+      return api.get("platform/analytics/storage-usage");
+    },
+  });
+}

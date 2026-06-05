@@ -16,6 +16,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatCurrency } from "@/lib/utils";
 
 interface RevenueChartProps {
   data: any[] | undefined;
@@ -28,7 +29,7 @@ export function RevenueChart({ data, isLoading }: RevenueChartProps) {
       <CardHeader>
         <CardTitle className='text-lg'>Revenue Performance</CardTitle>
         <CardDescription>
-          MRR and Booking Volume over last 6 months
+          Monthly collected revenue from subscription payments
         </CardDescription>
       </CardHeader>
       <CardContent className='h-[300px]'>
@@ -38,7 +39,7 @@ export function RevenueChart({ data, isLoading }: RevenueChartProps) {
           </div>
         ) : data &&
           data.length > 0 &&
-          data.some((d: any) => d.revenue > 0 || d.bookings > 0) ? (
+          data.some((d: any) => d.revenue > 0 || d.collected > 0) ? (
           <ResponsiveContainer width='100%' height='100%' minHeight={300}>
             <AreaChart data={data}>
               <defs>
@@ -63,10 +64,11 @@ export function RevenueChart({ data, isLoading }: RevenueChartProps) {
                 tickLine={false}
                 tick={{ fontSize: 12 }}
               />
-              <Tooltip />
+              <Tooltip formatter={(value: any) => formatCurrency(value)} />
               <Area
                 type='monotone'
-                dataKey='revenue'
+                dataKey='collected'
+                name='Collected'
                 stroke='#C9973A'
                 fillOpacity={1}
                 fill='url(#colorRev)'
@@ -81,8 +83,8 @@ export function RevenueChart({ data, isLoading }: RevenueChartProps) {
               No revenue data available
             </p>
             <p className='text-xs text-slate-400 max-w-[260px] mt-1'>
-              Active subscriptions and completed bookings are required to
-              populate revenue metrics.
+              Completed subscription payments will appear here once hotels
+              start paying.
             </p>
           </div>
         )}
