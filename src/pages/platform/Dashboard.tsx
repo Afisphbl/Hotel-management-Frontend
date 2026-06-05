@@ -152,9 +152,45 @@ export function PlatformDashboard() {
 
       {/* Charts Grid */}
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-        <RevenueChart data={revData} isLoading={revLoading} />
-        <BillingCollectionChart data={billing?.monthlyCollectionHistory} isLoading={billLoading} />
-        <TierDistributionChart data={tierData} isLoading={tierLoading} />
+        <div className='lg:col-span-2 space-y-6'>
+          <RevenueChart data={revData} isLoading={revLoading} />
+          <BillingCollectionChart data={billing?.monthlyCollectionHistory} isLoading={billLoading} />
+        </div>
+        <div className='space-y-6'>
+          <TierDistributionChart data={tierData} isLoading={tierLoading} />
+
+          {/* Storage Usage */}
+          <Card className='shadow-sm border-none bg-white'>
+            <CardContent className='p-6'>
+              <div className='flex items-center justify-between mb-2'>
+                <p className='text-xs font-medium text-muted-foreground uppercase tracking-wider'>Total Storage</p>
+                <HardDrive className='w-4 h-4 text-[#C9973A]' />
+              </div>
+              {storageLoading ? (
+                <Skeleton className='h-8 w-24' />
+              ) : (
+                <h3 className='text-2xl font-bold text-[#0F1B2D]'>
+                  {storageData?.totalStorageMb ? (storageData.totalStorageMb / 1024).toFixed(1) : 0} GB
+                </h3>
+              )}
+            </CardContent>
+          </Card>
+          <Card className='shadow-sm border-none bg-white'>
+            <CardContent className='p-6'>
+              <div className='flex items-center justify-between mb-2'>
+                <p className='text-xs font-medium text-muted-foreground uppercase tracking-wider'>Avg Per Hotel</p>
+                <Activity className='w-4 h-4 text-[#C9973A]' />
+              </div>
+              {storageLoading ? (
+                <Skeleton className='h-8 w-24' />
+              ) : (
+                <h3 className='text-2xl font-bold text-[#0F1B2D]'>
+                  {storageData?.averagePerHotel ? (storageData.averagePerHotel / 1024).toFixed(2) : 0} GB
+                </h3>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Platform Health Section */}
@@ -212,40 +248,6 @@ export function PlatformDashboard() {
               <div className='h-full flex items-center justify-center text-xs text-muted-foreground'>
                 No registration data yet
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Storage Usage */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-        <Card className='shadow-sm border-none bg-white'>
-          <CardContent className='p-6'>
-            <div className='flex items-center justify-between mb-2'>
-              <p className='text-xs font-medium text-muted-foreground uppercase tracking-wider'>Total Storage</p>
-              <HardDrive className='w-4 h-4 text-[#C9973A]' />
-            </div>
-            {storageLoading ? (
-              <Skeleton className='h-8 w-24' />
-            ) : (
-              <h3 className='text-2xl font-bold text-[#0F1B2D]'>
-                {storageData?.totalStorageMb ? (storageData.totalStorageMb / 1024).toFixed(1) : 0} GB
-              </h3>
-            )}
-          </CardContent>
-        </Card>
-        <Card className='shadow-sm border-none bg-white'>
-          <CardContent className='p-6'>
-            <div className='flex items-center justify-between mb-2'>
-              <p className='text-xs font-medium text-muted-foreground uppercase tracking-wider'>Avg Per Hotel</p>
-              <Activity className='w-4 h-4 text-[#C9973A]' />
-            </div>
-            {storageLoading ? (
-              <Skeleton className='h-8 w-24' />
-            ) : (
-              <h3 className='text-2xl font-bold text-[#0F1B2D]'>
-                {storageData?.averagePerHotel ? (storageData.averagePerHotel / 1024).toFixed(2) : 0} GB
-              </h3>
             )}
           </CardContent>
         </Card>
