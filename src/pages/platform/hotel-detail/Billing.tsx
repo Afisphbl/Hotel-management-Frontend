@@ -20,15 +20,15 @@ export function HotelBilling() {
 
   const { data: billing, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["hotel-billing", hotelId],
-    queryFn: () => api.get(`platform/billing/hotels`).then((hotels: any[]) =>
-      hotels.find((h: any) => h.hotelId === hotelId)
+    queryFn: () => api.get(`platform/billing/hotels`).then((res: any) =>
+      (res.data ?? res).find((h: any) => h.hotelId === hotelId)
     ),
     enabled: !!hotelId,
   });
 
   const { data: history } = useQuery({
     queryKey: ["hotel-billing-history", hotelId],
-    queryFn: () => api.get(`platform/billing/${hotelId}/history`),
+    queryFn: () => api.get(`platform/billing/${hotelId}/history`).then((res: any) => res.data ?? []),
     enabled: !!hotelId,
   });
 
