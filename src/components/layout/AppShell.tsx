@@ -233,6 +233,15 @@ export function AppShell() {
   } = useNotificationStore();
 
   const [unseenReviews, setUnseenReviews] = React.useState(0);
+  const [isSuspended, setIsSuspended] = React.useState(false);
+
+  const fetchSuspensionStatus = async () => {
+    if (user?.role !== 'HOTEL_OWNER') return;
+    try {
+      const res = await api.get<{ success: boolean; data: { isSuspended: boolean } }>('billing/payment-status');
+      setIsSuspended(res.data.isSuspended);
+    } catch {}
+  };
 
   const fetchUnseenReviews = async () => {
     if (user?.role === "HOTEL_OWNER") return;
@@ -246,6 +255,7 @@ export function AppShell() {
     fetchNotifications();
     fetchUnreadCount();
     fetchUnseenReviews();
+    fetchSuspensionStatus();
     const interval = setInterval(() => {
       fetchUnreadCount();
       fetchUnseenReviews();
@@ -280,6 +290,24 @@ export function AppShell() {
 
   return (
     <div className='flex h-screen bg-[#F8F7F4] text-[#0F1B2D] flex-col'>
+      {/* Suspension Banner */}
+      {isSuspended && (
+        <div className='bg-red-600 text-white px-4 py-2 flex items-center justify-between text-sm font-bold z-50'>
+          <div className='flex items-center gap-2'>
+            <ShieldAlert className='w-4 h-4' />
+            <span>Your account is suspended due to an unpaid bill. Access is restricted to billing only.</span>
+          </div>
+          <Button
+            size='sm'
+            variant='secondary'
+            className='h-7 bg-white text-red-700 hover:bg-white/90 shrink-0'
+            onClick={() => navigate({ to: '/hotel/owner/billing' })}
+          >
+            Pay Now
+          </Button>
+        </div>
+      )}
+
       {/* Impersonation Banner */}
       {isImpersonating && (
         <div className='bg-amber-600 text-white px-4 py-2 flex items-center justify-between text-sm font-bold z-50'>
