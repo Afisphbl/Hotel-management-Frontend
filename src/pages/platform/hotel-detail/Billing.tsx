@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DollarSign, ShieldAlert, Database } from "lucide-react";
+import { DollarSign, ShieldAlert, Database, Copy } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { ConfirmPaymentDialog } from "@/components/platform/billing/ConfirmPaymentDialog";
@@ -137,6 +137,7 @@ export function HotelBilling() {
           <Table>
             <TableHeader className="bg-[#F8F7F4]">
               <TableRow>
+                <TableHead>Payment ID</TableHead>
                 <TableHead>Period</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Method</TableHead>
@@ -147,13 +148,22 @@ export function HotelBilling() {
             <TableBody>
               {(!history || history.length === 0) ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-12 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={6} className="py-12 text-center text-sm text-muted-foreground">
                     No payment records found
                   </TableCell>
                 </TableRow>
               ) : (
                 history.map((p: any) => (
                   <TableRow key={p.id}>
+                    <TableCell className="text-sm font-mono text-xs">
+                      <span
+                        title="Click to copy"
+                        className="cursor-pointer text-muted-foreground hover:text-[#0F1B2D] flex items-center gap-1"
+                        onClick={() => { navigator.clipboard.writeText(p.id); toast.success("ID copied"); }}
+                      >
+                        {p.id.substring(0, 8)}… <Copy className="w-3 h-3" />
+                      </span>
+                    </TableCell>
                     <TableCell className="text-sm">
                       {p.periodStart?.slice(0, 7) || '—'}
                     </TableCell>
