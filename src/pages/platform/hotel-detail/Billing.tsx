@@ -28,7 +28,7 @@ export function HotelBilling() {
 
   const { data: history } = useQuery({
     queryKey: ["hotel-billing-history", hotelId],
-    queryFn: () => api.get(`platform/billing/hotels/${hotelId}/history`),
+    queryFn: () => api.get(`platform/billing/${hotelId}/history`),
     enabled: !!hotelId,
   });
 
