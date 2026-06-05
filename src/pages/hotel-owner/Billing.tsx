@@ -47,7 +47,7 @@ export function HotelOwnerBilling() {
   const handlePayChapa = async () => {
     setPaying(true);
     try {
-      const res = await api.post("billing/initiate-payment");
+      const res = await api.post("billing/initiate-payment", { returnUrl: window.location.origin });
       const data = res.data ?? res;
       if (data?.checkoutUrl) {
         window.open(data.checkoutUrl, "_blank");

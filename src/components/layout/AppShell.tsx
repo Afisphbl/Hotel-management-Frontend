@@ -515,7 +515,6 @@ export function AppShell() {
                 <DropdownMenu
                   onOpenChange={(open: boolean) => {
                     if (open) {
-                      fetchNotifications();
                       fetchUnreadCount();
                       fetchUnseenReviews();
                     }

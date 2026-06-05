@@ -106,6 +106,8 @@ export function LoginPage() {
         const hostParts = window.location.hostname.split(".");
         const alreadyOnSubdomain = hostParts.length >= 3 || (hostParts.length >= 2 && hostParts[0] !== "localhost" && hostParts[0] !== "127" && hostParts[0] !== "127.0.0.1");
         if (!alreadyOnSubdomain && appDomain) {
+          // Clear auth from this domain's localStorage before redirecting to subdomain
+          useAuthStore.setState({ user: null, token: null, originalToken: null, hotelSubdomain: null });
           const subdomainUrl = `${protocol}//${hotelSubdomain}.${appDomain}/login?access_token=${encodeURIComponent(access_token)}`;
           window.location.href = subdomainUrl;
           return;
