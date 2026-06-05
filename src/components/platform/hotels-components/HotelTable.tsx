@@ -50,6 +50,7 @@ export function HotelTable({
               <TableHead>Tier</TableHead>
               <TableHead className="hidden sm:table-cell">Rooms</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="hidden md:table-cell">Billing</TableHead>
               <TableHead className="hidden xl:table-cell">Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -57,7 +58,7 @@ export function HotelTable({
           <TableBody>
             {isError ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-16 text-center">
+                <TableCell colSpan={8} className="py-16 text-center">
                   <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100 animate-bounce">
                     <ShieldAlert className="w-6 h-6 text-red-500" />
                   </div>
@@ -102,7 +103,7 @@ export function HotelTable({
               ))
             ) : hotels.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-20 text-center animate-fade-in">
+                <TableCell colSpan={8} className="py-20 text-center animate-fade-in">
                   <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Search className="w-6 h-6 text-slate-300" />
                   </div>

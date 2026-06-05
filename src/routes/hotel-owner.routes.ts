@@ -10,6 +10,7 @@ import {
   Hotels as HotelOwnerHotels,
   FinanceSettings as HotelOwnerFinanceSettings,
   OwnerSettings as HotelOwnerSettings,
+  Billing as HotelOwnerBilling,
 } from "@/pages/hotel-owner";
 import { Housekeeping as HotelAdminHousekeeping, Maintenance as HotelAdminMaintenance } from "@/pages/hotel-admin";
 
@@ -22,6 +23,7 @@ const hotelOwnerLoader = () => {
 
 export const hotelOwnerRoutes = [
   createRoute({ getParentRoute: () => hotelLayoutRoute, path: "owner/dashboard", loader: hotelOwnerLoader, component: HotelOwnerDashboard }),
+  createRoute({ getParentRoute: () => hotelLayoutRoute, path: "owner/billing", loader: hotelOwnerLoader, component: HotelOwnerBilling }),
   createRoute({ getParentRoute: () => hotelLayoutRoute, path: "owner/rooms", loader: hotelOwnerLoader, component: HotelOwnerRooms }),
   createRoute({ getParentRoute: () => hotelLayoutRoute, path: "owner/staff", loader: hotelOwnerLoader, component: HotelOwnerStaff }),
   createRoute({ getParentRoute: () => hotelLayoutRoute, path: "owner/pricing", loader: hotelOwnerLoader, component: HotelOwnerPricing }),

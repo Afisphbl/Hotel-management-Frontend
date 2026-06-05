@@ -39,6 +39,11 @@ export interface Hotel {
   subdomain?: string;
   branding?: { primaryColor?: string; accentColor?: string };
   enabledFeatures?: string[];
+  monthlyRate?: number;
+  currentMonthPaid?: boolean;
+  isDue?: boolean;
+  isOverdue?: boolean;
+  lastPaidAt?: string;
 }
 
 export const PLAN_MAP: Record<string, string> = {

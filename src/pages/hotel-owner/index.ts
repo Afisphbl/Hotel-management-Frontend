@@ -6,3 +6,4 @@ export { ReportsPage as Reports } from "./Reports";
 export { HotelsPage as Hotels } from "./Hotels";
 export { FinanceSettings } from "./FinanceSettings";
 export { OwnerSettings } from "./Settings";
+export { HotelOwnerBilling as Billing } from "./Billing";

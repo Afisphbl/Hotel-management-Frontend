@@ -13,6 +13,7 @@ import { HotelFeatureFlags } from "@/pages/platform/hotel-detail/FeatureFlags";
 import { HotelAuditLogs } from "@/pages/platform/hotel-detail/AuditLogs";
 import { HotelUsageMetrics } from "@/pages/platform/hotel-detail/UsageMetrics";
 import { HotelSubscription } from "@/pages/platform/hotel-detail/Subscription";
+import { HotelBilling } from "@/pages/platform/hotel-detail/Billing";
 import { HotelSecurity } from "@/pages/platform/hotel-detail/Security";
 import { HotelSettings } from "@/pages/platform/hotel-detail/Settings";
 import { PlatformSubscriptions } from "@/pages/platform/Subscriptions";
@@ -102,6 +103,12 @@ const platformHotelSubscriptionRoute = createRoute({
   component: HotelSubscription,
 });
 
+const platformHotelBillingRoute = createRoute({
+  getParentRoute: () => platformHotelDetailsRoute,
+  path: "billing",
+  component: HotelBilling,
+});
+
 const platformHotelSecurityRoute = createRoute({
   getParentRoute: () => platformHotelDetailsRoute,
   path: "security",
@@ -157,6 +164,7 @@ export const platformRouteTree = platformLayoutRoute.addChildren([
     platformHotelAuditLogsRoute,
     platformHotelMetricsRoute,
     platformHotelSubscriptionRoute,
+    platformHotelBillingRoute,
     platformHotelSecurityRoute,
     platformHotelSettingsRoute,
   ]),

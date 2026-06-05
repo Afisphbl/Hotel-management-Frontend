@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
+import { Link } from '@tanstack/react-router';
 import { useAuthStore } from '@/store/authStore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -9,7 +10,7 @@ import {
   ResponsiveContainer, ComposedChart, Line,
 } from 'recharts';
 import {
-  TrendingUp, Users, Bed, DollarSign, AlertCircle, ArrowUpRight, ArrowDownRight,
+  TrendingUp, Users, Bed, DollarSign, AlertCircle, AlertTriangle, ArrowUpRight, ArrowDownRight,
   Clock, UserCheck, Wrench, ClipboardList, ReceiptText, CheckCircle2, Hotel,
   BarChart3, Calendar,
 } from 'lucide-react';
@@ -71,16 +72,26 @@ export function HotelOwnerDashboard() {
   const { token } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
+  const [billingStatus, setBillingStatus] = useState<any>(null);
 
   useEffect(() => {
     const load = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch('/api/v1/hotel/dashboard', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const json = await res.json();
-        setData(json.data ?? null);
+        const [dashRes, billingRes] = await Promise.allSettled([
+          fetch('/api/v1/hotel/dashboard', {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then(r => r.json()),
+          fetch('/api/v1/billing/payment-status', {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then(r => r.json()),
+        ]);
+        if (dashRes.status === 'fulfilled') {
+          setData(dashRes.value.data ?? null);
+        }
+        if (billingRes.status === 'fulfilled') {
+          setBillingStatus(billingRes.value.data ?? billingRes.value ?? null);
+        }
       } catch {
         // silently fail — UI shows zeros
       } finally {
@@ -93,9 +104,39 @@ export function HotelOwnerDashboard() {
   }, [token]);
 
   const d = data;
+  const bill = billingStatus;
 
   return (
     <div className="space-y-8 pb-10">
+      {/* Billing reminder banner */}
+      {bill && !bill.currentMonthPaid && bill.monthlyRate > 0 && (
+        <div className={bill.isOverdue
+          ? "bg-red-50 border border-red-200 rounded-lg px-5 py-4 flex items-start gap-3"
+          : "bg-amber-50 border border-amber-200 rounded-lg px-5 py-4 flex items-start gap-3"
+        }>
+          {bill.isOverdue
+            ? <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            : <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          }
+          <div className="flex-1">
+            <p className={bill.isOverdue ? "text-sm font-semibold text-red-800" : "text-sm font-semibold text-amber-800"}>
+              {bill.isOverdue ? "Payment Overdue — Account at Risk" : "Monthly Payment Due"}
+            </p>
+            <p className={bill.isOverdue ? "text-xs text-red-700 mt-0.5" : "text-xs text-amber-700 mt-0.5"}>
+              {bill.isOverdue
+                ? `Your subscription payment of ${formatCurrency(bill.dueAmount || bill.monthlyRate)} is overdue. Please pay immediately to avoid suspension.`
+                : `Your monthly subscription of ${formatCurrency(bill.monthlyRate)} is due. Please complete your payment to keep your account active.`
+              }
+            </p>
+          </div>
+          <Link to="/hotel/owner/billing">
+            <Button size="sm" variant={bill.isOverdue ? "default" : "outline"} className={bill.isOverdue ? "bg-red-700 hover:bg-red-800" : ""}>
+              Pay Now
+            </Button>
+          </Link>
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-serif text-[#0F1B2D]">Owner Dashboard</h1>

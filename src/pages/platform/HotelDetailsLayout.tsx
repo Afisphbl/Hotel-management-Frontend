@@ -18,7 +18,8 @@ import {
   Globe,
   Palette,
   Database,
-  ShieldAlert
+  ShieldAlert,
+  DollarSign
 } from 'lucide-react';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -52,6 +53,7 @@ export function HotelDetailsLayout() {
     { id: 'branding', label: 'Branding', icon: Palette },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'subscription', label: 'Subscription', icon: CreditCard },
+    { id: 'billing', label: 'Billing', icon: DollarSign },
     { id: 'features', label: 'Feature Flags', icon: ShieldCheck },
     { id: 'metrics', label: 'Usage', icon: BarChart3 },
     { id: 'audit-logs', label: 'Audit Logs', icon: History },

@@ -89,6 +89,22 @@ export function HotelTableRow({
         </div>
       </TableCell>
 
+      <TableCell className="hidden md:table-cell" onClick={(e) => e.stopPropagation()}>
+        {hotel.monthlyRate ? (
+          hotel.currentMonthPaid ? (
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] font-semibold">Paid</Badge>
+          ) : hotel.isOverdue ? (
+            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px] font-semibold">Overdue</Badge>
+          ) : hotel.isDue ? (
+            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] font-semibold">Due</Badge>
+          ) : (
+            <span className="text-[11px] text-muted-foreground">—</span>
+          )
+        ) : (
+          <span className="text-[11px] text-muted-foreground">No rate</span>
+        )}
+      </TableCell>
+
       <TableCell className="hidden xl:table-cell text-[11px] text-muted-foreground font-medium">
         {hotel.created ? format(new Date(hotel.created), "MMM d, yyyy") : "—"}
       </TableCell>
