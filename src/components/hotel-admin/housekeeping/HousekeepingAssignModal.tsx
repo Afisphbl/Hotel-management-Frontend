@@ -16,9 +16,10 @@ interface HousekeepingAssignModalProps {
   onStaffChange: (id: string) => void;
   onAssign: () => void;
   assigning: boolean;
+  staffLoading?: boolean;
 }
 
-export function HousekeepingAssignModal({ target, onClose, staffList, selectedStaffId, onStaffChange, onAssign, assigning }: HousekeepingAssignModalProps) {
+export function HousekeepingAssignModal({ target, onClose, staffList, selectedStaffId, onStaffChange, onAssign, assigning, staffLoading }: HousekeepingAssignModalProps) {
   if (!target) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
@@ -32,12 +33,15 @@ export function HousekeepingAssignModal({ target, onClose, staffList, selectedSt
           <div className="space-y-1.5">
             <Label htmlFor="hk-assign-staff">Staff Member</Label>
             <select id="hk-assign-staff" aria-label="Staff Member" title="Staff Member" className="flex w-full h-10 px-3 py-2 border border-input bg-background rounded-md text-sm"
-              value={selectedStaffId} onChange={e => onStaffChange(e.target.value)}>
-              <option value="">-- Select Staff --</option>
+              value={selectedStaffId} onChange={e => onStaffChange(e.target.value)} disabled={staffLoading}>
+              <option value="">{staffLoading ? 'Loading staff...' : '-- Select Staff --'}</option>
               {staffList.map(st => (
                 <option key={st.id} value={st.id}>{st.firstName} {st.lastName} ({st.role?.replace('_', ' ')})</option>
               ))}
             </select>
+            {staffList.length === 0 && !staffLoading && (
+              <p className="text-xs text-amber-600">No housekeeping staff available. Add staff members from the Staff page.</p>
+            )}
           </div>
           <div className="flex gap-3 pt-2">
             <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>

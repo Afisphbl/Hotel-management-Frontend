@@ -32,6 +32,7 @@ export function AdminHousekeeping() {
   const [assignTarget, setAssignTarget] = useState<any>(null);
   const [assigning, setAssigning] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState('');
+  const [staffLoading, setStaffLoading] = useState(false);
 
   const [completeTarget, setCompleteTarget] = useState<any>(null);
   const [completing, setCompleting] = useState(false);
@@ -46,10 +47,15 @@ export function AdminHousekeeping() {
   }, [page, filterStatus]);
 
   useEffect(() => {
-    fetchStaff();
     fetchRooms();
     fetchSummary();
   }, []);
+
+  useEffect(() => {
+    if (assignTarget) {
+      fetchStaff();
+    }
+  }, [assignTarget]);
 
   const fetchTasks = async () => {
     try {
@@ -73,10 +79,35 @@ export function AdminHousekeeping() {
 
   const fetchStaff = async () => {
     try {
-      const res = await api.get('hotel/staff?limit=100');
-      setStaffList(res.data || res.items || []);
+      setStaffLoading(true);
+      const res = await api.get(`hotel/staff?limit=100&t=${Date.now()}`);
+      let allStaff = res.data || res.items || [];
+      let filtered = allStaff.filter(
+        (s: any) =>
+          (s.role === 'housekeeping_staff' || s.role === 'housekeeping_supervisor') &&
+          s.status === 'active',
+      );
+      if (filtered.length === 0) {
+        const ownerRes = await api.get('hotel/owner/staff');
+        const ownerStaff = ownerRes.data || ownerRes.items || [];
+        filtered = ownerStaff.filter(
+          (s: any) =>
+            (s.roleName && s.roleName.toUpperCase().includes('HOUSEKEEPING')) &&
+            s.status === 'ACTIVE',
+        ).map((s: any) => ({
+          id: s.id,
+          firstName: s.firstName,
+          lastName: s.lastName,
+          role: s.roleName,
+          status: s.status,
+        }));
+      }
+      setStaffList(filtered);
     } catch (err: any) {
-      console.error('Failed to load staff list:', err.message);
+      toast.error('Failed to load staff list: ' + err.message);
+      setStaffList([]);
+    } finally {
+      setStaffLoading(false);
     }
   };
 
@@ -275,6 +306,7 @@ export function AdminHousekeeping() {
         onStaffChange={setSelectedStaffId}
         onAssign={handleAssign}
         assigning={assigning}
+        staffLoading={staffLoading}
       />
       <HousekeepingCompleteModal
         target={completeTarget}
