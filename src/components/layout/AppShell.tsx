@@ -49,6 +49,7 @@ import { Separator } from "@/components/ui/separator";
 import { useNotificationStore } from "@/store/notificationStore";
 import { api } from "@/lib/api";
 import { format } from "date-fns";
+import { AiStaffWidget } from "@/components/shared/AiStaffWidget";
 
 interface NavItem {
   title: string;
@@ -676,6 +677,9 @@ export function AppShell() {
           </main>
         </div>
       </div>
+      {["HOTEL_ADMIN", "HOTEL_MANAGER", "SUPER_ADMIN"].includes(user?.role ?? "") && (
+        <AiStaffWidget />
+      )}
     </div>
   );
 }
